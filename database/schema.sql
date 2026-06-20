@@ -22,6 +22,7 @@ CREATE TABLE IF NOT EXISTS users (
   role               ENUM('superadmin','admin','user') NOT NULL DEFAULT 'user',
   name               VARCHAR(100) NOT NULL,
   position           VARCHAR(150) DEFAULT NULL,
+  designation        ENUM('Dean','Department Head','Office Head','Faculty','Staff') DEFAULT NULL,
   department_id      VARCHAR(10)  DEFAULT NULL,
   email              VARCHAR(100) DEFAULT NULL,
   gender             ENUM('Male','Female','Other') DEFAULT NULL,
