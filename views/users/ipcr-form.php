@@ -29,9 +29,14 @@ $user = requireAuth(['user']);
     </div>
     <div class="d-flex gap-2 no-print">
       <button class="btn btn-outline-secondary btn-sm" onclick="window.print()"><i class="fa-solid fa-print me-1"></i>Print</button>
-      <button class="btn btn-outline-primary btn-sm" onclick="saveIPCR('draft')"><i class="fa-solid fa-floppy-disk me-1"></i>Save Draft</button>
-      <button class="btn btn-success btn-sm" onclick="submitIPCR()"><i class="fa-solid fa-paper-plane me-1"></i>Submit</button>
+      <button class="btn btn-outline-primary btn-sm" id="btnSaveDraft" onclick="saveIPCR('draft')"><i class="fa-solid fa-floppy-disk me-1"></i>Save Draft</button>
+      <button class="btn btn-success btn-sm" id="btnSubmit" onclick="submitIPCR()"><i class="fa-solid fa-paper-plane me-1"></i>Submit</button>
     </div>
+  </div>
+
+  <div id="noTimelineAlert" class="alert alert-warning d-none no-print" role="alert">
+    <i class="fa-solid fa-triangle-exclamation me-2"></i>
+    <strong>No active submission period.</strong> The Super Admin has not opened a submission period yet. You can view and fill in the form, but saving and submitting are disabled until a period is opened.
   </div>
 
   <!-- Print Header (visible on print only) -->
@@ -154,8 +159,8 @@ $user = requireAuth(['user']);
 
   <div class="d-flex gap-2 justify-content-end mt-3 no-print">
     <button class="btn btn-outline-secondary" onclick="showPrintPreview()"><i class="fa-solid fa-print me-1"></i>Print Preview</button>
-    <button class="btn btn-outline-primary" onclick="saveIPCR('draft')"><i class="fa-solid fa-floppy-disk me-1"></i>Save Draft</button>
-    <button class="btn btn-success" onclick="submitIPCR()"><i class="fa-solid fa-paper-plane me-1"></i>Submit for Review</button>
+    <button class="btn btn-outline-primary" id="btnSaveDraft2" onclick="saveIPCR('draft')"><i class="fa-solid fa-floppy-disk me-1"></i>Save Draft</button>
+    <button class="btn btn-success" id="btnSubmit2" onclick="submitIPCR()"><i class="fa-solid fa-paper-plane me-1"></i>Submit for Review</button>
   </div>
 </main>
 
@@ -179,7 +184,8 @@ $user = requireAuth(['user']);
 
   async function initForm() {
     // Load open timeline
-    const tlRes = await fetch(API_BASE + 'timeline/list.php?status=open').then(r => r.json()).catch(() => null);
+    const tlRes = await fetch(API_BASE + 'timeline/list.php?status=open', { credentials: 'include' }).then(r => r.json()).catch(() => null);
+    if (tlRes?.error) { showToast(tlRes.error, 'danger'); return; }
     activeTimeline = tlRes?.timelines?.[0] || null;
 
     if (activeTimeline) {
@@ -194,7 +200,7 @@ $user = requireAuth(['user']);
       document.getElementById('ipcrStatus').value = 'Draft';
 
       // Check for existing IPCR on this timeline
-      const existRes = await fetch(`${API_BASE}ipcr/get.php?timeline_id=${activeTimeline.id}`).then(r => r.json()).catch(() => null);
+      const existRes = await fetch(`${API_BASE}ipcr/get.php?timeline_id=${activeTimeline.id}`, { credentials: 'include' }).then(r => r.json()).catch(() => null);
       if (existRes?.form) {
         const f = existRes.form;
         existingIpcrId = f.id;
@@ -207,7 +213,7 @@ $user = requireAuth(['user']);
         loadSection('supportBody', f.items.support);
       } else {
         // Load KPIs for fresh form
-        const kpiRes = await fetch(`${API_BASE}kpi/list.php`).then(r => r.json()).catch(() => null);
+        const kpiRes = await fetch(`${API_BASE}kpi/list.php`, { credentials: 'include' }).then(r => r.json()).catch(() => null);
         if (kpiRes?.grouped) {
           kpi = kpiRes.grouped;
           loadKpiSection('coreBody', kpi.core);
@@ -215,20 +221,24 @@ $user = requireAuth(['user']);
           loadKpiSection('supportBody', kpi.support);
         }
         // Load dept name
-        document.getElementById('ipcrOffice').value = session.department_name || session.department_id || '';
+        document.getElementById('ipcrOffice').value = session.department_name || session.department || '';
       }
     } else {
-      // No open timeline — load KPIs anyway for reference
-      const kpiRes = await fetch(`${API_BASE}kpi/list.php`).then(r => r.json()).catch(() => null);
+      // No open timeline — load KPIs for reference but disable save/submit
+      const kpiRes = await fetch(`${API_BASE}kpi/list.php`, { credentials: 'include' }).then(r => r.json()).catch(() => null);
       if (kpiRes?.grouped) {
         kpi = kpiRes.grouped;
         loadKpiSection('coreBody', kpi.core);
         loadKpiSection('strategicBody', kpi.strategic);
         loadKpiSection('supportBody', kpi.support);
       }
-      document.getElementById('ipcrOffice').value = session.department_name || session.department_id || '';
+      document.getElementById('ipcrOffice').value = session.department_name || session.department || '';
       document.getElementById('ipcrStatus').value = 'No open timeline';
-      showToast('No active submission period is currently open.', 'warning');
+      document.getElementById('noTimelineAlert').classList.remove('d-none');
+      ['btnSaveDraft', 'btnSubmit', 'btnSaveDraft2', 'btnSubmit2'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) { el.disabled = true; el.title = 'No active submission period is open.'; }
+      });
     }
     computeOverallRating();
   }
@@ -241,7 +251,7 @@ $user = requireAuth(['user']);
     items.forEach(item => {
       tbody.innerHTML += `<tr>
         <td style="font-size:0.82rem;background:#fafafa;white-space:nowrap">${item.mfo}</td>
-        <td style="font-size:0.82rem;background:#fafafa">${item.successIndicator}</td>
+        <td style="font-size:0.82rem;background:#fafafa">${item.success_indicator}</td>
         <td style="font-size:0.82rem;background:#fafafa;white-space:nowrap">${item.target}</td>
         <td><textarea class="form-control form-control-sm" rows="2" placeholder="Describe your actual accomplishment..."></textarea></td>
         <td><input type="number" class="form-control form-control-sm rating-input" min="1" max="5" step="0.5" placeholder="1-5" data-kpi="${item.id}" oninput="computeOverallRating()"></td>
@@ -257,7 +267,7 @@ $user = requireAuth(['user']);
       const kpiItem = allKpi.find(k => k.id === item.kpiId) || {};
       tbody.innerHTML += `<tr>
         <td style="font-size:0.82rem;background:#fafafa;white-space:nowrap">${kpiItem.mfo || '-'}</td>
-        <td style="font-size:0.82rem;background:#fafafa">${kpiItem.successIndicator || item.successIndicator || '-'}</td>
+        <td style="font-size:0.82rem;background:#fafafa">${kpiItem.success_indicator || item.success_indicator || '-'}</td>
         <td style="font-size:0.82rem;background:#fafafa;white-space:nowrap">${kpiItem.target || '-'}</td>
         <td><textarea class="form-control form-control-sm" rows="2">${item.accomplishment || ''}</textarea></td>
         <td><input type="number" class="form-control form-control-sm rating-input" min="1" max="5" step="0.5" value="${item.rating || ''}" data-kpi="${item.kpiId || ''}" oninput="computeOverallRating()"></td>
@@ -268,13 +278,15 @@ $user = requireAuth(['user']);
   function getRows(tbodyId, kpiList) {
     const rows = [];
     document.getElementById(tbodyId).querySelectorAll('tr').forEach((tr, i) => {
-      const inputs = tr.querySelectorAll('input, textarea');
-      // inputs[0]=textarea(accomplishment), inputs[1]=number(rating, has data-kpi), inputs[2]=text(remarks)
+      const textarea  = tr.querySelector('textarea');
+      const ratingInp = tr.querySelector('.rating-input');
+      const remarksInp = tr.querySelectorAll('input')[1];
       rows.push({
-        kpiId: kpiList[i]?.id || inputs[1]?.dataset?.kpi || '',
-        accomplishment: inputs[0]?.value || '',
-        rating: parseFloat(inputs[1]?.value) || 0,
-        remarks: inputs[2]?.value || ''
+        kpi_id:           kpiList[i]?.id || ratingInp?.dataset?.kpi || '',
+        success_indicator: tr.cells[1]?.textContent?.trim() || '',
+        accomplishment:   textarea?.value || '',
+        rating:           parseFloat(ratingInp?.value) || 0,
+        remarks:          remarksInp?.value || ''
       });
     });
     return rows;
@@ -308,7 +320,7 @@ $user = requireAuth(['user']);
 
     try {
       const res = await fetch(API_BASE + 'ipcr/save.php', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
       const data = await res.json();
