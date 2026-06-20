@@ -288,11 +288,10 @@ $user = requireAuth(['superadmin']);
     const mfo = document.getElementById('kpiMfo').value.trim();
     const indicator = document.getElementById('kpiIndicator').value.trim();
     if (!mfo || !indicator) { showToast('MFO and Success Indicator are required.', 'warning'); return; }
-    const catLabels = { core: 'Core Function', strategic: 'Strategic Function', support: 'Support Function' };
     const res = await fetch(API_BASE + 'kpi/save.php', {
       method: 'POST', credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: id || undefined, category: catLabels[cat], mfo, success_indicator: indicator, target: document.getElementById('kpiTarget').value, measure: document.getElementById('kpiMeasure').value })
+      body: JSON.stringify({ id: id || undefined, category: cat, mfo, success_indicator: indicator, target: document.getElementById('kpiTarget').value, measure: document.getElementById('kpiMeasure').value })
     }).then(r => r.json()).catch(() => null);
     if (res?.success) {
       bootstrap.Modal.getInstance(document.getElementById('kpiModal')).hide();
