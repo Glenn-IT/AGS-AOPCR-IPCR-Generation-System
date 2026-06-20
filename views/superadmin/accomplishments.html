@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Accomplishment & Ratings | CSU-Piat</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div id="toast-container"></div>
+<div id="sidebar-container"></div>
+<div id="navbar-container"></div>
+
+<main class="main-content" id="mainContent">
+  <div class="page-header d-flex justify-content-between align-items-start flex-wrap gap-2">
+    <div>
+      <h2><i class="fa-solid fa-clipboard-check me-2 text-primary"></i>Accomplishment & Ratings</h2>
+      <p>Rate the IPCR submissions of Deans and Department Heads.</p>
+    </div>
+    <div class="d-flex gap-2 no-print">
+      <button class="btn btn-primary btn-sm" onclick="saveRatings()"><i class="fa-solid fa-save me-1"></i>Save Ratings</button>
+    </div>
+  </div>
+
+  <!-- Select Dean/Head -->
+  <div class="card mb-3">
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-md-4">
+          <label class="form-label">Select Dean / Department Head</label>
+          <select class="form-select" id="selectAdmin" onchange="loadAdmin()">
+            <option value="">-- Select --</option>
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">College / Office</label>
+          <input type="text" class="form-control bg-light" id="accOffice" readonly>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Position</label>
+          <input type="text" class="form-control bg-light" id="accPosition" readonly>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Covered Period</label>
+          <input type="text" class="form-control bg-light" id="accPeriod" readonly>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Date Submitted</label>
+          <input type="text" class="form-control bg-light" id="accDate" readonly>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Current Status</label>
+          <input type="text" class="form-control bg-light" id="accStatus" readonly>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Rating Sections -->
+  <div id="formSections" class="d-none">
+    <div class="mb-3">
+      <div class="ipcr-section-header"><i class="fa-solid fa-star me-2"></i>A. CORE FUNCTION</div>
+      <div class="table-responsive">
+        <table class="table table-bordered mb-0">
+          <thead class="table-light"><tr><th style="width:110px">MFO/KRA</th><th>Success Indicator</th><th>Accomplishment</th><th style="width:90px">Rating (1-5)</th><th>Remarks</th></tr></thead>
+          <tbody id="coreRatingBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="mb-3">
+      <div class="ipcr-section-header"><i class="fa-solid fa-chess me-2"></i>B. STRATEGIC FUNCTION</div>
+      <div class="table-responsive">
+        <table class="table table-bordered mb-0">
+          <thead class="table-light"><tr><th style="width:110px">MFO/KRA</th><th>Success Indicator</th><th>Accomplishment</th><th style="width:90px">Rating (1-5)</th><th>Remarks</th></tr></thead>
+          <tbody id="strategicRatingBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="mb-3">
+      <div class="ipcr-section-header"><i class="fa-solid fa-hands-helping me-2"></i>C. SUPPORT FUNCTION</div>
+      <div class="table-responsive">
+        <table class="table table-bordered mb-0">
+          <thead class="table-light"><tr><th style="width:110px">MFO/KRA</th><th>Success Indicator</th><th>Accomplishment</th><th style="width:90px">Rating (1-5)</th><th>Remarks</th></tr></thead>
+          <tbody id="supportRatingBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Overall Rating -->
+    <div class="card mt-3" style="background:#FFF4E6">
+      <div class="card-body">
+        <div class="row align-items-center">
+          <div class="col-md-6">
+            <label class="form-label fw-700">Final Status</label>
+            <select class="form-select" id="finalStatus">
+              <option value="reviewed">Reviewed</option>
+              <option value="approved">Approved</option>
+              <option value="disapproved">Disapproved</option>
+            </select>
+          </div>
+          <div class="col-md-6 text-end">
+            <div class="fw-700" style="font-size:0.9rem">Computed Overall Rating</div>
+            <div id="overallRatingDisplay" style="font-size:1.5rem;font-weight:800;color:var(--primary)">-</div>
+            <div id="ratingLabelDisplay"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="d-flex gap-2 justify-content-end mt-3 no-print">
+      <button class="btn btn-primary" onclick="saveRatings()"><i class="fa-solid fa-save me-1"></i>Save Ratings</button>
+    </div>
+  </div>
+
+  <div id="emptyState" class="empty-state mt-4">
+    <i class="fa-solid fa-user-check"></i>
+    <p>Select a Dean or Department Head above to view and rate their IPCR.</p>
+  </div>
+</main>
+
+<div id="footer-container"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="../../data/mock-data.js"></script>
+<script src="../../assets/js/auth.js"></script>
+<script src="../../assets/js/components.js"></script>
+<script>
+  const session = requireAuth(['superadmin']);
+  initLayout('superadmin', 'accomplishments', [{ label: 'Accomplishment & Ratings' }]);
+
+  const depts = getMockDepartments();
+  const kpi = getMockKPI();
+  const allKpi = [...(kpi.core||[]), ...(kpi.strategic||[]), ...(kpi.support||[])];
+
+  // Get all admin users and their IPCR submissions
+  const adminUsers = getMockUsers().filter(u => u.role === 'admin');
+  const adminIpcrs = getMockIPCR().filter(f => adminUsers.some(u => u.id === f.userId));
+
+  const sel = document.getElementById('selectAdmin');
+  adminIpcrs.forEach(f => {
+    const o = document.createElement('option');
+    o.value = f.id;
+    o.textContent = f.userName + ' — ' + f.department + ' (' + f.coveredPeriod + ')';
+    sel.appendChild(o);
+  });
+
+  if (adminIpcrs.length === 0) {
+    document.getElementById('emptyState').innerHTML = '<i class="fa-solid fa-inbox"></i><p>No IPCR submissions from Deans or Department Heads yet.</p>';
+  }
+
+  let currentForm = null;
+
+  function loadAdmin() {
+    const id = sel.value;
+    if (!id) {
+      document.getElementById('formSections').classList.add('d-none');
+      document.getElementById('emptyState').style.display = '';
+      return;
+    }
+    currentForm = getMockIPCR().find(f => f.id === id);
+    if (!currentForm) return;
+
+    const dept = depts.find(d => d.name === currentForm.department);
+    document.getElementById('accOffice').value = currentForm.department;
+    document.getElementById('accPosition').value = currentForm.position || '-';
+    document.getElementById('accPeriod').value = currentForm.coveredPeriod;
+    document.getElementById('accDate').value = formatDate(currentForm.date);
+    document.getElementById('accStatus').value = currentForm.status;
+    document.getElementById('finalStatus').value = currentForm.status !== 'pending' ? currentForm.status : 'reviewed';
+
+    loadRatingRows('coreRatingBody', currentForm.coreFunction || []);
+    loadRatingRows('strategicRatingBody', currentForm.strategicFunction || []);
+    loadRatingRows('supportRatingBody', currentForm.supportFunction || []);
+
+    document.getElementById('formSections').classList.remove('d-none');
+    document.getElementById('emptyState').style.display = 'none';
+    computeOverall();
+  }
+
+  function loadRatingRows(tbodyId, items) {
+    const tbody = document.getElementById(tbodyId);
+    tbody.innerHTML = '';
+    items.forEach(item => {
+      const kpiData = allKpi.find(k => k.id === item.kpiId);
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td style="font-size:0.82rem;background:#fafafa;white-space:nowrap">${kpiData?.mfo || '-'}</td>
+        <td style="font-size:0.82rem">${kpiData?.successIndicator || item.successIndicator || '-'}</td>
+        <td><input type="text" class="form-control form-control-sm" value="${item.accomplishment || ''}" placeholder="Actual accomplishment..."></td>
+        <td><input type="number" class="form-control form-control-sm rating-input" min="1" max="5" step="0.5" value="${item.rating || ''}" oninput="computeOverall()"></td>
+        <td><input type="text" class="form-control form-control-sm" value="${item.remarks || ''}" placeholder="Remarks..."></td>`;
+      tbody.appendChild(tr);
+    });
+  }
+
+  function computeOverall() {
+    const allRatings = document.querySelectorAll('.rating-input');
+    let total = 0, count = 0;
+    allRatings.forEach(inp => { const v = parseFloat(inp.value); if (!isNaN(v) && v > 0) { total += v; count++; } });
+    const avg = count > 0 ? (total / count) : 0;
+    document.getElementById('overallRatingDisplay').textContent = avg > 0 ? avg.toFixed(2) : '-';
+    document.getElementById('ratingLabelDisplay').innerHTML = avg > 0 ? getRatingLabel(avg) : '';
+  }
+
+  function collectRows(tbodyId, originalItems) {
+    const rows = [];
+    document.getElementById(tbodyId).querySelectorAll('tr').forEach((tr, i) => {
+      const inputs = tr.querySelectorAll('input');
+      rows.push({
+        kpiId: originalItems[i]?.kpiId || '',
+        accomplishment: inputs[0]?.value || '',
+        rating: parseFloat(inputs[1]?.value) || 0,
+        remarks: inputs[2]?.value || ''
+      });
+    });
+    return rows;
+  }
+
+  function saveRatings() {
+    if (!currentForm) { showToast('Please select a Dean or Department Head first.', 'warning'); return; }
+    const allRatings = document.querySelectorAll('.rating-input');
+    let total = 0, count = 0;
+    allRatings.forEach(inp => { const v = parseFloat(inp.value); if (!isNaN(v) && v > 0) { total += v; count++; } });
+    const avg = count > 0 ? parseFloat((total / count).toFixed(2)) : 0;
+    const status = document.getElementById('finalStatus').value;
+
+    const allIpcrs = getMockIPCR();
+    const idx = allIpcrs.findIndex(f => f.id === currentForm.id);
+    if (idx !== -1) {
+      allIpcrs[idx].rating = avg;
+      allIpcrs[idx].status = status;
+      allIpcrs[idx].coreFunction = collectRows('coreRatingBody', currentForm.coreFunction || []);
+      allIpcrs[idx].strategicFunction = collectRows('strategicRatingBody', currentForm.strategicFunction || []);
+      allIpcrs[idx].supportFunction = collectRows('supportRatingBody', currentForm.supportFunction || []);
+      localStorage.setItem('csu_piat_ipcr_forms', JSON.stringify(allIpcrs));
+      document.getElementById('accStatus').value = status;
+      showToast('Ratings saved! Overall: ' + avg.toFixed(2) + ' (' + status + ')', 'success');
+      addLog(session.id, `Rated ${currentForm.userName} IPCR — ${avg.toFixed(2)} (${status})`);
+    }
+  }
+</script>
+</body>
+</html>
