@@ -92,9 +92,20 @@ try {
               <?php endforeach; ?>
             </select>
           </div>
-          <div class="col-12">
+          <div class="col-md-6">
             <label class="form-label">Position</label>
             <input type="text" class="form-control" id="regPosition" placeholder="e.g. Instructor I">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Role / Designation</label>
+            <select class="form-select" id="regDesignation">
+              <option value="">Select Role</option>
+              <option>Dean</option>
+              <option>Department Head</option>
+              <option>Office Head</option>
+              <option>Faculty</option>
+              <option>Staff</option>
+            </select>
           </div>
           <div class="col-12">
             <label class="form-label">Security Question <span class="text-danger">*</span></label>
@@ -150,7 +161,8 @@ try {
     const confirmPw = document.getElementById('regConfirmPw').value;
     const gender    = document.getElementById('regGender').value;
     const dept      = document.getElementById('regDepartment').value;
-    const position  = document.getElementById('regPosition').value.trim();
+    const position    = document.getElementById('regPosition').value.trim();
+    const designation = document.getElementById('regDesignation').value;
     const secQ      = document.getElementById('regSecQ').value;
     const secA      = document.getElementById('regSecA').value.trim();
     const btn       = document.getElementById('registerBtn');
@@ -170,7 +182,7 @@ try {
         headers: { 'Content-Type': 'application/json' },
         body:    JSON.stringify({
           name, username, email, password, confirm_password: confirmPw,
-          gender, department: dept, position, security_question: secQ, security_answer: secA,
+          gender, department: dept, position, designation, security_question: secQ, security_answer: secA,
         }),
       });
       const data = await res.json();
