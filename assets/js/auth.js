@@ -1,64 +1,23 @@
-// CSU-PIAT Authentication Module
+// CSU-PIAT Auth Module — PHP/MySQL backend version
 
-const MAX_LOGIN_ATTEMPTS = 3;
+// ----------------------------------------------------------------
+// Session helpers (PHP session is the source of truth)
+// SESSION_USER is injected by PHP into each protected page.
+// ----------------------------------------------------------------
 
-function getUsers() { return JSON.parse(localStorage.getItem('csu_piat_users')) || []; }
-function getSession() { return JSON.parse(localStorage.getItem('csu_piat_session')); }
-function setSession(user) { localStorage.setItem('csu_piat_session', JSON.stringify(user)); }
-function clearSession() { localStorage.removeItem('csu_piat_session'); }
-
-function getAttempts() { return parseInt(localStorage.getItem('csu_piat_attempts') || '0'); }
-function setAttempts(n) { localStorage.setItem('csu_piat_attempts', String(n)); }
-function resetAttempts() { localStorage.removeItem('csu_piat_attempts'); }
-
-function isLocked() {
-  const lockTime = localStorage.getItem('csu_piat_locktime');
-  if (!lockTime) return false;
-  const diff = (Date.now() - parseInt(lockTime)) / 1000;
-  if (diff > 30) { localStorage.removeItem('csu_piat_locktime'); resetAttempts(); return false; }
-  return true;
-}
-
-function login(username, password) {
-  if (isLocked()) return { success: false, error: 'Account temporarily locked. Please try again in 30 seconds.' };
-  const users = getUsers();
-  const user = users.find(u => u.username === username && u.password === password);
-  if (!user) {
-    const attempts = getAttempts() + 1;
-    setAttempts(attempts);
-    if (attempts >= MAX_LOGIN_ATTEMPTS) {
-      localStorage.setItem('csu_piat_locktime', String(Date.now()));
-      return { success: false, error: `Too many failed attempts. Account locked for 30 seconds.` };
-    }
-    return { success: false, error: `Invalid username or password. ${MAX_LOGIN_ATTEMPTS - attempts} attempt(s) remaining.` };
-  }
-  if (user.status === 'inactive') return { success: false, error: 'Your account has been deactivated. Contact the administrator.' };
-  resetAttempts();
-
-  // Update last login
-  const users2 = getUsers();
-  const idx = users2.findIndex(u => u.id === user.id);
-  if (idx !== -1) {
-    users2[idx].lastLogin = new Date().toLocaleString('en-PH');
-    localStorage.setItem('csu_piat_users', JSON.stringify(users2));
-  }
-
-  // Log activity
-  addLog(user.id, 'Logged in successfully');
-  setSession(user);
-  return { success: true, user };
-}
-
-function logout() {
-  const session = getSession();
-  if (session) addLog(session.id, 'Logged out');
-  clearSession();
-  window.location.href = getBasePath() + 'index.html';
+function getSession() {
+  return window.SESSION_USER || null;
 }
 
 function requireAuth(allowedRoles) {
-  const session = getSession();
-  if (!session) { window.location.href = getBasePath() + 'index.html'; return null; }
+  // PHP already enforces this server-side.
+  // This JS stub just returns the session for UI use and acts as
+  // a last-resort client-side safety net.
+  const session = window.SESSION_USER;
+  if (!session) {
+    window.location.href = getBasePath() + 'index.php';
+    return null;
+  }
   if (allowedRoles && !allowedRoles.includes(session.role)) {
     redirectByRole(session.role);
     return null;
@@ -66,92 +25,109 @@ function requireAuth(allowedRoles) {
   return session;
 }
 
+function logout() {
+  window.location.href = getBasePath() + 'api/auth/logout.php';
+}
+
 function redirectByRole(role) {
   const base = getBasePath();
-  if (role === 'superadmin') window.location.href = base + 'views/superadmin/dashboard.html';
-  else if (role === 'admin') window.location.href = base + 'views/admin/dashboard.html';
-  else window.location.href = base + 'views/users/dashboard.html';
+  if (role === 'superadmin') window.location.href = base + 'views/superadmin/dashboard.php';
+  else if (role === 'admin') window.location.href = base + 'views/admin/dashboard.php';
+  else window.location.href = base + 'views/users/dashboard.php';
 }
 
 function getBasePath() {
   const path = window.location.pathname;
   if (path.includes('/views/superadmin/')) return '../../';
-  if (path.includes('/views/admin/')) return '../../';
-  if (path.includes('/views/users/')) return '../../';
+  if (path.includes('/views/admin/'))      return '../../';
+  if (path.includes('/views/users/'))      return '../../';
   return '';
 }
 
-function addLog(userId, activity) {
-  const logs = JSON.parse(localStorage.getItem('csu_piat_account_logs')) || [];
-  const now = new Date();
-  logs.unshift({
-    userId,
-    date: now.toLocaleDateString('en-PH'),
-    time: now.toLocaleTimeString('en-PH'),
-    activity
-  });
-  localStorage.setItem('csu_piat_account_logs', JSON.stringify(logs.slice(0, 100)));
-}
+// ----------------------------------------------------------------
+// Activity log — now handled server-side, this is a no-op
+// ----------------------------------------------------------------
+function addLog(userId, activity) { /* handled by PHP */ }
 
-function getUserLogs(userId) {
-  const logs = JSON.parse(localStorage.getItem('csu_piat_account_logs')) || [];
-  return logs.filter(l => l.userId === userId);
-}
-
+// ----------------------------------------------------------------
+// Password change — AJAX to backend
+// ----------------------------------------------------------------
 function changePassword(userId, oldPassword, newPassword) {
-  const users = getUsers();
-  const idx = users.findIndex(u => u.id === userId);
-  if (idx === -1) return { success: false, error: 'User not found.' };
-  if (users[idx].password !== oldPassword) return { success: false, error: 'Current password is incorrect.' };
-  users[idx].password = newPassword;
-  localStorage.setItem('csu_piat_users', JSON.stringify(users));
-  addLog(userId, 'Changed password');
-  return { success: true };
+  // Returns a Promise. Callers that expect synchronous result
+  // (account pages) must be updated to handle the Promise.
+  return fetch(getBasePath() + 'api/auth/change-password.php', {
+    method:  'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body:    JSON.stringify({
+      current_password: oldPassword,
+      new_password:     newPassword,
+      confirm_password: newPassword,
+    }),
+  }).then(r => r.json());
 }
 
+// ----------------------------------------------------------------
+// Forgot password helpers (used by forgot-password.html inline JS)
+// These are AJAX wrappers — return Promises.
+// ----------------------------------------------------------------
 function verifyUsername(username) {
-  const users = getUsers();
-  return users.find(u => u.username === username) || null;
+  return fetch('api/auth/forgot-password.php', {
+    method:  'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body:    JSON.stringify({ action: 'verify_username', username }),
+  }).then(r => r.json());
 }
 
 function verifySecurityAnswer(username, answer) {
-  const users = getUsers();
-  const user = users.find(u => u.username === username);
-  if (!user) return false;
-  return user.securityAnswer.toLowerCase() === answer.trim().toLowerCase();
+  return fetch('api/auth/forgot-password.php', {
+    method:  'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body:    JSON.stringify({ action: 'verify_answer', answer }),
+  }).then(r => r.json());
 }
 
 function resetPassword(username, newPassword) {
-  const users = getUsers();
-  const idx = users.findIndex(u => u.username === username);
-  if (idx === -1) return false;
-  users[idx].password = newPassword;
-  localStorage.setItem('csu_piat_users', JSON.stringify(users));
-  addLog(users[idx].id, 'Reset password via Forgot Password');
-  return true;
+  return fetch('api/auth/reset-password.php', {
+    method:  'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body:    JSON.stringify({ password: newPassword, confirm_password: newPassword }),
+  }).then(r => r.json());
 }
 
+// ----------------------------------------------------------------
+// Registration (used by register.html inline JS)
+// ----------------------------------------------------------------
 function registerUser(data) {
-  const users = getUsers();
-  if (users.find(u => u.username === data.username)) return { success: false, error: 'Username already exists.' };
-  const newUser = {
-    id: Date.now(),
-    username: data.username,
-    password: data.password,
-    role: data.role || 'user',
-    name: data.name,
-    position: data.position || '',
-    department: data.department || '',
-    email: data.email || '',
-    gender: data.gender || '',
-    status: 'active',
-    avatar: data.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase(),
-    securityQuestion: data.securityQuestion || '',
-    securityAnswer: data.securityAnswer || '',
-    lastLogin: '-',
-    createdAt: new Date().toLocaleDateString('en-PH')
-  };
-  users.push(newUser);
-  localStorage.setItem('csu_piat_users', JSON.stringify(users));
-  return { success: true, user: newUser };
+  return fetch('api/auth/register.php', {
+    method:  'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body:    JSON.stringify({
+      name:              data.name,
+      username:          data.username,
+      password:          data.password,
+      confirm_password:  data.password,
+      email:             data.email || '',
+      gender:            data.gender || '',
+      department:        data.department,
+      position:          data.position || '',
+      security_question: data.securityQuestion,
+      security_answer:   data.securityAnswer,
+    }),
+  }).then(r => r.json());
+}
+
+// ----------------------------------------------------------------
+// Login attempt counter display (client-side only)
+// Real rate limiting is server-side (login_attempts table).
+// ----------------------------------------------------------------
+const MAX_LOGIN_ATTEMPTS = 3;
+
+function getAttempts() {
+  return parseInt(sessionStorage.getItem('csu_login_attempts') || '0');
+}
+function setAttempts(n) {
+  sessionStorage.setItem('csu_login_attempts', String(n));
+}
+function resetAttempts() {
+  sessionStorage.removeItem('csu_login_attempts');
 }

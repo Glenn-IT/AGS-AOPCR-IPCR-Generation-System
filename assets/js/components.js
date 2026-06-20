@@ -31,46 +31,73 @@ function formatDate(dateStr) {
   return isNaN(d) ? dateStr : d.toLocaleDateString('en-PH', { year: 'numeric', month: 'short', day: 'numeric' });
 }
 
+function getStatusBadge(status) {
+  const map = {
+    draft:       ['bg-secondary', 'Draft'],
+    pending:     ['bg-warning text-dark', 'Pending'],
+    reviewed:    ['bg-info text-dark', 'Reviewed'],
+    approved:    ['bg-success', 'Approved'],
+    disapproved: ['bg-danger', 'Disapproved'],
+    active:      ['bg-success', 'Active'],
+    inactive:    ['bg-secondary', 'Inactive'],
+    open:        ['bg-success', 'Open'],
+    closed:      ['bg-danger', 'Closed'],
+  };
+  const [cls, label] = map[status] || ['bg-secondary', status || '-'];
+  return `<span class="badge ${cls}">${label}</span>`;
+}
+
+function getRatingLabel(rating) {
+  const v = parseFloat(rating);
+  if (!v || v <= 0) return '';
+  if (v >= 4.5) return '<span class="badge bg-success">Outstanding</span>';
+  if (v >= 3.5) return '<span class="badge" style="background:#E85C0D">Very Satisfactory</span>';
+  if (v >= 2.5) return '<span class="badge bg-warning text-dark">Satisfactory</span>';
+  if (v >= 1.5) return '<span class="badge bg-danger">Unsatisfactory</span>';
+  return '<span class="badge bg-dark">Poor</span>';
+}
+
 function buildSidebar(role, activePage) {
   const menus = {
     superadmin: [
       { section: 'Main' },
-      { icon: 'fa-gauge', label: 'Dashboard', href: 'dashboard.html', page: 'dashboard' },
+      { icon: 'fa-gauge', label: 'Dashboard', href: 'dashboard.php', page: 'dashboard' },
       { section: 'OPCR / Performance' },
-      { icon: 'fa-bullseye', label: 'OPCR Form', href: 'set-target.html', page: 'set-target' },
-      { icon: 'fa-clipboard-check', label: 'Accomplishment & Ratings', href: 'accomplishments.html', page: 'accomplishments' },
+      { icon: 'fa-bullseye', label: 'OPCR Form', href: 'set-target.php', page: 'set-target' },
+      { icon: 'fa-clipboard-check', label: 'Accomplishment & Ratings', href: 'accomplishments.php', page: 'accomplishments' },
       { section: 'Management' },
-      { icon: 'fa-users', label: 'Account Management', href: 'accounts.html', page: 'accounts' },
-      { icon: 'fa-chart-bar', label: 'Reports', href: 'reports.html', page: 'reports' },
+      { icon: 'fa-users', label: 'Account Management', href: 'accounts.php', page: 'accounts' },
+      { icon: 'fa-chart-bar', label: 'Reports', href: 'reports.php', page: 'reports' },
       { section: 'Configuration' },
-      { icon: 'fa-gear', label: 'Settings', href: 'settings.html', page: 'settings' },
+      { icon: 'fa-gear', label: 'Settings', href: 'settings.php', page: 'settings' },
       { section: 'Account' },
-      { icon: 'fa-user-cog', label: 'My Profile', href: 'account.html', page: 'account' }
+      { icon: 'fa-user-cog', label: 'My Profile', href: 'account.php', page: 'account' }
     ],
     admin: [
       { section: 'Main' },
-      { icon: 'fa-gauge', label: 'Dashboard', href: 'dashboard.html', page: 'dashboard' },
+      { icon: 'fa-gauge', label: 'Dashboard', href: 'dashboard.php', page: 'dashboard' },
       { section: 'IPCR / Performance' },
-      { icon: 'fa-file-lines', label: 'IPCR Form', href: 'ipcr-form.html', page: 'ipcr-form' },
-      { icon: 'fa-clipboard-check', label: 'Accomplishments & Ratings', href: 'accomplishments.html', page: 'accomplishments' },
-      { icon: 'fa-file-alt', label: 'Reports', href: 'reports.html', page: 'reports' },
+      { icon: 'fa-file-lines', label: 'IPCR Form', href: 'ipcr-form.php', page: 'ipcr-form' },
+      { icon: 'fa-clipboard-check', label: 'Accomplishments & Ratings', href: 'accomplishments.php', page: 'accomplishments' },
+      { icon: 'fa-file-alt', label: 'Reports', href: 'reports.php', page: 'reports' },
       { section: 'Account' },
-      { icon: 'fa-user-cog', label: 'My Profile', href: 'account.html', page: 'account' }
+      { icon: 'fa-user-cog', label: 'My Profile', href: 'account.php', page: 'account' }
     ],
     user: [
       { section: 'Main' },
-      { icon: 'fa-gauge', label: 'Dashboard', href: 'dashboard.html', page: 'dashboard' },
+      { icon: 'fa-gauge', label: 'Dashboard', href: 'dashboard.php', page: 'dashboard' },
       { section: 'Performance' },
-      { icon: 'fa-file-lines', label: 'IPCR Form', href: 'ipcr-form.html', page: 'ipcr-form' },
-      { icon: 'fa-paperclip', label: 'Evidence Upload', href: 'evidence.html', page: 'evidence' },
-      { icon: 'fa-eye', label: 'View Status', href: 'status.html', page: 'status' },
+      { icon: 'fa-file-lines', label: 'IPCR Form', href: 'ipcr-form.php', page: 'ipcr-form' },
+      { icon: 'fa-paperclip', label: 'Evidence Upload', href: 'evidence.php', page: 'evidence' },
+      { icon: 'fa-eye', label: 'View Status', href: 'status.php', page: 'status' },
       { section: 'Account' },
-      { icon: 'fa-user-cog', label: 'My Profile', href: 'account.html', page: 'account' }
+      { icon: 'fa-user-cog', label: 'My Profile', href: 'account.php', page: 'account' }
     ]
   };
 
   const items = menus[role] || menus.user;
-  const session = getSession();
+  // Use PHP-injected SESSION_USER (not localStorage)
+  const session = window.SESSION_USER || {};
   const roleLabels = { superadmin: 'Super Administrator', admin: 'Administrator', user: 'Faculty / Staff' };
 
   return `
@@ -91,10 +118,10 @@ function buildSidebar(role, activePage) {
       </div>
       <div style="padding:12px 16px;border-top:1px solid rgba(255,255,255,0.15);margin-top:auto">
         <div style="display:flex;align-items:center;gap:8px">
-          <div style="width:32px;height:32px;background:rgba(255,255,255,0.2);border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:0.7rem;font-weight:700;flex-shrink:0">${session?.avatar || 'U'}</div>
+          <div style="width:32px;height:32px;background:rgba(255,255,255,0.2);border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:0.7rem;font-weight:700;flex-shrink:0">${session.avatar || 'U'}</div>
           <div style="overflow:hidden;transition:all 0.3s" class="sidebar-user-info">
-            <div style="color:#fff;font-size:0.75rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${session?.name || 'User'}</div>
-            <div style="color:rgba(255,255,255,0.6);font-size:0.65rem">${roleLabels[session?.role] || 'User'}</div>
+            <div style="color:#fff;font-size:0.75rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${session.name || 'User'}</div>
+            <div style="color:rgba(255,255,255,0.6);font-size:0.65rem">${roleLabels[session.role] || 'User'}</div>
           </div>
         </div>
       </div>
@@ -103,7 +130,7 @@ function buildSidebar(role, activePage) {
 }
 
 function buildNavbar(pageTitle, breadcrumbs = []) {
-  const session = getSession();
+  const session = window.SESSION_USER || {};
   const roleLabels = { superadmin: 'Super Administrator', admin: 'Administrator', user: 'Faculty / Staff' };
   const crumbHtml = breadcrumbs.map((b, i) =>
     i === breadcrumbs.length - 1
@@ -131,18 +158,18 @@ function buildNavbar(pageTitle, breadcrumbs = []) {
         </button>
         <div class="dropdown">
           <button class="user-avatar-btn dropdown-toggle" data-bs-toggle="dropdown" type="button">
-            <div class="user-avatar">${session?.avatar || 'U'}</div>
+            <div class="user-avatar">${session.avatar || 'U'}</div>
             <div class="user-info">
-              <div class="user-name">${session?.name || 'User'}</div>
-              <div class="user-role">${roleLabels[session?.role] || 'User'}</div>
+              <div class="user-name">${session.name || 'User'}</div>
+              <div class="user-role">${roleLabels[session.role] || 'User'}</div>
             </div>
           </button>
           <ul class="dropdown-menu dropdown-menu-end shadow-sm" style="font-size:0.85rem;border:none;border-radius:10px">
             <li><div class="px-3 py-2 border-bottom">
-              <div class="fw-600" style="font-size:0.88rem">${session?.name}</div>
-              <div class="text-muted" style="font-size:0.75rem">${session?.email || ''}</div>
+              <div class="fw-600" style="font-size:0.88rem">${session.name || ''}</div>
+              <div class="text-muted" style="font-size:0.75rem">${session.email || ''}</div>
             </div></li>
-            <li><a class="dropdown-item" href="account.html"><i class="fa-solid fa-user me-2 text-primary"></i>My Profile</a></li>
+            <li><a class="dropdown-item" href="account.php"><i class="fa-solid fa-user me-2 text-primary"></i>My Profile</a></li>
             <li><a class="dropdown-item" href="#" onclick="handleLogout(event)"><i class="fa-solid fa-right-from-bracket me-2 text-danger"></i>Logout</a></li>
           </ul>
         </div>
@@ -152,7 +179,7 @@ function buildNavbar(pageTitle, breadcrumbs = []) {
 
 function buildFooter() {
   return `<footer class="main-footer" id="mainFooter">
-    <span>© 2026 Cagayan State University - Piat Campus | AOPCR/IPCR Generation System | <span class="text-primary">v1.0</span></span>
+    <span>© 2026 Cagayan State University - Piat Campus | AOPCR/IPCR Generation System | <span class="text-primary">v2.0</span></span>
   </footer>`;
 }
 

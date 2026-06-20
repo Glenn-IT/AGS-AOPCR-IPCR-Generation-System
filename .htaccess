@@ -1,0 +1,14 @@
+Options -Indexes
+
+# Basic security headers
+<IfModule mod_headers.c>
+  Header always set X-Frame-Options "SAMEORIGIN"
+  Header always set X-XSS-Protection "1; mode=block"
+  Header always set X-Content-Type-Options "nosniff"
+</IfModule>
+
+# Block direct browser access to config and api folders returning HTML pages
+# (API endpoints return JSON; config files must never be directly accessed)
+<FilesMatch "^(config|database)\.php$">
+  Deny from all
+</FilesMatch>

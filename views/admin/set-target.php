@@ -1,0 +1,570 @@
+<?php
+require_once '../../config/session.php';
+$user = requireAuth(['admin']);
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Set Target (OPCR) | CSU-Piat</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="../../assets/css/style.css">
+  <script>
+  window.SESSION_USER = <?= json_encode($user, JSON_HEX_TAG | JSON_UNESCAPED_UNICODE) ?>;
+  const API_BASE = '<?= BASE_URL ?>api/';
+  </script>
+</head>
+<body>
+<div id="toast-container"></div>
+<div id="sidebar-container"></div>
+<div id="navbar-container"></div>
+
+<main class="main-content" id="mainContent">
+  <div class="page-header d-flex justify-content-between align-items-start flex-wrap gap-2">
+    <div>
+      <h2><i class="fa-solid fa-bullseye me-2 text-primary"></i>Set Target — OPCR Form</h2>
+      <p>Office Performance Commitment and Review | CSU-Piat</p>
+    </div>
+    <div class="d-flex gap-2 no-print">
+      <button class="btn btn-outline-secondary btn-sm" onclick="window.print()"><i class="fa-solid fa-print me-1"></i>Print</button>
+      <button class="btn btn-outline-primary btn-sm" id="editBtn" onclick="enableEdit()" style="display:none"><i class="fa-solid fa-pen me-1"></i>Edit</button>
+      <button class="btn btn-primary btn-sm" id="saveBtn" onclick="saveOPCR()"><i class="fa-solid fa-save me-1"></i>Save OPCR</button>
+      <button class="btn btn-success btn-sm" id="confirmBtn" onclick="confirmOPCR()"><i class="fa-solid fa-check me-1"></i>Confirm & Submit</button>
+    </div>
+  </div>
+
+  <!-- Form Header Info -->
+  <div class="card mb-3">
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-md-4">
+          <label class="form-label">College / Office</label>
+          <input type="text" class="form-control" id="opcrOffice" readonly>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Name</label>
+          <input type="text" class="form-control" id="opcrName" readonly>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Position</label>
+          <input type="text" class="form-control" id="opcrPosition" readonly>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Covered Period</label>
+          <input type="text" class="form-control" id="opcrPeriod" placeholder="e.g. January - June 2026">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Date</label>
+          <input type="date" class="form-control" id="opcrDate">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Status</label>
+          <input type="text" class="form-control bg-light" id="opcrStatus" readonly>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Core Function -->
+  <div class="mb-3">
+    <div class="ipcr-section-header d-flex justify-content-between align-items-center">
+      <span><i class="fa-solid fa-star me-2"></i>A. CORE FUNCTION</span>
+      <button class="btn btn-sm btn-light" onclick="addRow('core')"><i class="fa-solid fa-plus me-1"></i>Add Row</button>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-bordered mb-0" id="coreTable">
+        <thead class="table-light">
+          <tr><th>MFO/PAP</th><th>Success Indicator</th><th style="width:90px">Target</th><th style="width:80px">Budget</th><th style="width:80px">Measure</th><th>Actual Accomplishment</th><th style="width:90px">Avg. Rating</th><th class="no-print" style="width:50px">Del</th></tr>
+        </thead>
+        <tbody id="coreBody"></tbody>
+        <tfoot><tr class="table-warning"><td colspan="6" class="text-end fw-bold" style="font-size:0.83rem">Average Rating — Core Function:</td><td id="coreAvg" class="text-center fw-bold">—</td><td class="no-print"></td></tr></tfoot>
+      </table>
+    </div>
+  </div>
+
+  <!-- Strategic Function -->
+  <div class="mb-3">
+    <div class="ipcr-section-header d-flex justify-content-between align-items-center">
+      <span><i class="fa-solid fa-chess me-2"></i>B. STRATEGIC FUNCTION</span>
+      <button class="btn btn-sm btn-light" onclick="addRow('strategic')"><i class="fa-solid fa-plus me-1"></i>Add Row</button>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-bordered mb-0" id="strategicTable">
+        <thead class="table-light">
+          <tr><th>MFO/PAP</th><th>Success Indicator</th><th style="width:90px">Target</th><th style="width:80px">Budget</th><th style="width:80px">Measure</th><th>Actual Accomplishment</th><th style="width:90px">Avg. Rating</th><th class="no-print" style="width:50px">Del</th></tr>
+        </thead>
+        <tbody id="strategicBody"></tbody>
+        <tfoot><tr class="table-warning"><td colspan="6" class="text-end fw-bold" style="font-size:0.83rem">Average Rating — Strategic Function:</td><td id="strategicAvg" class="text-center fw-bold">—</td><td class="no-print"></td></tr></tfoot>
+      </table>
+    </div>
+  </div>
+
+  <!-- Support Function -->
+  <div class="mb-3">
+    <div class="ipcr-section-header d-flex justify-content-between align-items-center">
+      <span><i class="fa-solid fa-hands-helping me-2"></i>C. SUPPORT FUNCTION</span>
+      <button class="btn btn-sm btn-light" onclick="addRow('support')"><i class="fa-solid fa-plus me-1"></i>Add Row</button>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-bordered mb-0" id="supportTable">
+        <thead class="table-light">
+          <tr><th>MFO/PAP</th><th>Success Indicator</th><th style="width:90px">Target</th><th style="width:80px">Budget</th><th style="width:80px">Measure</th><th>Actual Accomplishment</th><th style="width:90px">Avg. Rating</th><th class="no-print" style="width:50px">Del</th></tr>
+        </thead>
+        <tbody id="supportBody"></tbody>
+        <tfoot><tr class="table-warning"><td colspan="6" class="text-end fw-bold" style="font-size:0.83rem">Average Rating — Support Function:</td><td id="supportAvg" class="text-center fw-bold">—</td><td class="no-print"></td></tr></tfoot>
+      </table>
+    </div>
+  </div>
+
+  <!-- Final Average Rating -->
+  <div class="card mb-3 border-primary" style="background:#FFF4E6">
+    <div class="card-body d-flex align-items-center justify-content-between flex-wrap gap-2">
+      <div>
+        <h6 class="mb-0 fw-700"><i class="fa-solid fa-calculator me-2 text-primary"></i>Final Average Rating (OPCR)</h6>
+        <small class="text-muted">Computed from Core, Strategic, and Support averages</small>
+      </div>
+      <div class="d-flex align-items-center gap-3">
+        <span class="fs-4 fw-700 text-primary" id="finalAvgDisplay">—</span>
+        <span id="finalRatingLabel"></span>
+        <span id="opcrStatusBadge" class="badge bg-secondary ms-1">Draft</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="d-flex gap-2 justify-content-end no-print mt-3">
+    <button class="btn btn-outline-secondary" onclick="showPrintPreview()"><i class="fa-solid fa-print me-1"></i>Print Preview</button>
+    <button class="btn btn-outline-primary" id="editBtn2" onclick="enableEdit()" style="display:none"><i class="fa-solid fa-pen me-1"></i>Edit</button>
+    <button class="btn btn-primary" id="saveBtn2" onclick="saveOPCR()"><i class="fa-solid fa-save me-1"></i>Save OPCR</button>
+    <button class="btn btn-success" id="confirmBtn2" onclick="confirmOPCR()"><i class="fa-solid fa-check me-1"></i>Confirm & Submit</button>
+  </div>
+</main>
+
+<div id="footer-container"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="../../assets/js/auth.js"></script>
+<script src="../../assets/js/components.js"></script>
+<script>
+  initLayout('admin', 'set-target', [{ label: 'Set Target (OPCR)' }]);
+
+  const session = SESSION_USER;
+  let activeTimeline = null;
+  let existingOpcrId = null;
+
+  document.getElementById('opcrName').value = session.name;
+  document.getElementById('opcrPosition').value = session.position || '';
+  document.getElementById('opcrDate').value = new Date().toISOString().split('T')[0];
+
+  async function initOPCR() {
+    // Load open timeline
+    const tlRes = await fetch(API_BASE + 'timeline/list.php?status=open').then(r => r.json()).catch(() => null);
+    activeTimeline = tlRes?.timelines?.[0] || null;
+
+    if (activeTimeline) {
+      document.getElementById('opcrPeriod').value = activeTimeline.semester + ' ' + activeTimeline.academic_year;
+
+      // Check for existing OPCR on this timeline
+      const existRes = await fetch(`${API_BASE}opcr/get.php?timeline_id=${activeTimeline.id}`).then(r => r.json()).catch(() => null);
+      if (existRes?.form) {
+        const f = existRes.form;
+        existingOpcrId = f.id;
+        document.getElementById('opcrOffice').value = f.department_name || session.department_id || '';
+        document.getElementById('opcrPeriod').value = f.covered_period;
+        document.getElementById('opcrStatus').value = f.status;
+        setOPCRStatus(f.status);
+        loadRows('coreBody', f.items.core, true);
+        loadRows('strategicBody', f.items.strategic, true);
+        loadRows('supportBody', f.items.support, true);
+        if (f.status === 'pending' || f.status === 'approved' || f.status === 'reviewed') setLocked(true);
+      } else {
+        document.getElementById('opcrOffice').value = session.department_name || session.department_id || '';
+        setOPCRStatus('draft');
+        // Load KPIs as default rows
+        const kpiRes = await fetch(API_BASE + 'kpi/list.php').then(r => r.json()).catch(() => null);
+        if (kpiRes?.grouped) {
+          loadRows('coreBody', kpiRes.grouped.core || []);
+          loadRows('strategicBody', kpiRes.grouped.strategic || []);
+          loadRows('supportBody', kpiRes.grouped.support || []);
+        }
+      }
+    } else {
+      document.getElementById('opcrOffice').value = session.department_name || session.department_id || '';
+      setOPCRStatus('draft');
+      showToast('No active submission period is currently open.', 'warning');
+    }
+    computeOPCRAverages();
+  }
+
+  initOPCR();
+
+  function loadRows(tbodyId, items, isExisting = false) {
+    const tbody = document.getElementById(tbodyId);
+    tbody.innerHTML = '';
+    items.forEach(item => {
+      const tr = createRow({
+        mfo:              item.mfo || item.mfo || '',
+        successIndicator: item.success_indicator || item.successIndicator || '',
+        target:           item.target || '',
+        budget:           item.budget || '0',
+        measure:          item.measure || '',
+        actual:           item.actual || '',
+        rating:           item.rating || '',
+        itemId:           item.id || '',
+      });
+      tbody.appendChild(tr);
+    });
+  }
+
+  function createRow(data = {}) {
+    const tr = document.createElement('tr');
+    tr.dataset.itemId = data.itemId || '';
+    tr.innerHTML = `
+      <td><input type="text" class="form-control form-control-sm" value="${data.mfo || ''}" placeholder="e.g. Instruction"></td>
+      <td><input type="text" class="form-control form-control-sm" value="${data.successIndicator || ''}" placeholder="Success indicator..."></td>
+      <td><input type="text" class="form-control form-control-sm" value="${data.target || ''}" placeholder="Target"></td>
+      <td><input type="number" class="form-control form-control-sm" value="${data.budget || '0'}" placeholder="0"></td>
+      <td><input type="text" class="form-control form-control-sm" value="${data.measure || ''}" placeholder="Q/T/E"></td>
+      <td><input type="text" class="form-control form-control-sm" value="${data.actual || ''}" placeholder="Actual accomplishment..."></td>
+      <td><input type="number" class="form-control form-control-sm opcr-rating" min="1" max="5" step="0.01" value="${data.rating || ''}" placeholder="1-5" oninput="computeOPCRAverages()"></td>
+      <td class="no-print text-center">
+        <button class="btn btn-outline-danger btn-sm" onclick="this.closest('tr').remove();computeOPCRAverages()" title="Remove"><i class="fa-solid fa-trash"></i></button>
+      </td>`;
+    return tr;
+  }
+
+  function addRow(section) {
+    const tbodyMap = { core: 'coreBody', strategic: 'strategicBody', support: 'supportBody' };
+    document.getElementById(tbodyMap[section]).appendChild(createRow());
+    computeOPCRAverages();
+  }
+
+  function getRows(tbodyId) {
+    const rows = [];
+    document.getElementById(tbodyId).querySelectorAll('tr').forEach(tr => {
+      const inputs = tr.querySelectorAll('input');
+      // inputs: [0]=mfo, [1]=indicator, [2]=target, [3]=budget, [4]=measure, [5]=actual, [6]=rating
+      rows.push({ mfo: inputs[0].value, successIndicator: inputs[1].value, target: inputs[2].value, budget: inputs[3].value, measure: inputs[4].value, actual: inputs[5].value, rating: inputs[6].value });
+    });
+    return rows;
+  }
+
+  function computeOPCRAverages() {
+    ['core', 'strategic', 'support'].forEach(sec => {
+      const inputs = document.querySelectorAll(`#${sec}Body .opcr-rating`);
+      const vals = Array.from(inputs).map(i => parseFloat(i.value)).filter(v => !isNaN(v) && v >= 1 && v <= 5);
+      const avg = vals.length ? (vals.reduce((a, b) => a + b, 0) / vals.length) : null;
+      document.getElementById(`${sec}Avg`).textContent = avg !== null ? avg.toFixed(2) : '—';
+    });
+    const secAvgs = ['core', 'strategic', 'support'].map(s => {
+      const t = document.getElementById(`${s}Avg`).textContent;
+      return t !== '—' ? parseFloat(t) : null;
+    }).filter(v => v !== null);
+    const label = document.getElementById('finalRatingLabel');
+    if (secAvgs.length) {
+      const finalAvg = secAvgs.reduce((a, b) => a + b, 0) / secAvgs.length;
+      document.getElementById('finalAvgDisplay').textContent = finalAvg.toFixed(2);
+      label.innerHTML = getRatingLabel(finalAvg);
+    } else {
+      document.getElementById('finalAvgDisplay').textContent = '—';
+      label.innerHTML = '';
+    }
+  }
+
+  function setLocked(locked) {
+    document.querySelectorAll('#coreBody input, #strategicBody input, #supportBody input').forEach(i => i.disabled = locked);
+    document.querySelectorAll('.btn-outline-danger').forEach(b => b.disabled = locked);
+    const addBtns = document.querySelectorAll('.ipcr-section-header button');
+    addBtns.forEach(b => b.disabled = locked);
+    ['editBtn', 'editBtn2'].forEach(id => { const el = document.getElementById(id); if (el) el.style.display = locked ? 'inline-flex' : 'none'; });
+    ['saveBtn', 'saveBtn2', 'confirmBtn', 'confirmBtn2'].forEach(id => { const el = document.getElementById(id); if (el) el.style.display = locked ? 'none' : 'inline-flex'; });
+  }
+
+  function enableEdit() {
+    confirmModal('Allow editing of this submitted OPCR? Status will revert to Draft.', 'Enable Edit', () => {
+      setLocked(false);
+      setOPCRStatus('draft');
+      showToast('OPCR is now editable.', 'info');
+    });
+  }
+
+  function setOPCRStatus(status) {
+    const badge = document.getElementById('opcrStatusBadge');
+    const map = { draft: ['bg-secondary', 'Draft'], pending: ['bg-warning text-dark', 'Pending'], submitted: ['bg-success', 'Submitted'] };
+    const [cls, label] = map[status] || ['bg-secondary', status];
+    if (badge) { badge.className = `badge ms-1 ${cls}`; badge.textContent = label; }
+    const statusInput = document.getElementById('opcrStatus');
+    if (statusInput) statusInput.value = status;
+  }
+
+  async function saveOPCR(action = 'draft') {
+    const period = document.getElementById('opcrPeriod').value.trim();
+    if (!period) { showToast('Please enter the covered period.', 'warning'); return; }
+    if (!activeTimeline) { showToast('No open submission period found.', 'warning'); return; }
+
+    const payload = {
+      action,
+      opcr_id:        existingOpcrId || 0,
+      timeline_id:    activeTimeline.id,
+      covered_period: period,
+      core:      getRows('coreBody'),
+      strategic: getRows('strategicBody'),
+      support:   getRows('supportBody'),
+    };
+
+    try {
+      const res = await fetch(API_BASE + 'opcr/save.php', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (data.success) {
+        existingOpcrId = data.opcr_id;
+        document.getElementById('opcrStatus').value = data.status;
+        setOPCRStatus(data.status);
+        if (action === 'submit') setLocked(true);
+        showToast(data.message, 'success');
+      } else { showToast(data.error, 'danger'); }
+    } catch { showToast('Server error. Make sure XAMPP is running.', 'danger'); }
+  }
+
+  function confirmOPCR() {
+    const period = document.getElementById('opcrPeriod').value.trim();
+    if (!period) { showToast('Please enter the covered period.', 'warning'); return; }
+    confirmModal('Are you sure you want to submit this OPCR for Super Admin review?', 'Submit OPCR', () => saveOPCR('submit'));
+  }
+
+  // Preload logo for print preview
+  let _printLogo = '';
+  fetch('../../assets/images/csu-logo.png')
+    .then(r => r.blob()).then(b => {
+      const rd = new FileReader();
+      rd.onload = ev => { _printLogo = ev.target.result; };
+      rd.readAsDataURL(b);
+    }).catch(() => {});
+
+  function showPrintPreview() {
+    const name   = document.getElementById('opcrName').value.trim();
+    const pos    = document.getElementById('opcrPosition').value.trim();
+    const office = document.getElementById('opcrOffice').value.trim();
+    const period = document.getElementById('opcrPeriod').value.trim();
+    const date   = document.getElementById('opcrDate').value;
+
+    if (!period) { showToast('Please enter the covered period before previewing.', 'warning'); return; }
+
+    function ep(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+    const core      = getRows('coreBody');
+    const strategic = getRows('strategicBody');
+    const support   = getRows('supportBody');
+    const all       = [...core, ...strategic, ...support];
+    const avgs      = all.map(r => parseFloat(r.rating)).filter(v => v > 0);
+    const finalAvg  = avgs.length ? parseFloat((avgs.reduce((a,b)=>a+b,0)/avgs.length).toFixed(2)) : 0;
+
+    function adj(v) {
+      if(v>=4.5)return'Outstanding';if(v>=3.5)return'Very Satisfactory';
+      if(v>=2.5)return'Satisfactory';if(v>=1.5)return'Unsatisfactory';
+      if(v>0)return'Poor';return'';
+    }
+
+    function buildRows(rows, minRows) {
+      let html = '';
+      const total = Math.max(rows.length, minRows);
+      for (let i = 0; i < total; i++) {
+        const r = rows[i] || {};
+        const rat = parseFloat(r.rating) > 0 ? r.rating : '';
+        html += `<tr class="data-row">
+          <td>${ep(r.mfo)}</td>
+          <td>${ep(r.successIndicator)}</td>
+          <td class="tc">${ep(r.target)}</td>
+          <td class="tc">${ep(r.budget)}</td>
+          <td class="tc">${ep(r.measure)}</td>
+          <td>${ep(r.actual)}</td>
+          <td class="tc">${rat}</td>
+          <td class="tc">${rat}</td>
+          <td class="tc">${rat}</td>
+          <td class="tc b">${rat}</td>
+        </tr>`;
+      }
+      return html;
+    }
+
+    const logoTag = _printLogo
+      ? `<img src="${_printLogo}" class="logo" alt="CSU Logo">`
+      : `<div class="logo-ph"></div>`;
+
+    const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>OPCR — ${ep(name)}</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'Times New Roman',Times,serif; font-size:7.8pt; color:#000; background:#fff; }
+@page { size:letter landscape; margin:.35in .3in; }
+@media print { .no-print{display:none!important;} }
+.no-print { position:fixed;top:10px;right:14px;z-index:999;display:flex;gap:8px; }
+.no-print button { padding:7px 16px;font-size:12px;border:none;border-radius:4px;cursor:pointer;font-family:sans-serif;font-weight:600; }
+.btn-pdf { background:#c0392b;color:#fff; } .btn-cls { background:#555;color:#fff; }
+.form-outer { border:1.5px solid #000;width:100%; }
+table { width:100%; border-collapse:collapse; }
+td, th { border:1px solid #000; padding:1.5px 3px; vertical-align:middle; font-size:7.8pt; }
+.tc { text-align:center; } .b { font-weight:700; }
+.hdr-row { padding:5px 8px 4px; position:relative; border-bottom:1px solid #000; }
+.annex { position:absolute;top:5px;right:8px;font-size:7.5pt; }
+.hdr-inner { display:flex;align-items:center;justify-content:center;gap:8px; }
+.logo { width:46px;height:46px;object-fit:contain; } .logo-ph { width:46px;height:46px;background:#ddd;border-radius:50%; }
+.univ-text { text-align:center;line-height:1.5; }
+.univ-text .republic { font-size:7.5pt; } .univ-text .univ { font-size:9.5pt;font-weight:700; } .univ-text .campus { font-size:7.5pt; }
+.form-title { text-align:center;font-weight:700;font-size:9pt;text-decoration:underline;margin-top:4px;padding-bottom:2px; }
+.div-field { text-align:center;padding:3px 0 2px;border-bottom:1px solid #000; }
+.uline { display:inline-block;border-bottom:1px solid #000;min-width:180px;font-size:7.8pt; }
+.field-lbl { font-size:6.5pt;display:block;margin-top:1px; }
+.commit-wrap { display:table;width:100%;border-bottom:1px solid #000; }
+.commit-left { display:table-cell;width:73%;padding:4px 8px;vertical-align:top;line-height:1.7;font-size:7.8pt; }
+.commit-right { display:table-cell;width:27%;padding:4px 8px;vertical-align:bottom;border-left:1px solid #000;text-align:center; }
+.sig-line { display:block;border-top:1px solid #000;margin:28px auto 1px;width:80%;font-size:7pt; }
+.date-line { font-size:7.5pt;margin-top:4px; }
+.rev-table th { background:#fff;font-weight:700;font-size:7.5pt;text-align:center;padding:2px 4px; }
+.rev-table td { font-size:7.5pt;padding:3px 5px;vertical-align:bottom; }
+.rev-name { font-weight:700;font-size:7.8pt; } .rev-role { font-size:6.5pt;font-style:italic; }
+.data-table { border-top:1px solid #000; }
+.data-table th { background:#d9d9d9;font-weight:700;text-align:center;font-size:7.3pt;padding:2px 3px; }
+.data-table .sec-row td { background:#bdd7ee;font-weight:700;font-size:7.8pt;text-align:left;padding:2px 5px; }
+.data-table .data-row td { height:18px;font-size:7.5pt;padding:1px 3px;vertical-align:top; }
+.summary-table td { border:1px solid #000;padding:1.5px 5px;font-size:7.5pt; }
+.summary-table .lbl { font-weight:700; } .summary-table .val { text-align:center;font-weight:700; }
+.sig-tbl th { background:#fff;font-weight:700;text-align:center;font-size:7.3pt;border:1px solid #000;padding:2px 4px; }
+.sig-tbl td { border:1px solid #000;padding:2px 4px;font-size:7.3pt;vertical-align:top; }
+.sig-tbl .certify { font-style:italic;font-size:7pt;text-align:center; }
+.sig-tbl .sig-name-cell { font-weight:700;text-align:center; }
+.legend-note { font-size:6.5pt;padding:2px 5px;font-style:italic; }
+</style>
+</head>
+<body>
+<div class="no-print">
+  <button class="btn-pdf" onclick="window.print()">&#128438; Print / Save as PDF</button>
+  <button class="btn-cls" onclick="window.close()">&#x2715; Close</button>
+</div>
+<div class="form-outer">
+  <div class="hdr-row">
+    <div class="annex">ANNEX B</div>
+    <div class="hdr-inner">
+      ${logoTag}
+      <div class="univ-text">
+        <div class="republic">Republic of the Philippines</div>
+        <div class="univ">CAGAYAN STATE UNIVERSITY</div>
+        <div class="campus">Piat Campus, Piat, Cagayan</div>
+      </div>
+    </div>
+    <div class="form-title">OFFICE PERFORMANCE COMMITMENT AND REVIEW FORM (OPCR)</div>
+  </div>
+  <div class="div-field">
+    <span class="uline">&nbsp;${ep(office)}&nbsp;</span>
+    <span class="field-lbl">Division/Office/College</span>
+  </div>
+  <div class="commit-wrap">
+    <div class="commit-left">
+      I,&nbsp;<span style="border-bottom:1px solid #000;padding:0 4px">${ep(name)}</span>,&nbsp;<span style="border-bottom:1px solid #000;padding:0 4px">${ep(pos)}</span>,
+      commit to deliver and agree to be rated on the attainment of the following targets in accordance with the indicated measures for<br>
+      the period&nbsp;<span style="border-bottom:1px solid #000;padding:0 4px">${ep(period)}</span>.
+    </div>
+    <div class="commit-right">
+      <span class="sig-line">${ep(name)}<br><span style="font-size:6.5pt;font-style:italic">(name of head of office)</span></span>
+      <div class="date-line">Date:&nbsp;<span style="border-bottom:1px solid #000;padding:0 4px">${ep(date)}</span></div>
+    </div>
+  </div>
+  <table class="rev-table">
+    <tr>
+      <th style="width:35%">REVIEWED BY</th>
+      <th style="width:10%">DATE</th>
+      <th style="width:45%">APPROVED BY</th>
+      <th style="width:10%">DATE</th>
+    </tr>
+    <tr>
+      <td style="height:32px;vertical-align:bottom">
+        <div class="rev-name">&nbsp;</div><div class="rev-role">(immediate supervisor)</div>
+      </td>
+      <td>&nbsp;</td>
+      <td style="text-align:center;vertical-align:middle">
+        <div class="rev-name">HITLER C. DANGATAN, Ph.D.</div>
+        <div class="rev-role">Campus Executive Officer</div>
+      </td>
+      <td>&nbsp;</td>
+    </tr>
+  </table>
+  <table class="data-table">
+    <colgroup>
+      <col style="width:15%"><col style="width:22%"><col style="width:8%">
+      <col style="width:7%"><col style="width:7%"><col style="width:18%">
+      <col style="width:3%"><col style="width:3%"><col style="width:3%"><col style="width:3%">
+    </colgroup>
+    <thead>
+      <tr>
+        <th rowspan="2">MFO/PAP</th>
+        <th rowspan="2">SUCCESS INDICATORS</th>
+        <th rowspan="2">TARGET</th>
+        <th rowspan="2">BUDGET (₱)</th>
+        <th rowspan="2">MEASURE</th>
+        <th rowspan="2">ACTUAL ACCOMPLISHMENTS</th>
+        <th colspan="4">RATING</th>
+      </tr>
+      <tr><th>Q<sup>1</sup></th><th>E<sup>2</sup></th><th>T<sup>3</sup></th><th>A<sup>4</sup></th></tr>
+    </thead>
+    <tbody>
+      <tr class="sec-row"><td colspan="10">A. CORE FUNCTION</td></tr>
+      ${buildRows(core, 4)}
+      <tr class="sec-row"><td colspan="10">B. STRATEGIC FUNCTION</td></tr>
+      ${buildRows(strategic, 3)}
+      <tr class="sec-row"><td colspan="10">C. SUPPORT FUNCTION</td></tr>
+      ${buildRows(support, 3)}
+    </tbody>
+  </table>
+  <table class="summary-table">
+    <tr><td class="lbl" style="width:22%">AVERAGE RATING:</td><td class="val">${finalAvg||''}</td></tr>
+    <tr><td class="lbl">FINAL AVERAGE RATING:</td><td class="val">${finalAvg||''}</td></tr>
+    <tr><td class="lbl">ADJECTIVAL RATING:</td><td class="val">${finalAvg ? adj(finalAvg) : ''}</td></tr>
+  </table>
+  <table class="sig-tbl">
+    <tr>
+      <th style="width:20%">DISCUSSED WITH</th>
+      <th style="width:9%">DATE</th>
+      <th style="width:28%">ASSESSED BY</th>
+      <th style="width:9%">DATE</th>
+      <th style="width:25%">FINAL RATING BY</th>
+      <th style="width:9%">DATE</th>
+    </tr>
+    <tr style="height:52px">
+      <td>&nbsp;</td><td>&nbsp;</td>
+      <td class="certify">I certify that I discussed my assessment of the performance with the head of office</td>
+      <td>&nbsp;</td>
+      <td class="sig-name-cell">HITLER C. DANGATAN, Ph.D.</td>
+      <td>&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="sig-name-cell" style="border-top:1px solid #aaa">${ep(name)}</td>
+      <td>&nbsp;</td>
+      <td class="sig-name-cell" style="border-top:1px solid #aaa">(immediate supervisor)</td>
+      <td>&nbsp;</td>
+      <td class="sig-name-cell" style="border-top:1px solid #aaa">Campus Executive Officer</td>
+      <td>&nbsp;</td>
+    </tr>
+    <tr>
+      <td colspan="6" class="legend-note">Legend: 1:Quality &nbsp; 2:Efficiency &nbsp; 3:Timeliness &nbsp; 4:Average</td>
+    </tr>
+  </table>
+</div>
+<script>setTimeout(()=>window.print(),700);<\/script>
+</body>
+</html>`;
+
+    const w = window.open('', '_blank');
+    if (!w) { showToast('Please allow popups for this site to use Print Preview.', 'warning'); return; }
+    w.document.write(html);
+    w.document.close();
+  }
+
+</script>
+</body>
+</html>
