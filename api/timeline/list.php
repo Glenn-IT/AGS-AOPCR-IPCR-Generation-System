@@ -1,5 +1,5 @@
 <?php
-require_once '../../../config/session.php';
+require_once '../../config/session.php';
 header('Content-Type: application/json');
 
 requireAuth();
@@ -11,7 +11,7 @@ $where  = ['1=1'];
 $params = [];
 
 if ($status !== '') {
-    $where[]  = 'status = ?';
+    $where[]  = 't.status = ?';
     $params[] = $status;
 }
 
