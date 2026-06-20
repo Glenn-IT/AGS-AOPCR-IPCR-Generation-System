@@ -14,7 +14,7 @@ $params = [];
 if ($role !== '') { $where[] = 'u.role = ?'; $params[] = $role; }
 if ($status !== '') { $where[] = 'u.status = ?'; $params[] = $status; }
 
-$sql = 'SELECT u.id, u.name, u.username, u.email, u.role, u.status, u.position,
+$sql = 'SELECT u.id, u.name, u.username, u.email, u.role, u.status, u.position, u.designation,
         u.gender, u.avatar, u.last_login, u.created_at,
         d.name AS department_name, d.id AS department_id
         FROM users u LEFT JOIN departments d ON u.department_id = d.id
