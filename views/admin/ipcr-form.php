@@ -29,9 +29,14 @@ $user = requireAuth(['admin']);
     </div>
     <div class="d-flex gap-2 no-print">
       <button class="btn btn-outline-secondary btn-sm" onclick="window.print()"><i class="fa-solid fa-print me-1"></i>Print</button>
-      <button class="btn btn-outline-primary btn-sm" onclick="saveIPCR('draft')"><i class="fa-solid fa-floppy-disk me-1"></i>Save Draft</button>
-      <button class="btn btn-success btn-sm" onclick="submitIPCR()"><i class="fa-solid fa-paper-plane me-1"></i>Submit</button>
+      <button class="btn btn-outline-primary btn-sm" id="btnSaveDraft" onclick="saveIPCR('draft')"><i class="fa-solid fa-floppy-disk me-1"></i>Save Draft</button>
+      <button class="btn btn-success btn-sm" id="btnSubmit" onclick="submitIPCR()"><i class="fa-solid fa-paper-plane me-1"></i>Submit</button>
     </div>
+  </div>
+
+  <div id="noTimelineAlert" class="alert alert-warning d-none no-print" role="alert">
+    <i class="fa-solid fa-triangle-exclamation me-2"></i>
+    <strong>No active submission period.</strong> The Super Admin has not opened a submission period yet. You can view and fill in the form, but saving and submitting are disabled until a period is opened.
   </div>
 
   <!-- Print Header (visible on print only) -->
@@ -154,8 +159,8 @@ $user = requireAuth(['admin']);
 
   <div class="d-flex gap-2 justify-content-end mt-3 no-print">
     <button class="btn btn-outline-secondary" onclick="showPrintPreview()"><i class="fa-solid fa-print me-1"></i>Print Preview</button>
-    <button class="btn btn-outline-primary" onclick="saveIPCR('draft')"><i class="fa-solid fa-floppy-disk me-1"></i>Save Draft</button>
-    <button class="btn btn-success" onclick="submitIPCR()"><i class="fa-solid fa-paper-plane me-1"></i>Submit for Review</button>
+    <button class="btn btn-outline-primary" id="btnSaveDraft2" onclick="saveIPCR('draft')"><i class="fa-solid fa-floppy-disk me-1"></i>Save Draft</button>
+    <button class="btn btn-success" id="btnSubmit2" onclick="submitIPCR()"><i class="fa-solid fa-paper-plane me-1"></i>Submit for Review</button>
   </div>
 </main>
 
@@ -210,10 +215,15 @@ $user = requireAuth(['admin']);
         loadKpiSection('supportBody', kpi.support || []);
       }
     } else {
-      document.getElementById('ipcrStatus').value = 'draft';
+      document.getElementById('ipcrStatus').value = 'No open timeline';
       loadKpiSection('coreBody', kpi.core || []);
       loadKpiSection('strategicBody', kpi.strategic || []);
       loadKpiSection('supportBody', kpi.support || []);
+      document.getElementById('noTimelineAlert').classList.remove('d-none');
+      ['btnSaveDraft', 'btnSubmit', 'btnSaveDraft2', 'btnSubmit2'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) { el.disabled = true; el.title = 'No active submission period is open.'; }
+      });
     }
 
     computeOverallRating();
@@ -399,7 +409,7 @@ td,th{border:1px solid #000;padding:1.5px 3px;vertical-align:middle;font-size:7.
 
   function submitIPCR() {
     if (activeTimeline) {
-      const deadline = new Date(activeTimeline.submissionDeadline);
+      const deadline = new Date(activeTimeline.submission_deadline);
       deadline.setHours(23, 59, 59);
       if (new Date() > deadline) {
         showToast('The submission deadline has passed. Contact the Campus Executive Officer.', 'warning');
@@ -407,7 +417,7 @@ td,th{border:1px solid #000;padding:1.5px 3px;vertical-align:middle;font-size:7.
       }
     }
     confirmModal('Submit your IPCR for review by the Campus Executive Officer?', 'Submit IPCR', () => {
-      saveIPCR('pending');
+      saveIPCR('submit');
       setTimeout(() => window.location.href = 'dashboard.php', 1000);
     });
   }
