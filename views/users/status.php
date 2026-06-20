@@ -94,7 +94,7 @@ $user = requireAuth(['user']);
 
   async function loadStatus() {
     const [listRes] = await Promise.all([
-      fetch(API_BASE + 'ipcr/list.php').then(r => r.json()).catch(() => ({ forms: [] })),
+      fetch(API_BASE + 'ipcr/list.php', { credentials: 'include' }).then(r => r.json()).catch(() => ({ forms: [] })),
     ]);
     const ipcrs = listRes.forms || [];
 
@@ -166,7 +166,7 @@ $user = requireAuth(['user']);
   loadStatus();
 
   async function viewDetail(id) {
-    const res = await fetch(API_BASE + 'ipcr/get.php?id=' + id).then(r => r.json()).catch(() => null);
+    const res = await fetch(API_BASE + 'ipcr/get.php?id=' + id, { credentials: 'include' }).then(r => r.json()).catch(() => null);
     if (!res?.form) { showToast('Could not load form details.', 'danger'); return; }
     _currentIPCR = res.form;
     const f = res.form;
@@ -236,7 +236,7 @@ $user = requireAuth(['user']);
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>IPCR — ${ep(f.userName)}</title>
+<title>IPCR — ${ep(f.user_name)}</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 body { font-family:'Times New Roman',Times,serif; font-size:7.8pt; color:#000; background:#fff; }
@@ -307,18 +307,18 @@ td, th { border:1px solid #000; padding:1.5px 3px; vertical-align:middle; font-s
     <div class="form-title">INDIVIDUAL PERFORMANCE COMMITMENT AND REVIEW FORM (IPCR)</div>
   </div>
   <div class="div-field">
-    <span class="uline">&nbsp;${ep(f.department)}&nbsp;</span>
+    <span class="uline">&nbsp;${ep(f.department_name)}&nbsp;</span>
     <span class="field-lbl">Division/Office/College</span>
   </div>
   <div class="commit-wrap">
     <div class="commit-left">
-      I,&nbsp;<span style="border-bottom:1px solid #000;padding:0 4px">${ep(f.userName)}</span>,&nbsp;<span style="border-bottom:1px solid #000;padding:0 4px">${ep(f.position)}</span>,
+      I,&nbsp;<span style="border-bottom:1px solid #000;padding:0 4px">${ep(f.user_name)}</span>,&nbsp;<span style="border-bottom:1px solid #000;padding:0 4px">${ep(f.position)}</span>,
       commit to deliver and agree to be rated on the attainment of the following targets in accordance with the indicated measures for<br>
-      the period&nbsp;<span style="border-bottom:1px solid #000;padding:0 4px">${ep(f.coveredPeriod)}</span>.
+      the period&nbsp;<span style="border-bottom:1px solid #000;padding:0 4px">${ep(f.covered_period)}</span>.
     </div>
     <div class="commit-right">
-      <span class="sig-line">${ep(f.userName)}<br><span style="font-size:6.5pt;font-style:italic">(name of employee)</span></span>
-      <div class="date-line">Date:&nbsp;<span style="border-bottom:1px solid #000;padding:0 4px">${ep(f.date)}</span></div>
+      <span class="sig-line">${ep(f.user_name)}<br><span style="font-size:6.5pt;font-style:italic">(name of employee)</span></span>
+      <div class="date-line">Date:&nbsp;<span style="border-bottom:1px solid #000;padding:0 4px">${ep(f.date_submitted)}</span></div>
     </div>
   </div>
   <table class="rev-table">
@@ -374,11 +374,11 @@ td, th { border:1px solid #000; padding:1.5px 3px; vertical-align:middle; font-s
     </thead>
     <tbody>
       <tr class="sec-row"><td colspan="10">A. CORE FUNCTION</td></tr>
-      ${buildRows(f.coreFunction, 4)}
+      ${buildRows(f.items?.core, 4)}
       <tr class="sec-row"><td colspan="10">B. STRATEGIC FUNCTION</td></tr>
-      ${buildRows(f.strategicFunction, 3)}
+      ${buildRows(f.items?.strategic, 3)}
       <tr class="sec-row"><td colspan="10">C. SUPPORT FUNCTION</td></tr>
-      ${buildRows(f.supportFunction, 3)}
+      ${buildRows(f.items?.support, 3)}
     </tbody>
   </table>
   <table class="summary-table">
@@ -403,7 +403,7 @@ td, th { border:1px solid #000; padding:1.5px 3px; vertical-align:middle; font-s
       <td>&nbsp;</td>
     </tr>
     <tr>
-      <td class="sig-name-cell" style="border-top:1px solid #aaa">${ep(f.userName)}</td>
+      <td class="sig-name-cell" style="border-top:1px solid #aaa">${ep(f.user_name)}</td>
       <td>&nbsp;</td>
       <td class="sig-name-cell" style="border-top:1px solid #aaa">(immediate supervisor)</td>
       <td>&nbsp;</td>
@@ -425,31 +425,6 @@ td, th { border:1px solid #000; padding:1.5px 3px; vertical-align:middle; font-s
     w.document.close();
   }
 
-  function viewDetail(f) {
-    _currentIPCR = f;
-    const secLabels = { coreFunction: 'Core Function', strategicFunction: 'Strategic Function', supportFunction: 'Support Function' };
-    let html = `<div class="row g-2 mb-3 p-2 bg-light rounded" style="font-size:0.85rem">
-      <div class="col-6"><strong>Name:</strong> ${f.userName}</div>
-      <div class="col-6"><strong>Department:</strong> ${f.department}</div>
-      <div class="col-6"><strong>Position:</strong> ${f.position}</div>
-      <div class="col-6"><strong>Period:</strong> ${f.coveredPeriod}</div>
-      <div class="col-6"><strong>Status:</strong> ${getStatusBadge(f.status)}</div>
-      <div class="col-6"><strong>Rating:</strong> ${f.rating > 0 ? f.rating.toFixed(2) : '-'} — ${getRatingLabel(f.rating)}</div>
-    </div>`;
-    ['coreFunction', 'strategicFunction', 'supportFunction'].forEach(sec => {
-      const items = f[sec];
-      if (!items || items.length === 0) return;
-      html += `<div class="ipcr-section-header mb-0">${secLabels[sec]}</div>
-        <table class="table table-sm mb-3"><thead><tr><th>Indicator</th><th>Accomplishment</th><th>Rating</th><th>Remarks</th></tr></thead><tbody>
-        ${items.map(item => { const k = allKpi.find(x => x.id === item.kpiId); return `<tr>
-          <td style="font-size:0.8rem">${k?.successIndicator || '-'}</td>
-          <td style="font-size:0.8rem">${item.accomplishment || '-'}</td>
-          <td style="font-size:0.8rem;text-align:center">${item.rating || '-'}</td>
-          <td style="font-size:0.8rem">${item.remarks || '-'}</td></tr>`; }).join('')}</tbody></table>`;
-    });
-    document.getElementById('detailBody').innerHTML = html;
-    new bootstrap.Modal(document.getElementById('detailModal')).show();
-  }
 </script>
 </body>
 </html>
