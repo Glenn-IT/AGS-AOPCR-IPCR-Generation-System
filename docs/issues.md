@@ -1,7 +1,12 @@
-Register
--After the Position can you add a Roles ( Dean / Department Head / Office Head/ Faculty /Staff )
+http://localhost/AGS-AOPCR-IPCR-Generation-System/views/users/status.php
 
-Super Admin
-http://localhost/AGS-AOPCR-IPCR-Generation-System/views/superadmin/accounts.php
+IPCR Form Details
 
-- add a edit account on the SUPAD
+Name: undefined
+Department: undefined
+Position: undefined
+Period: undefined
+Status: -
+Rating: - —
+
+the data is not showing properly look and fix it
