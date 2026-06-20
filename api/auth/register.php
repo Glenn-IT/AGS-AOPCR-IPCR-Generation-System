@@ -14,9 +14,10 @@ $name     = trim($input['name'] ?? '');
 $username = trim($input['username'] ?? '');
 $password = $input['password'] ?? '';
 $email    = trim($input['email'] ?? '');
-$gender   = $input['gender'] ?? '';
-$dept     = $input['department'] ?? '';
-$position = trim($input['position'] ?? '');
+$gender      = $input['gender'] ?? '';
+$dept        = $input['department'] ?? '';
+$position    = trim($input['position'] ?? '');
+$designation = $input['designation'] ?? '';
 $secQ     = $input['security_question'] ?? '';
 $secA     = trim($input['security_answer'] ?? '');
 
@@ -60,12 +61,18 @@ $avatar    = strtoupper(substr($nameParts[0], 0, 1) . (isset($nameParts[1]) ? su
 $hashedPw  = password_hash($password, PASSWORD_BCRYPT);
 $hashedAns = password_hash(strtolower($secA), PASSWORD_BCRYPT);
 
+$allowedDesignations = ['Dean', 'Department Head', 'Office Head', 'Faculty', 'Staff'];
+$designation = in_array($designation, $allowedDesignations) ? $designation : null;
+
+$adminDesignations = ['Dean', 'Department Head', 'Office Head'];
+$assignedRole = in_array($designation, $adminDesignations) ? ROLE_ADMIN : ROLE_USER;
+
 $stmt = $db->prepare(
-    'INSERT INTO users (username, password, role, name, position, department_id, email, gender, status, avatar, security_question, security_answer)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+    'INSERT INTO users (username, password, role, name, position, designation, department_id, email, gender, status, avatar, security_question, security_answer)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
 );
 $stmt->execute([
-    $username, $hashedPw, ROLE_USER, $name, $position,
+    $username, $hashedPw, $assignedRole, $name, $position, $designation,
     $dept, $email, $gender ?: null, 'pending',
     $avatar, $secQ, $hashedAns
 ]);
