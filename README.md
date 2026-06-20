@@ -8,7 +8,9 @@ Cagayan State University — Piat Campus | Ytawes District, Piat, Cagayan | Foun
 
 ## Overview
 
-A fully functional **frontend prototype** of a performance evaluation and management system for CSU-Piat faculty and staff. All data is stored using `localStorage` — no backend, no database, no PHP, no MySQL required.
+A **PHP/MySQL performance evaluation system** for CSU-Piat faculty and staff. The system manages the full academic performance review cycle — from individual IPCR submissions by faculty, to department-level OPCR targets by office heads, to system-wide review and reporting by the campus administrator.
+
+> Full system documentation: [`docs/system-overview.md`](docs/system-overview.md)
 
 ---
 
@@ -16,59 +18,37 @@ A fully functional **frontend prototype** of a performance evaluation and manage
 
 | Technology | Purpose |
 |---|---|
-| HTML5 | Page structure |
-| CSS3 | Custom styling and layout |
+| PHP 8.x | Backend logic, authentication, API endpoints |
+| MySQL 8.x | Persistent data storage (11 tables) |
+| Apache (XAMPP) | Local web server |
 | Bootstrap 5.3 | Responsive UI components |
-| Vanilla JavaScript | Logic and interactivity |
+| Vanilla JavaScript (ES6+) | AJAX, dynamic UI, form handling |
 | Chart.js | Dashboard analytics |
 | Font Awesome 6 | Icons |
-| localStorage | Data persistence (simulated) |
 
 ---
 
-## Project Structure
+## Quick Start
 
-```
-AGS-AOPCR-IPCR-Generation-System/
-│
-├── index.html                  # Login page
-├── register.html               # User registration
-├── forgot-password.html        # 4-step password reset
-├── README.md
-│
-├── assets/
-│   ├── css/
-│   │   └── style.css           # Global styles, responsive layout
-│   └── js/
-│       ├── auth.js             # Authentication, session, lockout logic
-│       └── components.js       # Shared sidebar, navbar, toasts, modals
-│
-├── data/
-│   └── mock-data.js            # 20 CSU-Piat employees + all mock data
-│
-├── docs/
-│   └── Prompt.md               # Original project prompt
-│
-└── views/
-    ├── superadmin/
-    │   ├── dashboard.html      # Stats + 3 charts
-    │   ├── accounts.html       # Account management (activate/deactivate)
-    │   ├── reports.html        # All OPCR/IPCR reports + CSV export
-    │   └── settings.html       # Timeline + KPI management (CRUD)
-    │
-    ├── admin/
-    │   ├── dashboard.html      # Dept stats + rating/approval charts
-    │   ├── set-target.html     # OPCR form builder (editable rows)
-    │   ├── accomplishments.html# Rate employee IPCR submissions
-    │   └── reports.html        # Filtered IPCR reports + CSV export
-    │
-    └── users/
-        ├── dashboard.html      # Personal stats + status chart
-        ├── ipcr-form.html      # IPCR form (save draft / submit / print)
-        ├── evidence.html       # Document upload (drag-and-drop)
-        ├── status.html         # Submission tracking with progress steps
-        └── account.html        # Profile edit, change password, activity logs
-```
+1. Place the project in your XAMPP `htdocs` directory:
+   ```
+   C:\xampp\htdocs\AGS-AOPCR-IPCR-Generation-System\
+   ```
+
+2. Start **Apache** and **MySQL** in the XAMPP Control Panel.
+
+3. Run the database setup at:
+   ```
+   http://localhost/AGS-AOPCR-IPCR-Generation-System/setup.php
+   ```
+   Complete all 4 steps: Create Database → Create Tables → Create Upload Dirs → Seed Data.
+
+4. Delete `setup.php` after setup is complete (security).
+
+5. Open the system:
+   ```
+   http://localhost/AGS-AOPCR-IPCR-Generation-System/
+   ```
 
 ---
 
@@ -80,113 +60,101 @@ AGS-AOPCR-IPCR-Generation-System/
 | Admin (CEO) | `admin` | `admin123` |
 | Faculty/Staff | `faculty` | `faculty123` |
 
-Additional accounts are available in `data/mock-data.js`.
+50 additional accounts are available from the seed data (`database/seed.php`).
 
 ---
 
-## System Roles & Features
+## System Roles
 
 ### Super Admin
-- Dashboard with gender distribution, approval status, and department distribution charts
-- Account management — view, activate, and deactivate accounts
-- System-wide OPCR/IPCR reports with CSV export and print
-- Settings — manage academic year timelines and KPI indicators (Add/Edit/Delete)
+- Campus-wide dashboard with gender, approval, and department distribution charts
+- Account management — view all users, activate/deactivate accounts
+- OPCR review — rate and approve/disapprove department OPCR submissions
+- System-wide IPCR/OPCR reports with PDF and Excel export
+- Settings — manage academic year timelines and KPI indicators
 
-### Admin (Dean / Office Head)
-- Department-level dashboard with approval and rating charts
-- OPCR form builder — set MFO/PAP, success indicators, targets, and measures
-- Accomplishments & ratings — input actual accomplishments and rate IPCR submissions with auto-computed overall rating
-- Filtered IPCR reports with CSV export
+### Admin (Dean / Department Head / Office Head)
+- Department-scoped dashboard with approval and rating charts
+- OPCR form builder — set MFO/PAPs, success indicators, targets, and budget
+- IPCR review — rate faculty submissions from own department, approve/disapprove
+- Department-filtered reports with export
+- Own personal IPCR form
 
 ### Faculty / Staff (User)
-- Personal dashboard with form status overview
-- IPCR form — fill out accomplishments per KPI, save draft, and submit for review
-- Evidence upload — drag-and-drop file uploader with category tagging (localStorage simulation)
-- View status — progress tracker showing Submitted → Under Review → Final Decision
-- Account management — edit profile, change password with strength meter, activity logs
+- Personal dashboard with IPCR status breakdown and latest rating
+- IPCR form — fill accomplishments per KPI, save draft, or submit for review
+- Status tracker — progress steps from draft to final decision
+- Evidence upload — supporting documents per IPCR category
+- Account management — profile, password change, activity logs
+
+---
+
+## Project Structure
+
+```
+AGS-AOPCR-IPCR-Generation-System/
+├── index.php                   ← Login page
+├── register.php                ← Self-registration
+├── forgot-password.php         ← 3-step password recovery
+├── setup.php                   ← One-time database installer
+│
+├── config/                     ← DB config, session, constants
+├── database/                   ← schema.sql + seed.php
+├── api/                        ← 30 JSON API endpoints
+│   ├── auth/                   ← login, logout, register, password
+│   ├── ipcr/                   ← save, get, list, review
+│   ├── opcr/                   ← save, get, list, review
+│   ├── kpi/                    ← list, save, delete
+│   ├── timeline/               ← list, save
+│   ├── dashboard/              ← stats per role
+│   ├── notifications/          ← list, mark-read
+│   ├── users/                  ← list, toggle-status
+│   └── departments/            ← list
+│
+├── views/
+│   ├── superadmin/             ← dashboard, accounts, review-opcr, reports, settings
+│   ├── admin/                  ← dashboard, ipcr-form, review-ipcr, set-target, reports
+│   └── users/                  ← dashboard, ipcr-form, status, evidence, account
+│
+├── assets/
+│   ├── css/style.css
+│   └── js/
+│       ├── components.js
+│       └── auth.js
+│
+├── uploads/evidence/           ← Stored IPCR supporting documents
+│
+└── docs/
+    ├── system-overview.md      ← Full system documentation
+    ├── audit.md
+    └── templates/              ← Official CSU-Piat IPCR/OPCR Excel templates
+```
 
 ---
 
 ## Authentication Features
 
-- Login with username and password
+- Login with bcrypt password verification
 - Show/hide password toggle
-- Remember Me (persists username via localStorage)
-- Forgot Password — 4-step flow: verify username → security question → new password → success
-- Login attempt tracking — locked for 30 seconds after 3 failed attempts
-- Session management via localStorage
-- Logout confirmation modal
-- Account activity logging
-
----
-
-## Mock Data
-
-**20 CSU-Piat Employees** across real departments:
-
-| # | Department | Type |
-|---|---|---|
-| 1 | Office of the Campus Executive Officer | Administrative |
-| 2 | Registrar's Office | Administrative |
-| 3 | Accounting Office | Administrative |
-| 4 | Human Resource Office | Administrative |
-| 5 | Research, Development & Extension Office | Administrative |
-| 6 | IT Office | Administrative |
-| 7 | Partnership & Resource Mobilization Office | Administrative |
-| 8 | College of Agriculture | Academic (AACCUP Level II) |
-| 9 | College of Criminal Justice Administration | Academic |
-| 10 | College of Information and Computing Sciences | Academic |
-| 11 | College of Education | Academic |
-
-Pre-loaded data includes:
-- 7 sample IPCR forms with varied statuses (approved, pending, reviewed, disapproved)
-- 2 sample OPCR forms
-- KPI indicators across Core, Strategic, and Support functions
-- 4 academic year timelines (2024-2025 and 2025-2026)
-- Account activity logs and notifications
+- Remember Me (persists username)
+- Forgot password — 3-step flow: verify username → security question → new password
+- Rate limiting — 30-second lockout after 3 failed attempts (stored in DB)
+- Session management with `httponly` + `samesite=strict` cookie flags
+- Session regeneration on login
+- Full activity audit trail (logins, approvals, password changes)
 
 ---
 
 ## About CSU-Piat
 
-**Cagayan State University — Piat Campus** is the first state agricultural college in the Province of Cagayan, established in **1954**. Located in the Ytawes District of Piat, Cagayan, it is one of nine satellite campuses of Cagayan State University.
-
-The campus offers programs in Agriculture, Education, Criminal Justice Administration, and Information and Computing Sciences — several of which hold Level I and Level II accreditation from AACCUP (Accrediting Agency of Chartered Colleges and Universities in the Philippines).
+**Cagayan State University — Piat Campus** is the first state agricultural college in the Province of Cagayan, established in **1954**.
 
 - **Website:** https://piat.csu.edu.ph
 - **Address:** Ytawes District, Piat, Cagayan, Philippines
-- **Vision:** A premier university in the Asia-Pacific region producing globally competitive graduates and research innovations for sustainable development.
-
----
-
-## How to Run
-
-1. Place the project folder inside your XAMPP `htdocs` directory:
-   ```
-   C:\xampp\htdocs\AGS-AOPCR-IPCR-Generation-System\
-   ```
-2. Start **Apache** in the XAMPP Control Panel.
-3. Open your browser and navigate to:
-   ```
-   http://localhost/AGS-AOPCR-IPCR-Generation-System/
-   ```
-4. Log in using any of the demo credentials above.
-
-> **Note:** No database setup is needed. All data is initialized automatically in `localStorage` on first load.
-
----
-
-## Resetting Data
-
-To reset all mock data back to defaults, open the browser console and run:
-
-```js
-localStorage.clear();
-location.reload();
-```
+- 11 departments: 7 administrative offices + 4 academic colleges
 
 ---
 
 ## License
 
-For academic and demonstration purposes only — Cagayan State University, Piat Campus.
+For academic and administrative use only — Cagayan State University, Piat Campus.
