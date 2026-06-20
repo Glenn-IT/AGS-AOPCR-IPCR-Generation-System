@@ -83,7 +83,7 @@
       </div>
       <div class="modal-body" id="detailModalBody"></div>
       <div class="modal-footer">
-        <button class="btn btn-outline-secondary btn-sm" onclick="window.print()"><i class="fa-solid fa-print me-1"></i>Print</button>
+        <button class="btn btn-outline-secondary btn-sm" onclick="showPrintPreview()"><i class="fa-solid fa-print me-1"></i>Print Preview</button>
         <button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
       </div>
     </div>
@@ -99,6 +99,13 @@
 <script>
   requireAuth(['superadmin']);
   initLayout('superadmin', 'reports', [{ label: 'Reports' }]);
+
+  // Preload logo
+  let _printLogo = '';
+  fetch('../../assets/images/csu-logo.png')
+    .then(r => r.blob()).then(b => { const rd = new FileReader(); rd.onload = ev => { _printLogo = ev.target.result; }; rd.readAsDataURL(b); }).catch(() => {});
+
+  let _currentForm = null;
 
   const depts = getMockDepartments();
   const deptSel = document.getElementById('deptFilter');
@@ -148,7 +155,246 @@
     });
   }
 
+  function showPrintPreview() {
+    const form = _currentForm;
+    if (!form) { showToast('No form selected.', 'warning'); return; }
+
+    function ep(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+    function adj(v) {
+      if(v>=4.5)return'Outstanding';if(v>=3.5)return'Very Satisfactory';
+      if(v>=2.5)return'Satisfactory';if(v>=1.5)return'Unsatisfactory';if(v>0)return'Poor';return'';
+    }
+
+    const isIPCR = form.type === 'IPCR';
+    const kpi = getMockKPI();
+    const allKpi = [...(kpi.core||[]), ...(kpi.strategic||[]), ...(kpi.support||[])];
+    const finalAvg = parseFloat(form.rating || form.overallRating || 0);
+    const personName = form.name || form.userName || form.adminName || '';
+
+    function buildIPCRRows(items, minRows) {
+      let html = '';
+      const total = Math.max((items||[]).length, minRows);
+      for (let i = 0; i < total; i++) {
+        const item = (items||[])[i] || {};
+        const k = allKpi.find(x => x.id === item.kpiId) || {};
+        const rat = parseFloat(item.rating) > 0 ? item.rating : '';
+        html += `<tr class="data-row">
+          <td>${ep(k.mfo || item.mfo)}</td>
+          <td>${ep(k.successIndicator || item.successIndicator)}</td>
+          <td class="tc">${ep(k.target || item.target)}</td>
+          <td>${ep(personName)}</td>
+          <td>${ep(item.accomplishment || item.actual)}</td>
+          <td class="tc">${rat}</td><td class="tc">${rat}</td><td class="tc">${rat}</td>
+          <td class="tc b">${rat}</td>
+          <td>${ep(item.remarks)}</td>
+        </tr>`;
+      }
+      return html;
+    }
+
+    function buildOPCRRows(items, minRows) {
+      let html = '';
+      const total = Math.max((items||[]).length, minRows);
+      for (let i = 0; i < total; i++) {
+        const r = (items||[])[i] || {};
+        const rat = parseFloat(r.rating) > 0 ? r.rating : '';
+        html += `<tr class="data-row">
+          <td>${ep(r.mfo)}</td>
+          <td>${ep(r.successIndicator)}</td>
+          <td class="tc">${ep(r.target)}</td>
+          <td class="tc">${ep(r.budget)}</td>
+          <td class="tc">${ep(r.measure)}</td>
+          <td>${ep(r.actual || r.accomplishment)}</td>
+          <td class="tc">${rat}</td><td class="tc">${rat}</td><td class="tc">${rat}</td>
+          <td class="tc b">${rat}</td>
+        </tr>`;
+      }
+      return html;
+    }
+
+    const logoTag = _printLogo ? `<img src="${_printLogo}" class="logo" alt="CSU Logo">` : `<div class="logo-ph"></div>`;
+    const sharedCSS = `
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'Times New Roman',Times,serif; font-size:7.8pt; color:#000; background:#fff; }
+@page { size:letter landscape; margin:.35in .3in; }
+@media print { .no-print{display:none!important;} }
+.no-print { position:fixed;top:10px;right:14px;z-index:999;display:flex;gap:8px; }
+.no-print button { padding:7px 16px;font-size:12px;border:none;border-radius:4px;cursor:pointer;font-family:sans-serif;font-weight:600; }
+.btn-pdf { background:#c0392b;color:#fff; } .btn-cls { background:#555;color:#fff; }
+.form-outer { border:1.5px solid #000;width:100%; }
+table { width:100%; border-collapse:collapse; }
+td, th { border:1px solid #000; padding:1.5px 3px; vertical-align:middle; font-size:7.8pt; }
+.tc { text-align:center; } .b { font-weight:700; }
+.hdr-row { padding:5px 8px 4px; position:relative; border-bottom:1px solid #000; }
+.annex { position:absolute;top:5px;right:8px;font-size:7.5pt; }
+.hdr-inner { display:flex;align-items:center;justify-content:center;gap:8px; }
+.logo { width:46px;height:46px;object-fit:contain; } .logo-ph { width:46px;height:46px;background:#ddd;border-radius:50%; }
+.univ-text { text-align:center;line-height:1.5; }
+.univ-text .republic { font-size:7.5pt; } .univ-text .univ { font-size:9.5pt;font-weight:700; } .univ-text .campus { font-size:7.5pt; }
+.form-title { text-align:center;font-weight:700;font-size:9pt;text-decoration:underline;margin-top:4px;padding-bottom:2px; }
+.div-field { text-align:center;padding:3px 0 2px;border-bottom:1px solid #000; }
+.uline { display:inline-block;border-bottom:1px solid #000;min-width:180px;font-size:7.8pt; }
+.field-lbl { font-size:6.5pt;display:block;margin-top:1px; }
+.commit-wrap { display:table;width:100%;border-bottom:1px solid #000; }
+.commit-left { display:table-cell;width:73%;padding:4px 8px;vertical-align:top;line-height:1.7;font-size:7.8pt; }
+.commit-right { display:table-cell;width:27%;padding:4px 8px;vertical-align:bottom;border-left:1px solid #000;text-align:center; }
+.sig-line { display:block;border-top:1px solid #000;margin:28px auto 1px;width:80%;font-size:7pt; }
+.date-line { font-size:7.5pt;margin-top:4px; }
+.rev-table th { background:#fff;font-weight:700;font-size:7.5pt;text-align:center;padding:2px 4px; }
+.rev-table td { font-size:7.5pt;padding:3px 5px;vertical-align:bottom; }
+.rev-name { font-weight:700;font-size:7.8pt; } .rev-role { font-size:6.5pt;font-style:italic; }
+.legend-wrap { display:table;width:100%;border-top:none; }
+.legend-blank { display:table-cell;width:38%;border-right:1px solid #000; }
+.legend-right { display:table-cell;width:62%; }
+.legend-right table { border:none; }
+.legend-right td { border:none;border-bottom:1px solid #ccc;font-size:7.3pt;padding:1px 3px; }
+.legend-right td:first-child { font-weight:700;text-align:center;border-right:1px solid #000;width:20px;border-left:1px solid #000; }
+.legend-right tr:first-child td { border-top:1px solid #000; }
+.legend-right tr:last-child td { border-bottom:1px solid #000; }
+.data-table { border-top:1px solid #000; }
+.data-table th { background:#d9d9d9;font-weight:700;text-align:center;font-size:7.3pt;padding:2px 3px; }
+.data-table .sec-row td { background:#bdd7ee;font-weight:700;font-size:7.8pt;text-align:left;padding:2px 5px; }
+.data-table .data-row td { height:18px;font-size:7.5pt;padding:1px 3px;vertical-align:top; }
+.summary-table td { border:1px solid #000;padding:1.5px 5px;font-size:7.5pt; }
+.summary-table .lbl { font-weight:700; } .summary-table .val { text-align:center;font-weight:700; }
+.sig-tbl th { background:#fff;font-weight:700;text-align:center;font-size:7.3pt;border:1px solid #000;padding:2px 4px; }
+.sig-tbl td { border:1px solid #000;padding:2px 4px;font-size:7.3pt;vertical-align:top; }
+.sig-tbl .certify { font-style:italic;font-size:7pt;text-align:center; }
+.sig-tbl .sig-name-cell { font-weight:700;text-align:center; }
+.legend-note { font-size:6.5pt;padding:2px 5px;font-style:italic; }`;
+
+    let bodyContent = '';
+    if (isIPCR) {
+      bodyContent = `
+  <div class="hdr-row">
+    <div class="annex">ANNEX A</div>
+    <div class="hdr-inner">${logoTag}<div class="univ-text"><div class="republic">Republic of the Philippines</div><div class="univ">CAGAYAN STATE UNIVERSITY</div><div class="campus">Piat Campus, Piat, Cagayan</div></div></div>
+    <div class="form-title">INDIVIDUAL PERFORMANCE COMMITMENT AND REVIEW FORM (IPCR)</div>
+  </div>
+  <div class="div-field"><span class="uline">&nbsp;${ep(form.department)}&nbsp;</span><span class="field-lbl">Division/Office/College</span></div>
+  <div class="commit-wrap">
+    <div class="commit-left">I,&nbsp;<span style="border-bottom:1px solid #000;padding:0 4px">${ep(personName)}</span>,&nbsp;<span style="border-bottom:1px solid #000;padding:0 4px">${ep(form.position)}</span>, commit to deliver and agree to be rated on the attainment of the following targets in accordance with the indicated measures for<br>the period&nbsp;<span style="border-bottom:1px solid #000;padding:0 4px">${ep(form.coveredPeriod)}</span>.</div>
+    <div class="commit-right"><span class="sig-line">${ep(personName)}<br><span style="font-size:6.5pt;font-style:italic">(name of employee)</span></span><div class="date-line">Date:&nbsp;<span style="border-bottom:1px solid #000;padding:0 4px">${ep(form.date)}</span></div></div>
+  </div>
+  <table class="rev-table">
+    <tr><th style="width:35%">REVIEWED BY</th><th style="width:10%">DATE</th><th style="width:45%">APPROVED BY</th><th style="width:10%">DATE</th></tr>
+    <tr>
+      <td style="height:32px;vertical-align:bottom"><div class="rev-name">&nbsp;</div><div class="rev-role">(immediate supervisor)</div></td>
+      <td>&nbsp;</td>
+      <td style="text-align:center;vertical-align:middle"><div class="rev-name">HITLER C. DANGATAN, Ph.D.</div><div class="rev-role">Campus Executive Officer</div></td>
+      <td>&nbsp;</td>
+    </tr>
+  </table>
+  <div class="legend-wrap" style="border-top:1px solid #000;"><div class="legend-blank">&nbsp;</div>
+    <div class="legend-right"><table>
+      <tr><td>R</td><td>5 – Outstanding &nbsp;- performance exceeded expectation by 30% and above of planned target</td></tr>
+      <tr><td>A</td><td>4 – Very Satisfactory &nbsp;- performance exceeded expectations by 15% to 29% of planned targets</td></tr>
+      <tr><td>T</td><td>3 – Satisfactory &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- performance met 90% to 114% of the planned targets</td></tr>
+      <tr><td>I</td><td>2 – Unsatisfactory &nbsp;&nbsp;- performance only met 51% to 89% of planned targets</td></tr>
+      <tr><td>N</td><td>&nbsp;</td></tr>
+      <tr><td>G</td><td>1 – Poor &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- performance failed to deliver most of the targets by 50% and below</td></tr>
+    </table></div>
+  </div>
+  <table class="data-table">
+    <colgroup><col style="width:18%"><col style="width:20%"><col style="width:8%"><col style="width:10%"><col style="width:17%"><col style="width:3%"><col style="width:3%"><col style="width:3%"><col style="width:3%"><col style="width:15%"></colgroup>
+    <thead>
+      <tr><th rowspan="2">MFO/KRA</th><th rowspan="2">SUCCESS INDICATORS</th><th rowspan="2">TARGET</th><th rowspan="2">INDIVIDUALS ACCOUNTABLE</th><th rowspan="2">ACTUAL ACCOMPLISHMENTS</th><th colspan="4">RATING</th><th rowspan="2">REMARKS</th></tr>
+      <tr><th>Q<sup>1</sup></th><th>E<sup>2</sup></th><th>T<sup>3</sup></th><th>A<sup>4</sup></th></tr>
+    </thead>
+    <tbody>
+      <tr class="sec-row"><td colspan="10">A. CORE FUNCTION</td></tr>
+      ${buildIPCRRows(form.coreFunction, 4)}
+      <tr class="sec-row"><td colspan="10">B. STRATEGIC FUNCTION</td></tr>
+      ${buildIPCRRows(form.strategicFunction, 3)}
+      <tr class="sec-row"><td colspan="10">C. SUPPORT FUNCTION</td></tr>
+      ${buildIPCRRows(form.supportFunction, 3)}
+    </tbody>
+  </table>
+  <table class="summary-table">
+    <tr><td class="lbl" style="width:20%">AVERAGE RATING:</td><td class="val">${finalAvg > 0 ? finalAvg.toFixed(2) : ''}</td></tr>
+    <tr><td class="lbl">FINAL AVERAGE RATING:</td><td class="val">${finalAvg > 0 ? finalAvg.toFixed(2) : ''}</td></tr>
+    <tr><td class="lbl">ADJECTIVAL RATING:</td><td class="val">${finalAvg > 0 ? adj(finalAvg) : ''}</td></tr>
+  </table>
+  <table class="sig-tbl">
+    <tr><th style="width:18%">DISCUSSED WITH</th><th style="width:9%">DATE</th><th style="width:28%">ASSESSED BY</th><th style="width:9%">DATE</th><th style="width:27%">FINAL RATING BY</th><th style="width:9%">DATE</th></tr>
+    <tr style="height:52px"><td>&nbsp;</td><td>&nbsp;</td><td class="certify">I certify that I discussed my assessment of the performance with the employee</td><td>&nbsp;</td><td class="sig-name-cell">HITLER C. DANGATAN, Ph.D.</td><td>&nbsp;</td></tr>
+    <tr>
+      <td class="sig-name-cell" style="border-top:1px solid #aaa">${ep(personName)}</td><td>&nbsp;</td>
+      <td class="sig-name-cell" style="border-top:1px solid #aaa">(immediate supervisor)</td><td>&nbsp;</td>
+      <td class="sig-name-cell" style="border-top:1px solid #aaa">Campus Executive Officer</td><td>&nbsp;</td>
+    </tr>
+    <tr><td colspan="6" class="legend-note">Legend: 1:Quality &nbsp; 2:Efficiency &nbsp; 3:Timeliness &nbsp; 4:Average</td></tr>
+  </table>`;
+    } else {
+      bodyContent = `
+  <div class="hdr-row">
+    <div class="annex">ANNEX B</div>
+    <div class="hdr-inner">${logoTag}<div class="univ-text"><div class="republic">Republic of the Philippines</div><div class="univ">CAGAYAN STATE UNIVERSITY</div><div class="campus">Piat Campus, Piat, Cagayan</div></div></div>
+    <div class="form-title">OFFICE PERFORMANCE COMMITMENT AND REVIEW FORM (OPCR)</div>
+  </div>
+  <div class="div-field"><span class="uline">&nbsp;${ep(form.department)}&nbsp;</span><span class="field-lbl">Division/Office/College</span></div>
+  <div class="commit-wrap">
+    <div class="commit-left">I,&nbsp;<span style="border-bottom:1px solid #000;padding:0 4px">${ep(personName)}</span>,&nbsp;<span style="border-bottom:1px solid #000;padding:0 4px">${ep(form.position || form.adminName)}</span>, commit to deliver and agree to be rated on the attainment of the following targets in accordance with the indicated measures for<br>the period&nbsp;<span style="border-bottom:1px solid #000;padding:0 4px">${ep(form.coveredPeriod)}</span>.</div>
+    <div class="commit-right"><span class="sig-line">${ep(personName)}<br><span style="font-size:6.5pt;font-style:italic">(name of head of office)</span></span><div class="date-line">Date:&nbsp;<span style="border-bottom:1px solid #000;padding:0 4px">${ep(form.date)}</span></div></div>
+  </div>
+  <table class="rev-table">
+    <tr><th style="width:35%">REVIEWED BY</th><th style="width:10%">DATE</th><th style="width:45%">APPROVED BY</th><th style="width:10%">DATE</th></tr>
+    <tr>
+      <td style="height:32px;vertical-align:bottom"><div class="rev-name">&nbsp;</div><div class="rev-role">(immediate supervisor)</div></td>
+      <td>&nbsp;</td>
+      <td style="text-align:center;vertical-align:middle"><div class="rev-name">HITLER C. DANGATAN, Ph.D.</div><div class="rev-role">Campus Executive Officer</div></td>
+      <td>&nbsp;</td>
+    </tr>
+  </table>
+  <table class="data-table">
+    <colgroup><col style="width:15%"><col style="width:22%"><col style="width:8%"><col style="width:7%"><col style="width:7%"><col style="width:18%"><col style="width:3%"><col style="width:3%"><col style="width:3%"><col style="width:3%"></colgroup>
+    <thead>
+      <tr><th rowspan="2">MFO/PAP</th><th rowspan="2">SUCCESS INDICATORS</th><th rowspan="2">TARGET</th><th rowspan="2">BUDGET (₱)</th><th rowspan="2">MEASURE</th><th rowspan="2">ACTUAL ACCOMPLISHMENTS</th><th colspan="4">RATING</th></tr>
+      <tr><th>Q<sup>1</sup></th><th>E<sup>2</sup></th><th>T<sup>3</sup></th><th>A<sup>4</sup></th></tr>
+    </thead>
+    <tbody>
+      <tr class="sec-row"><td colspan="10">A. CORE FUNCTION</td></tr>
+      ${buildOPCRRows(form.coreFunction, 4)}
+      <tr class="sec-row"><td colspan="10">B. STRATEGIC FUNCTION</td></tr>
+      ${buildOPCRRows(form.strategicFunction, 3)}
+      <tr class="sec-row"><td colspan="10">C. SUPPORT FUNCTION</td></tr>
+      ${buildOPCRRows(form.supportFunction, 3)}
+    </tbody>
+  </table>
+  <table class="summary-table">
+    <tr><td class="lbl" style="width:20%">AVERAGE RATING:</td><td class="val">${finalAvg > 0 ? finalAvg.toFixed(2) : ''}</td></tr>
+    <tr><td class="lbl">FINAL AVERAGE RATING:</td><td class="val">${finalAvg > 0 ? finalAvg.toFixed(2) : ''}</td></tr>
+    <tr><td class="lbl">ADJECTIVAL RATING:</td><td class="val">${finalAvg > 0 ? adj(finalAvg) : ''}</td></tr>
+  </table>
+  <table class="sig-tbl">
+    <tr><th style="width:20%">DISCUSSED WITH</th><th style="width:9%">DATE</th><th style="width:28%">ASSESSED BY</th><th style="width:9%">DATE</th><th style="width:25%">FINAL RATING BY</th><th style="width:9%">DATE</th></tr>
+    <tr style="height:52px"><td>&nbsp;</td><td>&nbsp;</td><td class="certify">I certify that I discussed my assessment of the performance with the head of office</td><td>&nbsp;</td><td class="sig-name-cell">HITLER C. DANGATAN, Ph.D.</td><td>&nbsp;</td></tr>
+    <tr>
+      <td class="sig-name-cell" style="border-top:1px solid #aaa">${ep(personName)}</td><td>&nbsp;</td>
+      <td class="sig-name-cell" style="border-top:1px solid #aaa">(immediate supervisor)</td><td>&nbsp;</td>
+      <td class="sig-name-cell" style="border-top:1px solid #aaa">Campus Executive Officer</td><td>&nbsp;</td>
+    </tr>
+    <tr><td colspan="6" class="legend-note">Legend: 1:Quality &nbsp; 2:Efficiency &nbsp; 3:Timeliness &nbsp; 4:Average</td></tr>
+  </table>`;
+    }
+
+    const html = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>${isIPCR ? 'IPCR' : 'OPCR'} — ${ep(personName)}</title><style>${sharedCSS}</style></head><body>
+<div class="no-print">
+  <button class="btn-pdf" onclick="window.print()">&#128438; Print / Save as PDF</button>
+  <button class="btn-cls" onclick="window.close()">&#x2715; Close</button>
+</div>
+<div class="form-outer">${bodyContent}</div>
+<script>setTimeout(()=>window.print(),700);<\/script>
+</body></html>`;
+
+    const w = window.open('', '_blank');
+    if (!w) { showToast('Please allow popups for this site to use Print Preview.', 'warning'); return; }
+    w.document.write(html);
+    w.document.close();
+  }
+
   function viewDetail(form) {
+    _currentForm = form;
     const rating = form.rating || form.overallRating || 0;
     const sections = ['coreFunction', 'strategicFunction', 'supportFunction'];
     const secLabels = { coreFunction: 'Core Function', strategicFunction: 'Strategic Function', supportFunction: 'Support Function' };
