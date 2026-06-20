@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IPCR PDF Export Test | CSU-Piat</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    body { background: #f4f6fb; }
+    .sec-bar { background:#1a3c6e;color:#fff;font-weight:700;font-size:.82rem;padding:6px 14px;border-radius:4px 4px 0 0; }
+    .row-card { background:#fff;border:1px solid #dee2e6;border-top:none;padding:10px 12px;margin-bottom:10px;border-radius:0 0 6px 6px; }
+    .avg-box { background:#e8f4fd;border:1px solid #90c2e7;border-radius:4px;padding:2px 4px;font-weight:700;color:#1a3c6e;font-size:.82rem;text-align:center;min-height:32px;display:flex;align-items:center;justify-content:center; }
+    .row-num { display:inline-flex;align-items:center;justify-content:center;background:#1a3c6e;color:#fff;border-radius:50%;width:20px;height:20px;font-size:.7rem;font-weight:700;margin-right:6px; }
+  </style>
+</head>
+<body>
+<div class="container py-4" style="max-width:1060px">
+
+  <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+    <div>
+      <h4 class="mb-0"><i class="fa-solid fa-file-pdf text-danger me-2"></i>IPCR PDF Export — Test Page</h4>
+      <p class="text-muted small mb-0">Fill in your data then click <strong>Export to PDF</strong>. In the print dialog choose <em>Save as PDF</em> → <em>Landscape</em> → <em>Letter</em>.</p>
+    </div>
+    <a href="../index.html" class="btn btn-outline-secondary btn-sm"><i class="fa-solid fa-arrow-left me-1"></i>Back</a>
+  </div>
+
+  <!-- Employee Info -->
+  <div class="card mb-3 shadow-sm">
+    <div class="card-header bg-white fw-600 border-bottom"><i class="fa-solid fa-user-circle text-primary me-2"></i>Employee Information</div>
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-md-4"><label class="form-label fw-500">Full Name <span class="text-danger">*</span></label><input id="empName" class="form-control" value="Prof. Patrick Soriano"></div>
+        <div class="col-md-4"><label class="form-label fw-500">Position</label><input id="empPosition" class="form-control" value="Assistant Professor I"></div>
+        <div class="col-md-4"><label class="form-label fw-500">College / Office <span class="text-danger">*</span></label><input id="empOffice" class="form-control" value="College of Information and Computing Sciences"></div>
+        <div class="col-md-4"><label class="form-label fw-500">Covered Period <span class="text-danger">*</span></label><input id="coveredPeriod" class="form-control" value="January - June 2026"></div>
+        <div class="col-md-4"><label class="form-label fw-500">Date</label><input id="formDate" type="date" class="form-control"></div>
+        <div class="col-md-4"><label class="form-label fw-500">Immediate Supervisor</label><input id="supervisorName" class="form-control" value="Dr. Maria Santos"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="alert alert-light border mb-3 py-2">
+    <small><strong>Ratings:</strong> <span class="ms-2 text-success">5=Outstanding</span><span class="ms-2 text-primary">4=Very Satisfactory</span><span class="ms-2 text-warning">3=Satisfactory</span><span class="ms-2 text-danger">2=Unsatisfactory / 1=Poor</span>&nbsp;|&nbsp;<strong>Q</strong>=Quality <strong>E</strong>=Efficiency <strong>T</strong>=Timeliness</small>
+  </div>
+
+  <!-- Section A -->
+  <div class="mb-4">
+    <div class="sec-bar"><i class="fa-solid fa-star me-2"></i>A. CORE FUNCTION</div>
+    <div id="coreRows"></div>
+    <div class="mt-2 ms-1"><button class="btn btn-outline-primary btn-sm" onclick="addRow('coreRows','core')"><i class="fa-solid fa-plus me-1"></i>Add Row</button><span class="text-muted small ms-2">Template has 4 rows</span></div>
+  </div>
+
+  <!-- Section B -->
+  <div class="mb-4">
+    <div class="sec-bar"><i class="fa-solid fa-chess me-2"></i>B. STRATEGIC FUNCTION</div>
+    <div id="strategicRows"></div>
+    <div class="mt-2 ms-1"><button class="btn btn-outline-primary btn-sm" onclick="addRow('strategicRows','strategic')"><i class="fa-solid fa-plus me-1"></i>Add Row</button><span class="text-muted small ms-2">Template has 3 rows</span></div>
+  </div>
+
+  <!-- Section C -->
+  <div class="mb-4">
+    <div class="sec-bar"><i class="fa-solid fa-hands-helping me-2"></i>C. SUPPORT FUNCTION</div>
+    <div id="supportRows"></div>
+    <div class="mt-2 ms-1"><button class="btn btn-outline-primary btn-sm" onclick="addRow('supportRows','support')"><i class="fa-solid fa-plus me-1"></i>Add Row</button><span class="text-muted small ms-2">Template has 3 rows</span></div>
+  </div>
+
+  <!-- Export -->
+  <div class="card shadow-sm mb-5">
+    <div class="card-body d-flex align-items-center justify-content-between flex-wrap gap-3">
+      <div>
+        <h6 class="mb-1 fw-700"><i class="fa-solid fa-file-pdf text-danger me-2"></i>Export to PDF</h6>
+        <small class="text-muted">Opens the official IPCR layout in a new tab. Print → Save as PDF → Landscape → Letter.</small>
+      </div>
+      <button class="btn btn-danger btn-lg px-4" onclick="exportToPDF()">
+        <i class="fa-solid fa-file-pdf me-2"></i>Export IPCR to PDF
+      </button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+document.getElementById('formDate').value = new Date().toISOString().split('T')[0];
+
+let ctrs = {core:0,strategic:0,support:0};
+
+function addRow(cid, sec, d={}) {
+  const n = ++ctrs[sec];
+  const id = `${sec}_${n}`;
+  const div = document.createElement('div');
+  div.className = 'row-card'; div.id = id;
+  div.innerHTML = `
+    <div class="d-flex align-items-center mb-2">
+      <span class="row-num">${n}</span><span class="small text-muted">Row #${n}</span>
+      <button class="btn btn-sm btn-outline-danger ms-auto" onclick="document.getElementById('${id}').remove()"><i class="fa-solid fa-times"></i></button>
+    </div>
+    <div class="row g-2 mb-2">
+      <div class="col-md-2"><label class="form-label small">MFO / PAP</label><input class="form-control form-control-sm f-mfo" value="${h(d.mfo||'')}"></div>
+      <div class="col-md-4"><label class="form-label small">Success Indicators (Target + Measure)</label><input class="form-control form-control-sm f-si" value="${h(d.si||'')}"></div>
+      <div class="col-md-2"><label class="form-label small">Allotted Budget</label><input class="form-control form-control-sm f-budget" value="${h(d.budget||'')}"></div>
+      <div class="col-md-4"><label class="form-label small">Division / Persons Accountable</label><input class="form-control form-control-sm f-division" value="${h(d.division||'')}"></div>
+    </div>
+    <div class="row g-2 align-items-end">
+      <div class="col-md-4"><label class="form-label small">Actual Accomplishments</label><textarea class="form-control form-control-sm f-actual" rows="2">${h(d.actual||'')}</textarea></div>
+      <div class="col-4 col-md-1"><label class="form-label small">Q</label><input type="number" class="form-control form-control-sm f-q" min="1" max="5" step="0.5" value="${d.q||''}" oninput="ca('${id}')"></div>
+      <div class="col-4 col-md-1"><label class="form-label small">E</label><input type="number" class="form-control form-control-sm f-e" min="1" max="5" step="0.5" value="${d.e||''}" oninput="ca('${id}')"></div>
+      <div class="col-4 col-md-1"><label class="form-label small">T</label><input type="number" class="form-control form-control-sm f-t" min="1" max="5" step="0.5" value="${d.t||''}" oninput="ca('${id}')"></div>
+      <div class="col-md-1"><label class="form-label small">Avg</label><div class="avg-box f-avg">—</div></div>
+      <div class="col-md-4"><label class="form-label small">Remarks</label><input class="form-control form-control-sm f-remarks" value="${h(d.remarks||'')}"></div>
+    </div>`;
+  document.getElementById(cid).appendChild(div);
+  if (d.q||d.e||d.t) ca(id);
+}
+
+function h(s){return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');}
+function e(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+function ca(id) {
+  const d = document.getElementById(id);
+  const vals = ['f-q','f-e','f-t'].map(c=>parseFloat(d.querySelector('.'+c).value)).filter(v=>v>=1&&v<=5);
+  d.querySelector('.f-avg').textContent = vals.length ? (vals.reduce((a,b)=>a+b,0)/vals.length).toFixed(2) : '—';
+}
+
+function getRows(cid) {
+  return [...document.getElementById(cid).querySelectorAll('.row-card')].map(d=>{
+    const vals=['f-q','f-e','f-t'].map(c=>parseFloat(d.querySelector('.'+c).value)).filter(v=>v>=1&&v<=5);
+    const avg=vals.length?parseFloat((vals.reduce((a,b)=>a+b,0)/vals.length).toFixed(2)):0;
+    return {
+      mfo:d.querySelector('.f-mfo').value.trim(),
+      si:d.querySelector('.f-si').value.trim(),
+      budget:d.querySelector('.f-budget').value.trim(),
+      division:d.querySelector('.f-division').value.trim(),
+      actual:d.querySelector('.f-actual').value.trim(),
+      q:parseFloat(d.querySelector('.f-q').value)||'',
+      e:parseFloat(d.querySelector('.f-e').value)||'',
+      t:parseFloat(d.querySelector('.f-t').value)||'',
+      avg, remarks:d.querySelector('.f-remarks').value.trim()
+    };
+  });
+}
+
+function adj(avg){
+  if(avg>=4.5)return'Outstanding';if(avg>=3.5)return'Very Satisfactory';
+  if(avg>=2.5)return'Satisfactory';if(avg>=1.5)return'Unsatisfactory';
+  if(avg>0)return'Poor';return'';
+}
+
+// Sample data
+addRow('coreRows','core',{mfo:'Instruction',si:'Conduct effective and efficient delivery of instruction; 100% of scheduled classes',budget:'0',division:'Prof. Patrick Soriano',actual:'Conducted all scheduled classes with 98% student satisfaction rating',q:5,e:5,t:5,remarks:'Outstanding'});
+addRow('coreRows','core',{mfo:'Instruction',si:'Prepare and submit lesson plans and course syllabi on time; 100% on time',budget:'0',division:'Prof. Patrick Soriano',actual:'Submitted all syllabi and course materials on Day 1 of semester',q:5,e:5,t:5,remarks:'Outstanding'});
+addRow('coreRows','core',{mfo:'Research',si:'Conduct research relevant to academic programs; at least 1 completed/year',budget:'0',division:'Prof. Patrick Soriano',actual:'Completed research on AI integration in higher education',q:5,e:5,t:5,remarks:'Outstanding'});
+addRow('strategicRows','strategic',{mfo:'Innovation',si:'Develop and adopt innovative teaching strategies; at least 1 per semester',budget:'0',division:'Prof. Patrick Soriano',actual:'Developed innovative programming assessment tools',q:5,e:5,t:5,remarks:'Outstanding'});
+addRow('supportRows','support',{mfo:'Extension',si:'Participate in community extension activities; at least 8 hrs/semester',budget:'0',division:'Prof. Patrick Soriano',actual:'Conducted ICT literacy training in local community – 10 hours',q:5,e:5,t:5,remarks:'Outstanding'});
+addRow('supportRows','support',{mfo:'Capacity Building',si:'Attend trainings, seminars, workshops; at least 2/year',budget:'0',division:'Prof. Patrick Soriano',actual:'Attended 3 ICT seminars and 1 international webinar',q:4,e:5,t:4,remarks:'Very Satisfactory'});
+
+// ── Logo as base64 (loaded from server) ──────────────────────────
+let logoBase64 = '';
+fetch('../assets/images/csu-logo.png')
+  .then(r=>r.blob()).then(b=>{
+    const reader=new FileReader();
+    reader.onload=ev=>{ logoBase64=ev.target.result; };
+    reader.readAsDataURL(b);
+  }).catch(()=>{});
+
+// ── PDF Export ────────────────────────────────────────────────────
+function exportToPDF() {
+  const name   = document.getElementById('empName').value.trim();
+  const pos    = document.getElementById('empPosition').value.trim();
+  const office = document.getElementById('empOffice').value.trim();
+  const period = document.getElementById('coveredPeriod').value.trim();
+  const date   = document.getElementById('formDate').value;
+  const supv   = document.getElementById('supervisorName').value.trim();
+
+  if (!name)   { alert('Please enter the employee name.');   return; }
+  if (!period) { alert('Please enter the covered period.'); return; }
+
+  const core      = getRows('coreRows');
+  const strategic = getRows('strategicRows');
+  const support   = getRows('supportRows');
+  const all       = [...core,...strategic,...support];
+  const avgs      = all.map(r=>r.avg).filter(v=>v>0);
+  const finalAvg  = avgs.length ? parseFloat((avgs.reduce((a,b)=>a+b,0)/avgs.length).toFixed(2)) : 0;
+
+  // Build data rows for a section (fills blank rows up to minRows)
+  function dataRows(rows, minRows) {
+    let html = '';
+    const total = Math.max(rows.length, minRows);
+    for (let i=0; i<total; i++) {
+      const r = rows[i]||{};
+      html += `<tr class="data-row">
+        <td>${e(r.mfo)}</td>
+        <td>${e(r.si)}</td>
+        <td class="tc">${e(r.budget)}</td>
+        <td>${e(r.division)}</td>
+        <td>${e(r.actual)}</td>
+        <td class="tc">${r.q||''}</td>
+        <td class="tc">${r.e||''}</td>
+        <td class="tc">${r.t||''}</td>
+        <td class="tc b">${r.avg||''}</td>
+        <td>${e(r.remarks)}</td>
+      </tr>`;
+    }
+    return html;
+  }
+
+  const logoTag = logoBase64
+    ? `<img src="${logoBase64}" class="logo" alt="CSU Logo">`
+    : `<div class="logo-ph"></div>`;
+
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>IPCR — ${e(name)}</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'Times New Roman',Times,serif; font-size:7.8pt; color:#000; background:#fff; }
+
+@page { size:letter landscape; margin:.35in .3in; }
+@media print { .no-print{display:none!important;} }
+
+/* ── Screen toolbar ── */
+.no-print {
+  position:fixed;top:10px;right:14px;z-index:999;display:flex;gap:8px;
+}
+.no-print button {
+  padding:7px 16px;font-size:12px;border:none;border-radius:4px;
+  cursor:pointer;font-family:sans-serif;font-weight:600;
+}
+.btn-pdf  { background:#c0392b;color:#fff; }
+.btn-cls  { background:#555;color:#fff; }
+
+/* ── Outer border ── */
+.form-outer {
+  border:1.5px solid #000;
+  width:100%;
+}
+
+/* ── Utility ── */
+table { width:100%; border-collapse:collapse; }
+td, th { border:1px solid #000; padding:1.5px 3px; vertical-align:middle; font-size:7.8pt; }
+.tc { text-align:center; }
+.b  { font-weight:700; }
+.tl { text-align:left; }
+.noborder td, .noborder th { border:none; }
+
+/* ── HEADER ── */
+.hdr-row {
+  padding:5px 8px 4px;
+  position:relative;
+  border-bottom:1px solid #000;
+}
+.annex {
+  position:absolute;top:5px;right:8px;
+  font-size:7.5pt;
+}
+.hdr-inner {
+  display:flex;align-items:center;justify-content:center;gap:8px;
+}
+.logo { width:46px;height:46px;object-fit:contain; }
+.logo-ph { width:46px;height:46px;background:#ddd;border-radius:50%; }
+.univ-text { text-align:center;line-height:1.5; }
+.univ-text .republic { font-size:7.5pt; }
+.univ-text .univ    { font-size:9.5pt;font-weight:700; }
+.univ-text .campus  { font-size:7.5pt; }
+.form-title {
+  text-align:center;font-weight:700;font-size:9pt;
+  text-decoration:underline;margin-top:4px;
+  padding-bottom:2px;
+}
+
+/* ── DIVISION field ── */
+.div-field {
+  text-align:center;padding:3px 0 2px;
+  border-bottom:1px solid #000;
+}
+.uline { display:inline-block;border-bottom:1px solid #000;min-width:180px;font-size:7.8pt; }
+.field-lbl { font-size:6.5pt;display:block;margin-top:1px; }
+
+/* ── COMMITMENT block ── */
+.commit-wrap {
+  display:table;width:100%;
+  border-bottom:1px solid #000;
+}
+.commit-left {
+  display:table-cell;width:73%;
+  padding:4px 8px;vertical-align:top;line-height:1.7;font-size:7.8pt;
+}
+.commit-right {
+  display:table-cell;width:27%;
+  padding:4px 8px;vertical-align:bottom;
+  border-left:1px solid #000;
+  text-align:center;
+}
+.sig-line {
+  display:block;border-top:1px solid #000;
+  margin:28px auto 1px;width:80%;
+  font-size:7pt;
+}
+.date-line { font-size:7.5pt;margin-top:4px; }
+
+/* ── REVIEWER / APPROVER table ── */
+.rev-table { border-top:none; }
+.rev-table th {
+  background:#fff;font-weight:700;font-size:7.5pt;
+  text-align:center;padding:2px 4px;
+}
+.rev-table td { font-size:7.5pt;padding:3px 5px;vertical-align:bottom; }
+.rev-name  { font-weight:700;font-size:7.8pt; }
+.rev-role  { font-size:6.5pt;font-style:italic; }
+
+/* ── RATING LEGEND ── */
+.legend-wrap {
+  display:table;width:100%;
+  border-top:none;border-bottom:none;
+}
+.legend-blank { display:table-cell;width:38%;border-right:1px solid #000; }
+.legend-right { display:table-cell;width:62%; }
+.legend-right table { border:none; }
+.legend-right td { border:none;border-bottom:1px solid #ccc;font-size:7.3pt;padding:1px 3px; }
+.legend-right td:first-child {
+  font-weight:700;text-align:center;
+  border-right:1px solid #000;
+  width:20px;border-left:1px solid #000;
+}
+.legend-right tr:first-child td { border-top:1px solid #000; }
+.legend-right tr:last-child td  { border-bottom:1px solid #000; }
+
+/* ── MAIN DATA TABLE ── */
+.data-table { border-top:1px solid #000; }
+.data-table th {
+  background:#d9d9d9;font-weight:700;text-align:center;
+  font-size:7.3pt;padding:2px 3px;
+}
+.data-table .sec-row td {
+  background:#bdd7ee;font-weight:700;font-size:7.8pt;
+  text-align:left;padding:2px 5px;
+}
+.data-table .data-row td {
+  height:18px;font-size:7.5pt;padding:1px 3px;vertical-align:top;
+}
+
+/* ── RATING SUMMARY ── */
+.summary-table td {
+  border:1px solid #000;padding:1.5px 5px;font-size:7.5pt;
+}
+.summary-table .lbl { font-weight:700;font-size:7.5pt; }
+.summary-table .val { text-align:center;font-weight:700; }
+
+/* ── BOTTOM SIGNATURE TABLE ── */
+.sig-tbl th {
+  background:#fff;font-weight:700;text-align:center;font-size:7.3pt;
+  border:1px solid #000;padding:2px 4px;
+}
+.sig-tbl td { border:1px solid #000;padding:2px 4px;font-size:7.3pt;vertical-align:top; }
+.sig-tbl .certify { font-style:italic;font-size:7pt;text-align:center; }
+.sig-tbl .sig-name-cell { font-weight:700;text-align:center; }
+
+.legend-note { font-size:6.5pt;padding:2px 5px;font-style:italic; }
+</style>
+</head>
+<body>
+
+<div class="no-print">
+  <button class="btn-pdf" onclick="window.print()">&#128438; Print / Save as PDF</button>
+  <button class="btn-cls" onclick="window.close()">✕ Close</button>
+</div>
+
+<div class="form-outer">
+
+  <!-- ① HEADER -->
+  <div class="hdr-row">
+    <div class="annex">ANNEX A</div>
+    <div class="hdr-inner">
+      ${logoTag}
+      <div class="univ-text">
+        <div class="republic">Republic of the Philippines</div>
+        <div class="univ">CAGAYAN STATE UNIVERSITY</div>
+        <div class="campus">Piat Campus, Piat, Cagayan</div>
+      </div>
+    </div>
+    <div class="form-title">INDIVIDUAL PERFORMANCE COMMITMENT AND REVIEW FORM (IPCR)</div>
+  </div>
+
+  <!-- ② DIVISION/OFFICE FIELD -->
+  <div class="div-field">
+    <span class="uline">&nbsp;${e(office)}&nbsp;</span>
+    <span class="field-lbl">Division/Office/College</span>
+  </div>
+
+  <!-- ③ COMMITMENT TEXT -->
+  <div class="commit-wrap">
+    <div class="commit-left">
+      I,&nbsp;<span style="border-bottom:1px solid #000;padding:0 4px">${e(name)}</span>,&nbsp;<span style="border-bottom:1px solid #000;padding:0 4px">${e(pos)}</span>,
+      commit to deliver and agree to be rated on the attainment of the following targets in accordance with the indicated measures for<br>
+      the period&nbsp;<span style="border-bottom:1px solid #000;padding:0 4px">${e(period)}</span>.
+    </div>
+    <div class="commit-right">
+      <span class="sig-line">${e(name)}<br><span style="font-size:6.5pt;font-style:italic">(name of employee)</span></span>
+      <div class="date-line">Date:&nbsp;<span style="border-bottom:1px solid #000;padding:0 4px">${e(date)}</span></div>
+    </div>
+  </div>
+
+  <!-- ④ REVIEWED BY / APPROVED BY -->
+  <table class="rev-table">
+    <tr>
+      <th style="width:35%">REVIEWED BY</th>
+      <th style="width:10%">DATE</th>
+      <th style="width:45%">APPROVED BY</th>
+      <th style="width:10%">DATE</th>
+    </tr>
+    <tr>
+      <td style="height:32px;vertical-align:bottom">
+        <div class="rev-name">${e(supv)||'&nbsp;'}</div>
+        <div class="rev-role">(immediate supervisor)</div>
+      </td>
+      <td>&nbsp;</td>
+      <td style="text-align:center;vertical-align:middle">
+        <div class="rev-name">HITLER C. DANGATAN, Ph.D.</div>
+        <div class="rev-role">Campus Executive Officer</div>
+      </td>
+      <td>&nbsp;</td>
+    </tr>
+  </table>
+
+  <!-- ⑤ RATING LEGEND (right side only) -->
+  <div class="legend-wrap" style="border-top:1px solid #000;">
+    <div class="legend-blank">&nbsp;</div>
+    <div class="legend-right">
+      <table>
+        <tr><td>R</td><td>5 – Outstanding &nbsp;- performance exceeded expectation by 30% and above of planned target</td></tr>
+        <tr><td>A</td><td>4 – Very Satisfactory &nbsp;- performance exceeded expectations by 15% to 29% of planned targets</td></tr>
+        <tr><td>T</td><td>3 – Satisfactory &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- performance met 90% to 114% of the planned targets</td></tr>
+        <tr><td>I</td><td>2 – Unsatisfactory &nbsp;&nbsp;- performance only met 51% to 89% of planned targets and failed to deliver one or</td></tr>
+        <tr><td>N</td><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;more critical aspects of the targets</td></tr>
+        <tr><td>G</td><td>1 – Poor &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- performance failed to deliver most of the targets by 50% and below</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- ⑥ MAIN DATA TABLE -->
+  <table class="data-table">
+    <colgroup>
+      <col style="width:20%">
+      <col style="width:22%">
+      <col style="width:9%">
+      <col style="width:10%">
+      <col style="width:16%">
+      <col style="width:3%">
+      <col style="width:3%">
+      <col style="width:3%">
+      <col style="width:3%">
+      <col style="width:11%">
+    </colgroup>
+    <thead>
+      <tr>
+        <th rowspan="2">MFO/PAP</th>
+        <th rowspan="2">SUCCESS INDICATORS<br>(TARGET + MEASURE)</th>
+        <th rowspan="2">ALLOTTED<br>BUDGET</th>
+        <th rowspan="2">DIVISION/<br>INDIVIDUALS<br>ACCOUNTABLE</th>
+        <th rowspan="2">ACTUAL<br>ACCOMPLISHMENTS</th>
+        <th colspan="4">RATING</th>
+        <th rowspan="2">REMARKS</th>
+      </tr>
+      <tr>
+        <th>Q<sup>1</sup></th>
+        <th>E<sup>2</sup></th>
+        <th>T<sup>3</sup></th>
+        <th>A<sup>4</sup></th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="sec-row"><td colspan="10">CORE FUNCTION</td></tr>
+      ${dataRows(core, 4)}
+      <tr class="sec-row"><td colspan="10">STRATEGIC FUNCTION</td></tr>
+      ${dataRows(strategic, 3)}
+      <tr class="sec-row"><td colspan="10">SUPPORT FUNCTION</td></tr>
+      ${dataRows(support, 3)}
+    </tbody>
+  </table>
+
+  <!-- ⑦ RATING SUMMARY -->
+  <table class="summary-table">
+    <tr>
+      <td class="lbl" style="width:20%">AVERAGE RATING:</td>
+      <td class="val" style="width:80%">${finalAvg||''}</td>
+    </tr>
+    <tr>
+      <td class="lbl">FINAL AVERAGE RATING:</td>
+      <td class="val">${finalAvg||''}</td>
+    </tr>
+    <tr>
+      <td class="lbl">ADJECTIVAL RATING:</td>
+      <td class="val">${finalAvg?adj(finalAvg):''}</td>
+    </tr>
+  </table>
+
+  <!-- ⑧ BOTTOM SIGNATURE TABLE -->
+  <table class="sig-tbl">
+    <tr>
+      <th style="width:18%">DISCUSSED WITH</th>
+      <th style="width:9%">DATE</th>
+      <th style="width:28%">ASSESSED BY</th>
+      <th style="width:9%">DATE</th>
+      <th style="width:27%">FINAL RATING BY</th>
+      <th style="width:9%">DATE</th>
+    </tr>
+    <tr style="height:52px">
+      <td>&nbsp;</td>
+      <td>&nbsp;</td>
+      <td class="certify">I certify that I discussed my assessment of the performance with the employee</td>
+      <td>&nbsp;</td>
+      <td class="sig-name-cell">HITLER C. DANGATAN, Ph.D.</td>
+      <td>&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="sig-name-cell" style="border-top:1px solid #aaa">${e(name)}</td>
+      <td colspan="1">&nbsp;</td>
+      <td class="sig-name-cell" style="border-top:1px solid #aaa">${e(supv)||'(immediate supervisor)'}</td>
+      <td colspan="1">&nbsp;</td>
+      <td class="sig-name-cell" style="border-top:1px solid #aaa">Campus Executive Officer</td>
+      <td>&nbsp;</td>
+    </tr>
+    <tr>
+      <td colspan="6" class="legend-note">Legend: 1:Quality &nbsp; 2: Efficiency &nbsp; 3:Timeliness &nbsp; 4:Average</td>
+    </tr>
+  </table>
+
+</div><!-- /form-outer -->
+
+<script>setTimeout(()=>window.print(),700);<\/script>
+</body>
+</html>`;
+
+  const w = window.open('','_blank');
+  w.document.write(html);
+  w.document.close();
+}
+</script>
+</body>
+</html>
