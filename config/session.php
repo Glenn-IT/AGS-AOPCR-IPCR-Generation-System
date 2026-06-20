@@ -8,11 +8,25 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 function requireAuth(array $roles = []): array {
+    $isApi = str_contains($_SERVER['REQUEST_URI'] ?? '', '/api/');
+
     if (!isset($_SESSION['user'])) {
+        if ($isApi) {
+            http_response_code(401);
+            header('Content-Type: application/json');
+            echo json_encode(['success' => false, 'error' => 'Session expired. Please log in again.']);
+            exit;
+        }
         header('Location: ' . getBasePath() . 'index.php');
         exit;
     }
     if (!empty($roles) && !in_array($_SESSION['user']['role'], $roles, true)) {
+        if ($isApi) {
+            http_response_code(403);
+            header('Content-Type: application/json');
+            echo json_encode(['success' => false, 'error' => 'Access denied.']);
+            exit;
+        }
         redirectByRole($_SESSION['user']['role']);
         exit;
     }
