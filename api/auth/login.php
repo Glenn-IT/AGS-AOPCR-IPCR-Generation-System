@@ -75,17 +75,27 @@ if ($user['status'] === 'pending') {
 $db->prepare('DELETE FROM login_attempts WHERE username = ?')->execute([$username]);
 $db->prepare('UPDATE users SET last_login = NOW() WHERE id = ?')->execute([$user['id']]);
 
+// Fetch department name
+$deptName = '';
+if ($user['department_id']) {
+    $dstmt = $db->prepare('SELECT name FROM departments WHERE id = ? LIMIT 1');
+    $dstmt->execute([$user['department_id']]);
+    $deptName = $dstmt->fetchColumn() ?: '';
+}
+
 $sessionUser = [
-    'id'          => $user['id'],
-    'username'    => $user['username'],
-    'role'        => $user['role'],
-    'name'        => $user['name'],
-    'position'    => $user['position'],
-    'department'  => $user['department_id'],
-    'email'       => $user['email'],
-    'gender'      => $user['gender'],
-    'avatar'      => $user['avatar'],
-    'status'      => $user['status'],
+    'id'              => $user['id'],
+    'username'        => $user['username'],
+    'role'            => $user['role'],
+    'name'            => $user['name'],
+    'position'        => $user['position'],
+    'department'      => $user['department_id'],
+    'department_id'   => $user['department_id'],
+    'department_name' => $deptName,
+    'email'           => $user['email'],
+    'gender'          => $user['gender'],
+    'avatar'          => $user['avatar'],
+    'status'          => $user['status'],
 ];
 
 setSessionUser($sessionUser);
