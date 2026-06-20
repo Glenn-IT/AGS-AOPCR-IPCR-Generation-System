@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Account Management | CSU-Piat</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="../../assets/css/style.css">
+</head>
+<body>
+<div id="toast-container"></div>
+<div id="sidebar-container"></div>
+<div id="navbar-container"></div>
+
+<main class="main-content" id="mainContent">
+  <div class="page-header">
+    <h2><i class="fa-solid fa-users me-2 text-primary"></i>Account Management</h2>
+    <p>Manage CSU-Piat faculty and staff accounts.</p>
+  </div>
+
+  <div class="table-wrapper">
+    <div class="table-header">
+      <h6><i class="fa-solid fa-list me-2"></i>All Accounts</h6>
+      <div class="d-flex gap-2 flex-wrap">
+        <div class="search-box">
+          <i class="fa-solid fa-search search-icon"></i>
+          <input type="text" class="form-control form-control-sm" id="searchInput" placeholder="Search name, username...">
+        </div>
+        <select class="form-select form-select-sm" id="roleFilter" style="width:130px">
+          <option value="">All Roles</option>
+          <option value="admin">Admin</option>
+          <option value="user">User</option>
+        </select>
+        <select class="form-select form-select-sm" id="statusFilter" style="width:130px">
+          <option value="">All Status</option>
+          <option value="active">Active</option>
+          <option value="inactive">Inactive</option>
+        </select>
+      </div>
+    </div>
+    <div class="table-responsive">
+      <table class="table">
+        <thead><tr>
+          <th>#</th><th>Name</th><th>Username</th><th>Department</th><th>Position</th><th>Role</th><th>Status</th><th>Last Login</th><th class="no-print">Actions</th>
+        </tr></thead>
+        <tbody id="accountsTable"></tbody>
+      </table>
+    </div>
+    <div class="px-3 pb-3 d-flex justify-content-between align-items-center">
+      <small class="text-muted" id="tableInfo"></small>
+    </div>
+  </div>
+</main>
+
+<!-- View Account Modal -->
+<div class="modal fade" id="viewModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="fa-solid fa-user me-2"></i>Account Details</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" id="viewModalBody"></div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="footer-container"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="../../data/mock-data.js"></script>
+<script src="../../assets/js/auth.js"></script>
+<script src="../../assets/js/components.js"></script>
+<script>
+  requireAuth(['superadmin']);
+  initLayout('superadmin', 'accounts', [{ label: 'Account Management' }]);
+
+  let allUsers = getMockUsers().filter(u => u.role !== 'superadmin');
+  const depts = getMockDepartments();
+
+  function renderTable() {
+    const search = document.getElementById('searchInput').value.toLowerCase();
+    const roleF = document.getElementById('roleFilter').value;
+    const statusF = document.getElementById('statusFilter').value;
+
+    const filtered = allUsers.filter(u =>
+      (!search || u.name.toLowerCase().includes(search) || u.username.toLowerCase().includes(search)) &&
+      (!roleF || u.role === roleF) &&
+      (!statusF || u.status === statusF)
+    );
+
+    const tbody = document.getElementById('accountsTable');
+    tbody.innerHTML = '';
+    if (filtered.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="9" class="text-center py-4 text-muted">No accounts found.</td></tr>`;
+    } else {
+      filtered.forEach((u, i) => {
+        const deptName = depts.find(d => d.id === u.department)?.name || u.department;
+        const roleLabel = { admin: '<span class="badge bg-primary">Admin</span>', user: '<span class="badge bg-secondary">User</span>' }[u.role] || '';
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${i + 1}</td>
+          <td><div class="d-flex align-items-center gap-2">
+            <div class="avatar" style="width:32px;height:32px;font-size:0.7rem">${u.avatar}</div>
+            <div>
+              <div style="font-size:0.85rem;font-weight:600">${u.name}</div>
+              <div style="font-size:0.75rem;color:#888">${u.email || ''}</div>
+            </div></div></td>
+          <td style="font-size:0.83rem">${u.username}</td>
+          <td style="font-size:0.8rem">${deptName}</td>
+          <td style="font-size:0.8rem">${u.position || '-'}</td>
+          <td>${roleLabel}</td>
+          <td>${getStatusBadge(u.status)}</td>
+          <td style="font-size:0.78rem">${u.lastLogin || '-'}</td>
+          <td class="no-print">
+            <div class="d-flex gap-1">
+              <button class="btn btn-outline-primary btn-sm" onclick="viewAccount(${u.id})" title="View"><i class="fa-solid fa-eye"></i></button>
+              <button class="btn btn-${u.status === 'active' ? 'outline-danger' : 'outline-success'} btn-sm" onclick="toggleStatus(${u.id})" title="${u.status === 'active' ? 'Deactivate' : 'Activate'}">
+                <i class="fa-solid fa-${u.status === 'active' ? 'ban' : 'check'}"></i>
+              </button>
+            </div>
+          </td>`;
+        tbody.appendChild(tr);
+      });
+    }
+    document.getElementById('tableInfo').textContent = `Showing ${filtered.length} of ${allUsers.length} accounts`;
+  }
+
+  function viewAccount(id) {
+    const u = allUsers.find(x => x.id === id);
+    if (!u) return;
+    const deptName = depts.find(d => d.id === u.department)?.name || u.department;
+    document.getElementById('viewModalBody').innerHTML = `
+      <div class="text-center mb-3">
+        <div class="avatar mx-auto mb-2" style="width:64px;height:64px;font-size:1.2rem">${u.avatar}</div>
+        <h6 class="mb-0">${u.name}</h6>
+        <small class="text-muted">${u.position || 'N/A'}</small>
+      </div>
+      <table class="table table-sm table-borderless" style="font-size:0.85rem">
+        <tr><td class="text-muted fw-500" style="width:40%">Username</td><td>${u.username}</td></tr>
+        <tr><td class="text-muted fw-500">Email</td><td>${u.email || '-'}</td></tr>
+        <tr><td class="text-muted fw-500">Gender</td><td>${u.gender || '-'}</td></tr>
+        <tr><td class="text-muted fw-500">Role</td><td>${u.role}</td></tr>
+        <tr><td class="text-muted fw-500">Department</td><td>${deptName}</td></tr>
+        <tr><td class="text-muted fw-500">Status</td><td>${getStatusBadge(u.status)}</td></tr>
+        <tr><td class="text-muted fw-500">Last Login</td><td>${u.lastLogin || '-'}</td></tr>
+        <tr><td class="text-muted fw-500">Date Registered</td><td>${u.createdAt || '-'}</td></tr>
+      </table>`;
+    new bootstrap.Modal(document.getElementById('viewModal')).show();
+  }
+
+  function toggleStatus(id) {
+    const u = allUsers.find(x => x.id === id);
+    if (!u) return;
+    const action = u.status === 'active' ? 'deactivate' : 'activate';
+    confirmModal(`Are you sure you want to ${action} <strong>${u.name}</strong>'s account?`, 'Confirm Action', () => {
+      const users = getMockUsers();
+      const idx = users.findIndex(x => x.id === id);
+      if (idx !== -1) {
+        users[idx].status = users[idx].status === 'active' ? 'inactive' : 'active';
+        localStorage.setItem('csu_piat_users', JSON.stringify(users));
+        allUsers = users.filter(x => x.role !== 'superadmin');
+        renderTable();
+        showToast(`Account ${users[idx].status === 'active' ? 'activated' : 'deactivated'} successfully.`, 'success');
+      }
+    });
+  }
+
+  document.getElementById('searchInput').addEventListener('input', renderTable);
+  document.getElementById('roleFilter').addEventListener('change', renderTable);
+  document.getElementById('statusFilter').addEventListener('change', renderTable);
+  renderTable();
+</script>
+</body>
+</html>

@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Set Target (OPCR) | CSU-Piat Super Admin</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="../../assets/css/style.css">
+  <style>
+    .ipcr-section-header {
+      background: linear-gradient(135deg, #821131, #C7253E);
+      color: #fff;
+      padding: 0.6rem 1rem;
+      border-radius: 6px 6px 0 0;
+      font-weight: 600;
+      font-size: 0.88rem;
+      letter-spacing: 0.03em;
+    }
+    .ipcr-section-header .btn-light {
+      font-size: 0.75rem;
+      padding: 2px 10px;
+      border-radius: 4px;
+    }
+    .opcr-summary-bar {
+      background: #FFF4E6;
+      border: 1px solid #FABC3F55;
+      border-radius: 8px;
+      padding: 0.75rem 1.25rem;
+      font-size: 0.85rem;
+    }
+    .print-header { display: none; }
+    @media print {
+      .no-print { display: none !important; }
+      .print-header { display: block; text-align: center; margin-bottom: 1rem; }
+      .print-header h4 { font-size: 14pt; font-weight: 700; }
+      .print-header p { font-size: 10pt; margin: 0; }
+      .ipcr-section-header { background: #333 !important; -webkit-print-color-adjust: exact; }
+      body { font-size: 10pt; }
+      table { font-size: 9pt; }
+    }
+    .avg-row td { background: #FFF4E6 !important; font-weight: 600; }
+    .rating-badge {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+<div id="toast-container"></div>
+<div id="sidebar-container"></div>
+<div id="navbar-container"></div>
+
+<main class="main-content" id="mainContent">
+
+  <!-- Print Header (hidden on screen) -->
+  <div class="print-header">
+    <h4>CAGAYAN STATE UNIVERSITY — PIAT CAMPUS</h4>
+    <p>Office Performance Commitment and Review (OPCR)</p>
+    <p>Campus Director's Office</p>
+    <hr>
+  </div>
+
+  <div class="page-header d-flex justify-content-between align-items-start flex-wrap gap-2">
+    <div>
+      <h2><i class="fa-solid fa-bullseye me-2 text-primary"></i>Set Target — Institutional OPCR</h2>
+      <p class="mb-0">Office Performance Commitment and Review | Campus Director Level | CSU-Piat</p>
+    </div>
+    <div class="d-flex gap-2 flex-wrap no-print">
+      <button class="btn btn-outline-secondary btn-sm" onclick="window.print()">
+        <i class="fa-solid fa-print me-1"></i>Print
+      </button>
+      <button class="btn btn-outline-primary btn-sm" id="editBtn" onclick="enableEdit()">
+        <i class="fa-solid fa-pen me-1"></i>Edit
+      </button>
+      <button class="btn btn-primary btn-sm" id="confirmBtn" onclick="confirmOPCR()">
+        <i class="fa-solid fa-check me-1"></i>Confirm & Save
+      </button>
+    </div>
+  </div>
+
+  <!-- Status Banner -->
+  <div class="opcr-summary-bar mb-3 d-flex align-items-center gap-3 flex-wrap">
+    <span><i class="fa-solid fa-circle-info text-primary me-1"></i><strong>Status:</strong> <span id="statusBadge" class="badge bg-warning text-dark ms-1">Draft</span></span>
+    <span><i class="fa-solid fa-calendar text-primary me-1"></i><strong>Period:</strong> <span id="summaryPeriod">—</span></span>
+    <span><i class="fa-solid fa-star text-primary me-1"></i><strong>Final Average:</strong> <span id="summaryRating">—</span></span>
+    <span class="ms-auto text-muted" style="font-size:0.78rem">Last saved: <span id="lastSaved">Not yet saved</span></span>
+  </div>
+
+  <!-- Form Header Info -->
+  <div class="card mb-3">
+    <div class="card-header"><h6 class="mb-0"><i class="fa-solid fa-id-card me-2 text-primary"></i>Commitment Details</h6></div>
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-md-4">
+          <label class="form-label fw-500">Office / Unit</label>
+          <input type="text" class="form-control" id="opcrOffice" readonly>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label fw-500">Name of Campus Director</label>
+          <input type="text" class="form-control" id="opcrName" readonly>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label fw-500">Position / Designation</label>
+          <input type="text" class="form-control" id="opcrPosition" readonly>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label fw-500">Covered Period <span class="text-danger">*</span></label>
+          <input type="text" class="form-control" id="opcrPeriod" placeholder="e.g. January – June 2026" id="opcrPeriod">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label fw-500">Date Prepared</label>
+          <input type="date" class="form-control" id="opcrDate">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label fw-500">Rating Period</label>
+          <select class="form-select" id="opcrSemester">
+            <option value="1st Semester">1st Semester (Jan – Jun)</option>
+            <option value="2nd Semester">2nd Semester (Jul – Dec)</option>
+            <option value="Annual">Annual (Jan – Dec)</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- INSTRUCTIONS ACCORDION -->
+  <div class="accordion mb-3 no-print" id="instructionAccordion">
+    <div class="accordion-item border-0 shadow-sm">
+      <h2 class="accordion-header">
+        <button class="accordion-button collapsed py-2" type="button" data-bs-toggle="collapse" data-bs-target="#instrBody" style="font-size:0.85rem;background:#FFF4E6">
+          <i class="fa-solid fa-circle-question me-2 text-primary"></i> How to fill out this OPCR form
+        </button>
+      </h2>
+      <div id="instrBody" class="accordion-collapse collapse">
+        <div class="accordion-body" style="font-size:0.83rem">
+          <ul class="mb-0">
+            <li><strong>MFO/PAP</strong> — Major Final Output / Program, Activity, or Project (e.g., Instruction, Research, Accreditation).</li>
+            <li><strong>Success Indicator</strong> — A specific, measurable commitment (e.g., "85% of faculty with complete syllabi by Week 2").</li>
+            <li><strong>Target</strong> — The numeric goal or percentage you commit to achieve.</li>
+            <li><strong>Budget Required</strong> — Estimated budget in Philippine Peso (0 if none needed).</li>
+            <li><strong>Measure</strong> — How it will be measured: <em>Q</em>=Quality, <em>Qn</em>=Quantity, <em>T</em>=Timeliness, <em>E</em>=Efficiency.</li>
+            <li><strong>Average Rating</strong> — Filled by the rater during the evaluation phase; leave blank for now.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── A. CORE FUNCTION ── -->
+  <div class="mb-3">
+    <div class="ipcr-section-header d-flex justify-content-between align-items-center">
+      <span><i class="fa-solid fa-star me-2"></i>A. CORE FUNCTIONS</span>
+      <button class="btn btn-sm btn-light no-print" onclick="addRow('coreBody')">
+        <i class="fa-solid fa-plus me-1"></i>Add Row
+      </button>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-bordered mb-0" id="coreTable">
+        <thead class="table-light" style="font-size:0.8rem">
+          <tr>
+            <th style="min-width:160px">MFO / PAP</th>
+            <th style="min-width:220px">Success Indicator</th>
+            <th style="min-width:100px">Target</th>
+            <th style="min-width:100px">Budget (₱)</th>
+            <th style="min-width:90px">Measure</th>
+            <th style="min-width:90px">Avg. Rating</th>
+            <th class="no-print text-center" style="width:50px">Del</th>
+          </tr>
+        </thead>
+        <tbody id="coreBody"></tbody>
+        <tfoot>
+          <tr class="avg-row">
+            <td colspan="5" class="text-end fw-600" style="font-size:0.83rem">Average Rating — Core Function:</td>
+            <td id="coreAvg" class="text-center fw-700">—</td>
+            <td class="no-print"></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── B. STRATEGIC FUNCTION ── -->
+  <div class="mb-3">
+    <div class="ipcr-section-header d-flex justify-content-between align-items-center">
+      <span><i class="fa-solid fa-chess me-2"></i>B. STRATEGIC FUNCTIONS</span>
+      <button class="btn btn-sm btn-light no-print" onclick="addRow('strategicBody')">
+        <i class="fa-solid fa-plus me-1"></i>Add Row
+      </button>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-bordered mb-0" id="strategicTable">
+        <thead class="table-light" style="font-size:0.8rem">
+          <tr>
+            <th style="min-width:160px">MFO / PAP</th>
+            <th style="min-width:220px">Success Indicator</th>
+            <th style="min-width:100px">Target</th>
+            <th style="min-width:100px">Budget (₱)</th>
+            <th style="min-width:90px">Measure</th>
+            <th style="min-width:90px">Avg. Rating</th>
+            <th class="no-print text-center" style="width:50px">Del</th>
+          </tr>
+        </thead>
+        <tbody id="strategicBody"></tbody>
+        <tfoot>
+          <tr class="avg-row">
+            <td colspan="5" class="text-end fw-600" style="font-size:0.83rem">Average Rating — Strategic Function:</td>
+            <td id="strategicAvg" class="text-center fw-700">—</td>
+            <td class="no-print"></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── C. SUPPORT FUNCTION ── -->
+  <div class="mb-3">
+    <div class="ipcr-section-header d-flex justify-content-between align-items-center">
+      <span><i class="fa-solid fa-hands-helping me-2"></i>C. SUPPORT FUNCTIONS</span>
+      <button class="btn btn-sm btn-light no-print" onclick="addRow('supportBody')">
+        <i class="fa-solid fa-plus me-1"></i>Add Row
+      </button>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-bordered mb-0" id="supportTable">
+        <thead class="table-light" style="font-size:0.8rem">
+          <tr>
+            <th style="min-width:160px">MFO / PAP</th>
+            <th style="min-width:220px">Success Indicator</th>
+            <th style="min-width:100px">Target</th>
+            <th style="min-width:100px">Budget (₱)</th>
+            <th style="min-width:90px">Measure</th>
+            <th style="min-width:90px">Avg. Rating</th>
+            <th class="no-print text-center" style="width:50px">Del</th>
+          </tr>
+        </thead>
+        <tbody id="supportBody"></tbody>
+        <tfoot>
+          <tr class="avg-row">
+            <td colspan="5" class="text-end fw-600" style="font-size:0.83rem">Average Rating — Support Function:</td>
+            <td id="supportAvg" class="text-center fw-700">—</td>
+            <td class="no-print"></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </div>
+
+  <!-- Final Average Rating -->
+  <div class="card mb-4 border-primary">
+    <div class="card-body d-flex align-items-center justify-content-between flex-wrap gap-2" style="background:#FFF4E6">
+      <div>
+        <h6 class="mb-0 fw-700"><i class="fa-solid fa-calculator me-2 text-primary"></i>Final Average Rating</h6>
+        <small class="text-muted">Computed from Core, Strategic, and Support average ratings</small>
+      </div>
+      <div class="d-flex align-items-center gap-3">
+        <span class="fs-4 fw-700 text-primary" id="finalAvgDisplay">—</span>
+        <span id="finalRatingLabel" class="rating-badge bg-secondary text-white">Not yet rated</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Signature Block (print) -->
+  <div class="card mb-4">
+    <div class="card-header"><h6 class="mb-0"><i class="fa-solid fa-pen-nib me-2 text-primary"></i>Certification & Signatures</h6></div>
+    <div class="card-body">
+      <p style="font-size:0.83rem" class="mb-3">I hereby commit to deliver and agree to be rated on the attainment of the following targets in accordance with the indicated measures for the current rating period.</p>
+      <div class="row g-4">
+        <div class="col-md-4 text-center">
+          <div style="border-bottom:1px solid #333;margin-bottom:4px;height:48px"></div>
+          <strong style="font-size:0.82rem" id="sigName"></strong><br>
+          <small class="text-muted">Campus Director, CSU-Piat</small>
+        </div>
+        <div class="col-md-4 text-center">
+          <div style="border-bottom:1px solid #333;margin-bottom:4px;height:48px"></div>
+          <strong style="font-size:0.82rem">Immediate Supervisor</strong><br>
+          <small class="text-muted">VP for Academic Affairs / University President</small>
+        </div>
+        <div class="col-md-4 text-center">
+          <div style="border-bottom:1px solid #333;margin-bottom:4px;height:48px"></div>
+          <strong style="font-size:0.82rem">Date</strong><br>
+          <small class="text-muted">Date Signed</small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="d-flex gap-2 justify-content-end no-print mb-4 flex-wrap">
+    <button class="btn btn-outline-secondary" onclick="window.print()"><i class="fa-solid fa-print me-1"></i>Print Preview</button>
+    <button class="btn btn-outline-danger" onclick="resetForm()"><i class="fa-solid fa-rotate-left me-1"></i>Reset</button>
+    <button class="btn btn-primary" onclick="confirmOPCR()"><i class="fa-solid fa-check me-1"></i>Confirm & Save</button>
+  </div>
+
+</main>
+
+<div id="footer-container"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="../../data/mock-data.js"></script>
+<script src="../../assets/js/auth.js"></script>
+<script src="../../assets/js/components.js"></script>
+<script>
+  const session = requireAuth(['superadmin']);
+  initLayout('superadmin', 'set-target', [{ label: 'Set Target (OPCR)' }]);
+
+  const STORAGE_KEY = 'csu_piat_superadmin_opcr';
+
+  // Pre-fill header
+  document.getElementById('opcrOffice').value = 'Office of the Campus Director — CSU Piat';
+  document.getElementById('opcrName').value = session.name;
+  document.getElementById('opcrPosition').value = session.position || 'Campus Director';
+  document.getElementById('opcrDate').value = new Date().toISOString().split('T')[0];
+  document.getElementById('sigName').textContent = session.name;
+
+  // Default OPCR rows for Campus Director (institutional-level)
+  const DEFAULT_CORE = [
+    { mfo: 'Instruction', successIndicator: 'At least 90% of teaching loads properly distributed and monitored per semester', target: '90%', budget: '0', measure: 'Q/T', rating: '' },
+    { mfo: 'Instruction', successIndicator: '100% of faculty with complete and submitted course syllabi by Week 2 of each semester', target: '100%', budget: '0', measure: 'Q/T', rating: '' },
+    { mfo: 'Research', successIndicator: 'At least 5 completed and documented research outputs published or presented per year', target: '5', budget: '150000', measure: 'Q/Qn', rating: '' },
+    { mfo: 'Research', successIndicator: 'At least 80% of ongoing research projects with completed monitoring reports', target: '80%', budget: '0', measure: 'Q/T', rating: '' },
+    { mfo: 'Extension', successIndicator: 'At least 3 community extension programs implemented per semester with documented beneficiaries', target: '3', budget: '80000', measure: 'Q/Qn/E', rating: '' },
+    { mfo: 'Extension', successIndicator: '100% of extension programs with submitted Terminal Reports within 15 days after completion', target: '100%', budget: '0', measure: 'T', rating: '' },
+    { mfo: 'Production', successIndicator: 'At least 2 production or income-generating projects maintained or established within the campus', target: '2', budget: '50000', measure: 'Q/Qn', rating: '' }
+  ];
+
+  const DEFAULT_STRATEGIC = [
+    { mfo: 'AACCUP Accreditation', successIndicator: 'Achieve at least Level III accreditation status for targeted programs by 2nd Semester 2026', target: 'Level III', budget: '200000', measure: 'Q', rating: '' },
+    { mfo: 'Faculty Development', successIndicator: 'At least 70% of teaching personnel pursuing graduate studies or with relevant professional training', target: '70%', budget: '100000', measure: 'Q/Qn', rating: '' },
+    { mfo: 'Enrollment Growth', successIndicator: 'Achieve at least 5% increase in total student enrollment compared to previous year', target: '5%', budget: '30000', measure: 'Qn/E', rating: '' },
+    { mfo: 'Linkages & MOAs', successIndicator: 'At least 3 new Memoranda of Agreement (MOAs) signed with LGUs, NGOs, or industry partners', target: '3', budget: '10000', measure: 'Q/Qn', rating: '' },
+    { mfo: 'Gender & Development', successIndicator: 'GAD Plan and Budget submitted and approved; at least 2 GAD activities conducted per semester', target: '100%', budget: '40000', measure: 'Q/T', rating: '' }
+  ];
+
+  const DEFAULT_SUPPORT = [
+    { mfo: 'Administrative Reports', successIndicator: '100% of required reports (CHED, DepEd, CSC, DBM) submitted on or before deadline', target: '100%', budget: '0', measure: 'T/Q', rating: '' },
+    { mfo: 'Meetings & Committees', successIndicator: 'At least 2 Administrative Council meetings conducted per month with documented minutes', target: '2/month', budget: '0', measure: 'T/Qn', rating: '' },
+    { mfo: 'Budget & Finance', successIndicator: '100% of financial reports and liquidations submitted within 5 working days of completion', target: '100%', budget: '0', measure: 'T/Q', rating: '' },
+    { mfo: 'HR & Personnel', successIndicator: 'All personnel IPCR/OPCR forms reviewed and endorsed within 10 days of receipt', target: '100%', budget: '0', measure: 'T/Q', rating: '' },
+    { mfo: 'Campus Maintenance', successIndicator: 'At least 90% of maintenance requests acted upon within 3 working days', target: '90%', budget: '120000', measure: 'T/E', rating: '' }
+  ];
+
+  // Load saved or defaults
+  let isReadOnly = false;
+  const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
+
+  if (saved) {
+    document.getElementById('opcrPeriod').value = saved.coveredPeriod || '';
+    document.getElementById('opcrDate').value = saved.date || new Date().toISOString().split('T')[0];
+    document.getElementById('opcrSemester').value = saved.semester || '1st Semester';
+    loadRows('coreBody', saved.coreFunction || DEFAULT_CORE);
+    loadRows('strategicBody', saved.strategicFunction || DEFAULT_STRATEGIC);
+    loadRows('supportBody', saved.supportFunction || DEFAULT_SUPPORT);
+    setStatus(saved.status || 'draft');
+    document.getElementById('lastSaved').textContent = saved.savedAt ? new Date(saved.savedAt).toLocaleString('en-PH') : 'Not yet saved';
+    if (saved.status === 'confirmed') setReadOnly(true);
+  } else {
+    loadRows('coreBody', DEFAULT_CORE);
+    loadRows('strategicBody', DEFAULT_STRATEGIC);
+    loadRows('supportBody', DEFAULT_SUPPORT);
+    setStatus('draft');
+  }
+  updatePeriodSummary();
+  computeAverages();
+
+  function loadRows(tbodyId, items) {
+    const tbody = document.getElementById(tbodyId);
+    tbody.innerHTML = '';
+    items.forEach(item => tbody.appendChild(createRow(item)));
+  }
+
+  function createRow(data = {}) {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><input type="text" class="form-control form-control-sm" value="${esc(data.mfo)}" placeholder="e.g. Instruction"></td>
+      <td><input type="text" class="form-control form-control-sm" value="${esc(data.successIndicator)}" placeholder="Specific, measurable target..."></td>
+      <td><input type="text" class="form-control form-control-sm text-center" style="width:90px" value="${esc(data.target)}" placeholder="90%"></td>
+      <td><input type="number" class="form-control form-control-sm text-end" style="width:90px" value="${data.budget || 0}" min="0" placeholder="0"></td>
+      <td><input type="text" class="form-control form-control-sm text-center" style="width:80px" value="${esc(data.measure)}" placeholder="Q/T"></td>
+      <td><input type="number" class="form-control form-control-sm text-center rating-input" style="width:80px" value="${data.rating || ''}" min="1" max="5" step="0.01" placeholder="1–5" oninput="computeAverages()"></td>
+      <td class="no-print text-center">
+        <button class="btn btn-outline-danger btn-sm px-2" onclick="confirmModal('Remove this row?','Delete Row',()=>{ this.closest('tr').remove(); computeAverages(); })" title="Delete row">
+          <i class="fa-solid fa-trash" style="font-size:0.7rem"></i>
+        </button>
+      </td>`;
+    return tr;
+  }
+
+  function esc(val) {
+    return (val || '').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  function addRow(tbodyId) {
+    document.getElementById(tbodyId).appendChild(createRow());
+  }
+
+  function getRows(tbodyId) {
+    return Array.from(document.getElementById(tbodyId).querySelectorAll('tr')).map(tr => {
+      const inp = tr.querySelectorAll('input');
+      return { mfo: inp[0].value, successIndicator: inp[1].value, target: inp[2].value, budget: inp[3].value, measure: inp[4].value, rating: inp[5].value };
+    });
+  }
+
+  function computeAverages() {
+    ['core', 'strategic', 'support'].forEach(section => {
+      const inputs = document.querySelectorAll(`#${section}Body .rating-input`);
+      const vals = Array.from(inputs).map(i => parseFloat(i.value)).filter(v => !isNaN(v) && v >= 1 && v <= 5);
+      const avg = vals.length ? (vals.reduce((a, b) => a + b, 0) / vals.length) : null;
+      document.getElementById(`${section}Avg`).textContent = avg !== null ? avg.toFixed(2) : '—';
+    });
+
+    // Final average
+    const sectionAvgs = ['core', 'strategic', 'support'].map(s => {
+      const t = document.getElementById(`${s}Avg`).textContent;
+      return t !== '—' ? parseFloat(t) : null;
+    }).filter(v => v !== null);
+    if (sectionAvgs.length) {
+      const finalAvg = sectionAvgs.reduce((a, b) => a + b, 0) / sectionAvgs.length;
+      document.getElementById('finalAvgDisplay').textContent = finalAvg.toFixed(2);
+      document.getElementById('summaryRating').textContent = finalAvg.toFixed(2);
+      const label = document.getElementById('finalRatingLabel');
+      if (finalAvg >= 4.5) { label.className = 'rating-badge bg-success text-white'; label.textContent = 'Outstanding'; }
+      else if (finalAvg >= 3.5) { label.className = 'rating-badge text-white'; label.style.background = '#E85C0D'; label.textContent = 'Very Satisfactory'; }
+      else if (finalAvg >= 2.5) { label.className = 'rating-badge text-dark'; label.style.background = '#FABC3F'; label.textContent = 'Satisfactory'; }
+      else if (finalAvg >= 1.5) { label.className = 'rating-badge bg-danger text-white'; label.textContent = 'Unsatisfactory'; }
+      else { label.className = 'rating-badge bg-dark text-white'; label.textContent = 'Poor'; }
+    } else {
+      document.getElementById('finalAvgDisplay').textContent = '—';
+      document.getElementById('summaryRating').textContent = '—';
+      document.getElementById('finalRatingLabel').className = 'rating-badge bg-secondary text-white';
+      document.getElementById('finalRatingLabel').textContent = 'Not yet rated';
+      document.getElementById('finalRatingLabel').style.background = '';
+    }
+  }
+
+  function updatePeriodSummary() {
+    const p = document.getElementById('opcrPeriod').value;
+    document.getElementById('summaryPeriod').textContent = p || '—';
+  }
+  document.getElementById('opcrPeriod').addEventListener('input', updatePeriodSummary);
+
+  function setStatus(status) {
+    const badge = document.getElementById('statusBadge');
+    const map = {
+      draft: ['bg-secondary', 'Draft'],
+      pending: ['bg-warning text-dark', 'Pending Approval'],
+      confirmed: ['bg-success', 'Confirmed'],
+      disapproved: ['bg-danger', 'Disapproved']
+    };
+    const [cls, label] = map[status] || ['bg-secondary', status];
+    badge.className = `badge ${cls} ms-1`;
+    badge.textContent = label;
+  }
+
+  function setReadOnly(on) {
+    isReadOnly = on;
+    const allInputs = document.querySelectorAll('#coreBody input, #strategicBody input, #supportBody input, #opcrPeriod, #opcrDate, #opcrSemester');
+    allInputs.forEach(i => i.disabled = on);
+    document.querySelectorAll('.no-print button').forEach(b => {
+      if (b.id !== 'editBtn' && b.id !== 'confirmBtn') b.disabled = on;
+    });
+    document.getElementById('editBtn').style.display = on ? 'inline-flex' : 'none';
+    document.getElementById('confirmBtn').style.display = on ? 'none' : 'inline-flex';
+  }
+
+  function enableEdit() {
+    confirmModal('Allow editing of this confirmed OPCR? Status will revert to Draft.', 'Enable Edit', () => {
+      setReadOnly(false);
+      setStatus('draft');
+      showToast('OPCR is now editable. Don\'t forget to re-confirm after changes.', 'info');
+    });
+  }
+
+  function confirmOPCR() {
+    const period = document.getElementById('opcrPeriod').value.trim();
+    if (!period) { showToast('Please enter the Covered Period before saving.', 'warning'); return; }
+    const coreRows = getRows('coreBody');
+    if (coreRows.length === 0) { showToast('At least one Core Function row is required.', 'warning'); return; }
+
+    const formData = {
+      id: saved?.id || 'sa-opcr-' + Date.now(),
+      adminId: session.id,
+      adminName: session.name,
+      office: document.getElementById('opcrOffice').value,
+      position: document.getElementById('opcrPosition').value,
+      coveredPeriod: period,
+      date: document.getElementById('opcrDate').value,
+      semester: document.getElementById('opcrSemester').value,
+      status: 'confirmed',
+      overallRating: parseFloat(document.getElementById('finalAvgDisplay').textContent) || 0,
+      coreFunction: coreRows,
+      strategicFunction: getRows('strategicBody'),
+      supportFunction: getRows('supportBody'),
+      savedAt: new Date().toISOString()
+    };
+
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(formData));
+
+    // Also persist to main opcr_forms so it appears in Reports
+    const mainOpcrs = getMockOPCR();
+    const mainIdx = mainOpcrs.findIndex(o => o.adminId === session.id);
+    const mainRecord = {
+      id: formData.id, adminId: session.id, adminName: session.name,
+      department: document.getElementById('opcrOffice').value,
+      coveredPeriod: period, date: document.getElementById('opcrDate').value,
+      status: 'approved', overallRating: parseFloat(document.getElementById('finalAvgDisplay').textContent) || 0,
+      coreFunction: coreRows, strategicFunction: getRows('strategicBody'), supportFunction: getRows('supportBody')
+    };
+    if (mainIdx !== -1) mainOpcrs[mainIdx] = mainRecord; else mainOpcrs.push(mainRecord);
+    localStorage.setItem('csu_piat_opcr_forms', JSON.stringify(mainOpcrs));
+
+    setStatus('confirmed');
+    setReadOnly(true);
+    document.getElementById('lastSaved').textContent = new Date().toLocaleString('en-PH');
+    document.getElementById('summaryPeriod').textContent = period;
+    addLog(session.id, 'Confirmed Institutional OPCR for ' + period);
+    showToast('OPCR confirmed and saved successfully!', 'success');
+  }
+
+  function resetForm() {
+    confirmModal('Reset the form? All current entries will be replaced with defaults.', 'Reset OPCR', () => {
+      localStorage.removeItem(STORAGE_KEY);
+      location.reload();
+    });
+  }
+
+  // Init display
+  document.getElementById('editBtn').style.display = 'none';
+</script>
+</body>
+</html>
