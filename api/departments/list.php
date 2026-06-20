@@ -5,5 +5,5 @@ header('Content-Type: application/json');
 requireAuth();
 $db = getDB();
 
-$stmt = $db->query('SELECT id, name, code FROM departments ORDER BY name');
+$stmt = $db->query('SELECT id, name FROM departments WHERE is_active = 1 ORDER BY name');
 echo json_encode(['success' => true, 'departments' => $stmt->fetchAll()]);
