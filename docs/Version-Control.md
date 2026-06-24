@@ -67,21 +67,21 @@ Tags are lightweight pointers to specific commits. Even as `main` moves forward,
 
 | Version | Tag Name | Commit Hash |
 |---------|----------|-------------|
-| v1.00 | v1.00 | |
-| v1.01 | v1.01 | |
-| v1.02 | v1.02 | |
-| v1.03 | v1.03 | |
-| v1.04 | v1.04 | |
-| v1.05 | v1.05 | |
-| v1.06 | v1.06 | |
-| v1.07 | v1.07 | |
-| v1.08 | v1.08 | |
-| v1.09 | v1.09 | |
-| v1.10 | v1.10 | |
-| v1.11 | v1.11 | |
-| v1.12 | v1.12 | |
-| v1.13 | v1.13 | |
-| v1.14 | v1.14 | |
+| v1.00 | v1.00 | 8b747bdb591be583b1877ff9bb9222cde068e27c |
+| v1.01 | v1.01 | 2a9b476f658e774a927df80c665b7c02af06f83a |
+| v1.02 | v1.02 | 344a2fdeb4ffd63116689a5c739dc011bdb8ebf7 |
+| v1.03 | v1.03 | 2deb2d86ed6e93816e7d398f358404ffd0fe6a05 |
+| v1.04 | v1.04 | 0350e4eb4e0080649105575850133366d7599449 |
+| v1.05 | v1.05 | 358d809d27469cc94d82f94aaac4e482c97cc1c2 |
+| v1.06 | v1.06 | 4913c2aea25e944ce436b12be187759a0481689c |
+| v1.07 | v1.07 | 4e7a1a84fa36bd17e19b2d0f047a4ac6ca9e5ee5 |
+| v1.08 | v1.08 | 72ece51518a1c4560ad93ef0bd56530cb31f2048 |
+| v1.09 | v1.09 | f21096a845740dcde6924835573e4b23b2f94bb5 |
+| v1.10 | v1.10 | 7f3e54a6eaa536a834a478eecb3914a1b40af508 |
+| v1.11 | v1.11 | d30d1599f79c0b9781730f1eac9ccd4603e7101b |
+| v1.12 | v1.12 | f0690e2d862969b211a61ee7fc3e2a5e4a18a336 |
+| v1.13 | v1.13 | fd11e3897e1da2a9f82d7d8c6b9f1b74cd6bf386 |
+| v1.14 | v1.14 | da183858bd34b7b9a1b40bff46c10a019f9add8d |
 
 ---
 
