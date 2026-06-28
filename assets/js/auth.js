@@ -26,6 +26,8 @@ function requireAuth(allowedRoles) {
 }
 
 function logout() {
+  sessionStorage.removeItem('csu_login_attempts');
+  sessionStorage.removeItem('csu_lockout_until');
   window.location.href = getBasePath() + 'api/auth/logout.php';
 }
 

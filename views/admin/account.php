@@ -30,6 +30,7 @@ $user = requireAuth(['admin']);
   <ul class="nav nav-tabs mb-3" id="accountTabs">
     <li class="nav-item"><a class="nav-link active" href="#profile" data-bs-toggle="tab"><i class="fa-solid fa-user me-2"></i>My Profile</a></li>
     <li class="nav-item"><a class="nav-link" href="#changepw" data-bs-toggle="tab"><i class="fa-solid fa-lock me-2"></i>Change Password</a></li>
+    <li class="nav-item"><a class="nav-link" href="#securityq" data-bs-toggle="tab"><i class="fa-solid fa-shield-halved me-2"></i>Security Question</a></li>
     <li class="nav-item"><a class="nav-link" href="#logs" data-bs-toggle="tab"><i class="fa-solid fa-list-check me-2"></i>Activity Logs</a></li>
   </ul>
 
@@ -130,6 +131,47 @@ $user = requireAuth(['admin']);
       </div>
     </div>
 
+    <!-- Security Question Tab -->
+    <div class="tab-pane fade" id="securityq">
+      <div class="card" style="max-width:480px">
+        <div class="card-header"><h6><i class="fa-solid fa-shield-halved me-2"></i>Update Security Question</h6></div>
+        <div class="card-body">
+          <div class="alert alert-info py-2 mb-3" style="font-size:0.85rem"><i class="fa-solid fa-circle-info me-1"></i>Your security question is used to recover your account if you forget your password.</div>
+          <div class="mb-3">
+            <label class="form-label">Current Security Question</label>
+            <input type="text" class="form-control bg-light" id="currentSecurityQ" readonly placeholder="Loading...">
+          </div>
+          <form id="securityQForm" novalidate>
+            <div class="mb-3">
+              <label class="form-label">Current Answer <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" id="sqCurrentAnswer" placeholder="Enter your current answer">
+            </div>
+            <hr>
+            <div class="mb-3">
+              <label class="form-label">New Security Question <span class="text-danger">*</span></label>
+              <select class="form-select" id="sqNewQuestion">
+                <option value="">-- Select a question --</option>
+                <option>What is your mother's maiden name?</option>
+                <option>What city were you born in?</option>
+                <option>What is your pet's name?</option>
+                <option>What was the name of your first school?</option>
+                <option>What is your favorite book?</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">New Answer <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" id="sqNewAnswer" placeholder="Enter new answer">
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Confirm New Answer <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" id="sqConfirmAnswer" placeholder="Re-enter new answer">
+            </div>
+            <button type="submit" class="btn btn-primary btn-sm w-100"><i class="fa-solid fa-save me-1"></i>Update Security Question</button>
+          </form>
+        </div>
+      </div>
+    </div>
+
     <!-- Activity Logs Tab -->
     <div class="tab-pane fade" id="logs">
       <div class="table-wrapper">
@@ -215,6 +257,31 @@ $user = requireAuth(['admin']);
       logs.map((log, i) => `<tr><td>${i+1}</td><td style="font-size:0.83rem">${log.date}</td><td style="font-size:0.83rem">${log.time}</td><td style="font-size:0.83rem">${log.activity}</td></tr>`).join('');
   }
   document.querySelector('a[href="#logs"]').addEventListener('click', loadLogs, { once: true });
+
+  document.querySelector('a[href="#securityq"]').addEventListener('click', async function() {
+    const res = await fetch(API_BASE + 'user/get-security-question.php', { credentials: 'include' }).then(r => r.json()).catch(() => null);
+    document.getElementById('currentSecurityQ').value = res?.security_question || 'Not set';
+  }, { once: true });
+
+  document.getElementById('securityQForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const curAns  = document.getElementById('sqCurrentAnswer').value.trim();
+    const newQ    = document.getElementById('sqNewQuestion').value;
+    const newAns  = document.getElementById('sqNewAnswer').value.trim();
+    const confAns = document.getElementById('sqConfirmAnswer').value.trim();
+    if (!curAns || !newQ || !newAns || !confAns) { showToast('Please fill in all fields.', 'warning'); return; }
+    if (newAns !== confAns) { showToast('New answers do not match.', 'danger'); return; }
+    const res = await fetch(API_BASE + 'user/update-security-question.php', {
+      method: 'POST', credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ current_answer: curAns, security_question: newQ, new_answer: newAns, confirm_answer: confAns })
+    }).then(r => r.json()).catch(() => null);
+    if (res?.success) {
+      showToast('Security question updated successfully!', 'success');
+      document.getElementById('currentSecurityQ').value = newQ;
+      this.reset();
+    } else showToast(res?.error || 'Failed to update security question.', 'danger');
+  });
 
   function togglePw(id, btn) {
     const input = document.getElementById(id); const icon = btn.querySelector('i');

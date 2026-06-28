@@ -65,10 +65,17 @@ if (isLoggedIn()) {
       <!-- Step 2: Security Question -->
       <div class="step-card" id="step2">
         <h6 class="fw-700 mb-1">Step 2: Answer Security Question</h6>
-        <p class="text-muted mb-3" style="font-size:0.83rem">Answer your security question to verify your identity.</p>
+        <p class="text-muted mb-3" style="font-size:0.83rem">Select the security question you registered with and enter your answer.</p>
         <div class="mb-3">
           <label class="form-label">Security Question</label>
-          <input type="text" class="form-control bg-light" id="fpQuestion" readonly>
+          <select class="form-select" id="fpQuestion">
+            <option value="">-- Select your security question --</option>
+            <option>What is your mother's maiden name?</option>
+            <option>What city were you born in?</option>
+            <option>What is your pet's name?</option>
+            <option>What was the name of your first school?</option>
+            <option>What is your favorite book?</option>
+          </select>
         </div>
         <div class="mb-3">
           <label class="form-label">Your Answer</label>
@@ -162,7 +169,8 @@ if (isLoggedIn()) {
       const data = await res.json();
 
       if (data.success) {
-        document.getElementById('fpQuestion').value = data.security_question;
+        document.getElementById('fpQuestion').value = '';
+        document.getElementById('fpAnswer').value = '';
         goStep(2);
       } else {
         showToast(data.error, 'danger');
@@ -175,8 +183,10 @@ if (isLoggedIn()) {
   }
 
   async function step2Next() {
-    const answer = document.getElementById('fpAnswer').value.trim();
-    if (!answer) { showToast('Please answer the security question.', 'warning'); return; }
+    const question = document.getElementById('fpQuestion').value;
+    const answer   = document.getElementById('fpAnswer').value.trim();
+    if (!question) { showToast('Please select your security question.', 'warning'); return; }
+    if (!answer)   { showToast('Please enter your answer.', 'warning'); return; }
 
     const btn = document.getElementById('step2Btn');
     btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Verifying...';
@@ -185,7 +195,7 @@ if (isLoggedIn()) {
       const res = await fetch('api/auth/forgot-password.php', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ action: 'verify_answer', answer }),
+        body:    JSON.stringify({ action: 'verify_answer', question, answer }),
       });
       const data = await res.json();
 

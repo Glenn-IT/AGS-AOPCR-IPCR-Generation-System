@@ -682,7 +682,7 @@ define('DB_CHARSET', 'utf8mb4');
 | Batch IPCR approval (approve multiple at once) | Planned |
 | Profile picture upload | Planned |
 | Admin drill-down reports (click stat → filtered table) | Planned |
-
+R
 ---
 
 ## About CSU-Piat

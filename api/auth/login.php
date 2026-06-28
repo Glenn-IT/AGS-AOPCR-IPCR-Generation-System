@@ -23,18 +23,29 @@ $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
 
 // --- Rate limiting: count failed attempts in the last LOCKOUT_SECONDS ---
 $windowStart = date('Y-m-d H:i:s', time() - LOCKOUT_SECONDS);
+
+// Purge all expired attempts so stale rows never interfere with future cycles
+$db->prepare('DELETE FROM login_attempts WHERE attempted_at <= ?')->execute([$windowStart]);
 $stmt = $db->prepare(
-    'SELECT COUNT(*) FROM login_attempts WHERE username = ? AND attempted_at >= ?'
+    'SELECT COUNT(*) FROM login_attempts WHERE username = ? AND attempted_at > ?'
 );
 $stmt->execute([$username, $windowStart]);
 $attempts = (int) $stmt->fetchColumn();
 
 if ($attempts >= MAX_LOGIN_ATTEMPTS) {
+    $oldestStmt = $db->prepare(
+        'SELECT MIN(UNIX_TIMESTAMP(attempted_at)) FROM login_attempts WHERE username = ? AND attempted_at > ?'
+    );
+    $oldestStmt->execute([$username, $windowStart]);
+    $oldestTs        = (int) $oldestStmt->fetchColumn();
+    $secondsRemaining = max(1, LOCKOUT_SECONDS - (time() - $oldestTs));
+
     echo json_encode([
-        'success'  => false,
-        'error'    => 'Too many failed attempts. Account locked for ' . LOCKOUT_SECONDS . ' seconds.',
-        'locked'   => true,
-        'attempts' => $attempts,
+        'success'           => false,
+        'error'             => 'Too many failed attempts. Account locked for ' . LOCKOUT_SECONDS . ' seconds.',
+        'locked'            => true,
+        'attempts'          => $attempts,
+        'seconds_remaining' => $secondsRemaining,
     ]);
     exit;
 }
@@ -49,15 +60,29 @@ if (!$user || !password_verify($password, $user['password'])) {
     $db->prepare('INSERT INTO login_attempts (username, ip_address) VALUES (?, ?)')->execute([$username, $ip]);
 
     $remaining = MAX_LOGIN_ATTEMPTS - ($attempts + 1);
-    $msg = $remaining > 0
-        ? "Invalid username or password. {$remaining} attempt(s) remaining."
-        : 'Too many failed attempts. Account locked for ' . LOCKOUT_SECONDS . ' seconds.';
+    $nowLocked = $remaining <= 0;
+    $msg = $nowLocked
+        ? 'Too many failed attempts. Account locked for ' . LOCKOUT_SECONDS . ' seconds.'
+        : "Invalid username or password. {$remaining} attempt(s) remaining.";
 
-    echo json_encode([
+    $payload = [
         'success'  => false,
         'error'    => $msg,
         'attempts' => $attempts + 1,
-    ]);
+    ];
+    if ($nowLocked) {
+        // Re-query oldest attempt after inserting so seconds_remaining is accurate
+        $windowNow   = date('Y-m-d H:i:s', time() - LOCKOUT_SECONDS);
+        $oldestStmt2 = $db->prepare(
+            'SELECT MIN(UNIX_TIMESTAMP(attempted_at)) FROM login_attempts WHERE username = ? AND attempted_at > ?'
+        );
+        $oldestStmt2->execute([$username, $windowNow]);
+        $oldestTs2              = (int) $oldestStmt2->fetchColumn();
+        $secsLeft               = LOCKOUT_SECONDS - (time() - $oldestTs2);
+        $payload['locked']            = true;
+        $payload['seconds_remaining'] = max(1, $secsLeft);
+    }
+    echo json_encode($payload);
     exit;
 }
 

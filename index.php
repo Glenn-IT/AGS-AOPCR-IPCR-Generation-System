@@ -83,15 +83,6 @@ if (isLoggedIn()) {
         <a href="register.php" class="text-primary text-decoration-none ms-1" style="font-size:0.82rem;font-weight:600">Register here</a>
       </div>
 
-      <hr class="my-3">
-      <div class="text-center">
-        <small class="text-muted d-block mb-2" style="font-size:0.75rem">Demo Credentials</small>
-        <div class="d-flex gap-2 justify-content-center flex-wrap">
-          <button class="btn btn-outline-primary btn-sm" onclick="fillDemo('superadmin','admin123')">Super Admin</button>
-          <button class="btn btn-outline-success btn-sm" onclick="fillDemo('admin','admin123')">Admin</button>
-          <button class="btn btn-outline-secondary btn-sm" onclick="fillDemo('faculty','faculty123')">Faculty</button>
-        </div>
-      </div>
     </div>
   </div>
 </div>
@@ -101,6 +92,7 @@ if (isLoggedIn()) {
 <script>
   const MAX_ATTEMPTS = 3;
   let localAttempts = parseInt(sessionStorage.getItem('csu_login_attempts') || '0');
+  let countdownTimer = null;
 
   // Remember Me
   const remembered = localStorage.getItem('csu_piat_remember');
@@ -123,27 +115,77 @@ if (isLoggedIn()) {
     }
   }
 
-  updateAttemptsBar(localAttempts);
+  const LOCKOUT_SECS = 30;
+  const LOCKOUT_BUFFER_MS = 2000; // silent buffer after display hits 0
+
+  function startLockoutCountdown(lockUntilMs) {
+    const btn       = document.getElementById('loginBtn');
+    const lockAlert = document.getElementById('lockAlert');
+    const lockMsg   = document.getElementById('lockMsg');
+
+    clearInterval(countdownTimer);
+    btn.disabled = true;
+    lockAlert.classList.remove('d-none');
+
+    function tick() {
+      const msLeft = lockUntilMs - Date.now();
+      if (msLeft <= 0) {
+        clearInterval(countdownTimer);
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-right-to-bracket me-2"></i>Sign In';
+        lockAlert.classList.add('d-none');
+        sessionStorage.removeItem('csu_lockout_until');
+        sessionStorage.removeItem('csu_login_attempts');
+        localAttempts = 0;
+        document.getElementById('attemptsBar').classList.add('d-none');
+        return;
+      }
+      // Display counts from LOCKOUT_SECS to 1; buffer is hidden from the user
+      const displaySecs = Math.max(1, Math.ceil((msLeft - LOCKOUT_BUFFER_MS) / 1000));
+      lockMsg.textContent = 'Too many failed attempts. Please wait ' + displaySecs + ' second(s) before trying again.';
+      btn.innerHTML = '<i class="fa-solid fa-clock me-2"></i>Locked (' + displaySecs + 's)';
+    }
+
+    tick();
+    countdownTimer = setInterval(tick, 1000);
+  }
+
+  // On page load: restore lockout countdown if still active
+  const savedLockUntil = parseInt(sessionStorage.getItem('csu_lockout_until') || '0');
+  if (savedLockUntil && Date.now() < savedLockUntil) {
+    updateAttemptsBar(MAX_ATTEMPTS);
+    startLockoutCountdown(savedLockUntil);
+  } else {
+    if (savedLockUntil) {
+      sessionStorage.removeItem('csu_lockout_until');
+      sessionStorage.removeItem('csu_login_attempts');
+      localAttempts = 0;
+    }
+    updateAttemptsBar(localAttempts);
+  }
 
   document.getElementById('loginForm').addEventListener('submit', async function(e) {
     e.preventDefault();
-    const username = document.getElementById('username').value.trim();
-    const password = document.getElementById('password').value;
+    const username   = document.getElementById('username').value.trim();
+    const password   = document.getElementById('password').value;
     const rememberMe = document.getElementById('rememberMe').checked;
-    const btn = document.getElementById('loginBtn');
-    const lockAlert = document.getElementById('lockAlert');
+    const btn        = document.getElementById('loginBtn');
+    const lockAlert  = document.getElementById('lockAlert');
 
     if (!username || !password) {
       showToast('Please enter your username and password.', 'warning');
       return;
     }
 
+    // Prevent submit while locked
+    if (sessionStorage.getItem('csu_lockout_until') && Date.now() < parseInt(sessionStorage.getItem('csu_lockout_until'))) return;
+
     btn.disabled = true;
     btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Signing in...';
     lockAlert.classList.add('d-none');
 
     try {
-      const res = await fetch('api/auth/login.php', {
+      const res  = await fetch('api/auth/login.php', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
         body:    JSON.stringify({ username, password }),
@@ -152,6 +194,7 @@ if (isLoggedIn()) {
 
       if (data.success) {
         sessionStorage.removeItem('csu_login_attempts');
+        sessionStorage.removeItem('csu_lockout_until');
         if (rememberMe) localStorage.setItem('csu_piat_remember', username);
         else localStorage.removeItem('csu_piat_remember');
 
@@ -167,10 +210,18 @@ if (isLoggedIn()) {
       } else {
         btn.disabled = false;
         btn.innerHTML = '<i class="fa-solid fa-right-to-bracket me-2"></i>Sign In';
-        lockAlert.classList.remove('d-none');
-        document.getElementById('lockMsg').textContent = data.error;
 
-        if (!data.locked) {
+        if (data.locked) {
+          // Always lock for exactly LOCKOUT_SECS from now (+ hidden buffer)
+          const lockUntilMs = Date.now() + LOCKOUT_SECS * 1000 + LOCKOUT_BUFFER_MS;
+          sessionStorage.setItem('csu_lockout_until', String(lockUntilMs));
+          sessionStorage.setItem('csu_login_attempts', String(MAX_ATTEMPTS));
+          localAttempts = MAX_ATTEMPTS;
+          updateAttemptsBar(MAX_ATTEMPTS);
+          startLockoutCountdown(lockUntilMs);
+        } else {
+          lockAlert.classList.remove('d-none');
+          document.getElementById('lockMsg').textContent = data.error;
           localAttempts = data.attempts || (localAttempts + 1);
           sessionStorage.setItem('csu_login_attempts', String(localAttempts));
           updateAttemptsBar(localAttempts);
@@ -183,10 +234,7 @@ if (isLoggedIn()) {
     }
   });
 
-  function fillDemo(u, p) {
-    document.getElementById('username').value = u;
-    document.getElementById('password').value = p;
-  }
+
 </script>
 </body>
 </html>

@@ -37,10 +37,8 @@ if ($action === 'verify_username') {
     $_SESSION['fp_username'] = $username;
     unset($_SESSION['fp_verified']);
 
-    echo json_encode([
-        'success'           => true,
-        'security_question' => $user['security_question'],
-    ]);
+    // Do NOT reveal the security question to the client
+    echo json_encode(['success' => true]);
     exit;
 }
 
@@ -53,18 +51,24 @@ if ($action === 'verify_answer') {
         exit;
     }
 
-    $answer = strtolower(trim($input['answer'] ?? ''));
-    if (!$answer) {
-        echo json_encode(['success' => false, 'error' => 'Please enter your answer.']);
+    $question = trim($input['question'] ?? '');
+    $answer   = strtolower(trim($input['answer'] ?? ''));
+
+    if (!$question || !$answer) {
+        echo json_encode(['success' => false, 'error' => 'Please select a question and enter your answer.']);
         exit;
     }
 
-    $stmt = $db->prepare('SELECT security_answer FROM users WHERE username = ? LIMIT 1');
+    $stmt = $db->prepare('SELECT security_question, security_answer FROM users WHERE username = ? LIMIT 1');
     $stmt->execute([$_SESSION['fp_username']]);
     $row = $stmt->fetch();
 
-    if (!$row || !password_verify($answer, $row['security_answer'])) {
-        echo json_encode(['success' => false, 'error' => 'Incorrect answer. Please try again.']);
+    // Verify both question and answer — use same generic message to avoid revealing which is wrong
+    if (!$row
+        || $row['security_question'] !== $question
+        || !password_verify($answer, $row['security_answer'])
+    ) {
+        echo json_encode(['success' => false, 'error' => 'Incorrect security question or answer. Please try again.']);
         exit;
     }
 
