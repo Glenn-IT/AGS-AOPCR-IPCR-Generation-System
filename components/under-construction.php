@@ -1,5 +1,6 @@
 <?php
 define('CURRENT_VERSION', 'v1.00');
+$_uc_base = str_contains($_SERVER['PHP_SELF'] ?? '', '/views/') ? '../../' : '';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -77,7 +78,7 @@ define('CURRENT_VERSION', 'v1.00');
     <h1>Under Construction</h1>
     <p>This feature is not yet available in the current presentation version.<br>
        It will be unlocked in a future release.</p>
-    <a class="btn btn-logout" href="api/auth/logout.php">&#x1F512; Logout</a>
+    <a class="btn btn-logout" href="<?= $_uc_base ?>api/auth/logout.php">&#x1F512; Logout</a>
   </div>
 </body>
 </html>
