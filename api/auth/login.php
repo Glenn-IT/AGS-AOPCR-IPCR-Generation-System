@@ -21,24 +21,27 @@ if (!$username || !$password) {
 $db = getDB();
 $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
 
-// --- Rate limiting: count failed attempts in the last LOCKOUT_SECONDS ---
-$windowStart = date('Y-m-d H:i:s', time() - LOCKOUT_SECONDS);
+// --- Rate limiting: use MySQL NOW() to avoid PHP/MySQL timezone mismatch ---
+$lockoutSecs = (int) LOCKOUT_SECONDS;
 
-// Purge all expired attempts so stale rows never interfere with future cycles
-$db->prepare('DELETE FROM login_attempts WHERE attempted_at <= ?')->execute([$windowStart]);
+// Purge expired attempts using MySQL time
+$db->prepare(
+    "DELETE FROM login_attempts WHERE attempted_at <= NOW() - INTERVAL {$lockoutSecs} SECOND"
+)->execute();
+
 $stmt = $db->prepare(
-    'SELECT COUNT(*) FROM login_attempts WHERE username = ? AND attempted_at > ?'
+    "SELECT COUNT(*) FROM login_attempts WHERE username = ? AND attempted_at > NOW() - INTERVAL {$lockoutSecs} SECOND"
 );
-$stmt->execute([$username, $windowStart]);
+$stmt->execute([$username]);
 $attempts = (int) $stmt->fetchColumn();
 
 if ($attempts >= MAX_LOGIN_ATTEMPTS) {
     $oldestStmt = $db->prepare(
-        'SELECT MIN(UNIX_TIMESTAMP(attempted_at)) FROM login_attempts WHERE username = ? AND attempted_at > ?'
+        "SELECT GREATEST(0, {$lockoutSecs} - TIMESTAMPDIFF(SECOND, MIN(attempted_at), NOW()))
+         FROM login_attempts WHERE username = ? AND attempted_at > NOW() - INTERVAL {$lockoutSecs} SECOND"
     );
-    $oldestStmt->execute([$username, $windowStart]);
-    $oldestTs        = (int) $oldestStmt->fetchColumn();
-    $secondsRemaining = max(1, LOCKOUT_SECONDS - (time() - $oldestTs));
+    $oldestStmt->execute([$username]);
+    $secondsRemaining = max(1, (int) $oldestStmt->fetchColumn());
 
     echo json_encode([
         'success'           => false,
@@ -71,16 +74,13 @@ if (!$user || !password_verify($password, $user['password'])) {
         'attempts' => $attempts + 1,
     ];
     if ($nowLocked) {
-        // Re-query oldest attempt after inserting so seconds_remaining is accurate
-        $windowNow   = date('Y-m-d H:i:s', time() - LOCKOUT_SECONDS);
         $oldestStmt2 = $db->prepare(
-            'SELECT MIN(UNIX_TIMESTAMP(attempted_at)) FROM login_attempts WHERE username = ? AND attempted_at > ?'
+            "SELECT GREATEST(0, {$lockoutSecs} - TIMESTAMPDIFF(SECOND, MIN(attempted_at), NOW()))
+             FROM login_attempts WHERE username = ? AND attempted_at > NOW() - INTERVAL {$lockoutSecs} SECOND"
         );
-        $oldestStmt2->execute([$username, $windowNow]);
-        $oldestTs2              = (int) $oldestStmt2->fetchColumn();
-        $secsLeft               = LOCKOUT_SECONDS - (time() - $oldestTs2);
+        $oldestStmt2->execute([$username]);
         $payload['locked']            = true;
-        $payload['seconds_remaining'] = max(1, $secsLeft);
+        $payload['seconds_remaining'] = max(1, (int) $oldestStmt2->fetchColumn());
     }
     echo json_encode($payload);
     exit;
