@@ -66,6 +66,8 @@ define('CURRENT_VERSION', 'v1.00');
       transition: background 0.2s;
     }
     .btn:hover { background: #1d4ed8; }
+    .btn-logout { background: #dc2626; }
+    .btn-logout:hover { background: #b91c1c; }
   </style>
 </head>
 <body>
@@ -75,7 +77,7 @@ define('CURRENT_VERSION', 'v1.00');
     <h1>Under Construction</h1>
     <p>This feature is not yet available in the current presentation version.<br>
        It will be unlocked in a future release.</p>
-    <a class="btn" href="javascript:history.back()">&#8592; Go Back</a>
+    <a class="btn btn-logout" href="api/auth/logout.php">&#x1F512; Logout</a>
   </div>
 </body>
 </html>
