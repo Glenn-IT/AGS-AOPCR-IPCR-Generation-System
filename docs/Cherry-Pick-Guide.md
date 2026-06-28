@@ -163,10 +163,10 @@ The approach is not OGMS-specific. Any project where you tag demo or release sna
 **Solution:**
 
 1. Branched off `v1.00` → got the gated state with `CURRENT_VERSION = 'v1.00'`
-2. Changed only the button color, icon, href, and label in `components/under-construction.php`
-3. Committed → `fdae7cc`
-4. Re-pointed `v1.00` tag → `fdae7cc`
+2. Applied security question hardening to `forgot-password.php` + `api/auth/forgot-password.php`, login-attempts improvements to `api/auth/login.php` + `index.php`, and replaced the Go Back button with a red Logout button in `components/under-construction.php`
+3. Committed → `b821ea0`
+4. Re-pointed `v1.00` tag → `b821ea0`
 5. Back to `main`, deleted temp branch
 6. Updated hash in `Version-Control.md`
 
-Checking out `v1.00` now shows: login page only, all other pages gated, Logout button on the Under Construction card. Exactly what was needed.
+Checking out `v1.00` now shows: login page only, all other pages gated, Logout button on the Under Construction card, live lockout countdown on failed login, and security-question dropdown on forgot-password. Exactly what was needed.
