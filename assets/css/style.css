@@ -22,9 +22,8 @@
 .text-primary { color: var(--primary) !important; }
 .bg-primary { background-color: var(--primary) !important; }
 .border-primary { border-color: var(--primary) !important; }
-.nav-link.active { color: var(--primary) !important; }
 .nav-tabs .nav-link.active { border-color: var(--primary) !important; color: var(--primary) !important; }
-.nav-pills .nav-link.active { background-color: var(--primary) !important; }
+.nav-pills .nav-link.active { background-color: var(--primary) !important; color: #fff !important; }
 .dropdown-item:active { background-color: var(--primary) !important; }
 .form-check-input:checked { background-color: var(--primary) !important; border-color: var(--primary) !important; }
 
