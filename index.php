@@ -82,16 +82,6 @@ if (isLoggedIn()) {
         <span style="font-size:0.82rem;color:#888">Don't have an account?</span>
         <a href="register.php" class="text-primary text-decoration-none ms-1" style="font-size:0.82rem;font-weight:600">Register here</a>
       </div>
-
-      <hr class="my-3">
-      <div class="text-center">
-        <small class="text-muted d-block mb-2" style="font-size:0.75rem">Demo Credentials</small>
-        <div class="d-flex gap-2 justify-content-center flex-wrap">
-          <button class="btn btn-outline-primary btn-sm" onclick="fillDemo('superadmin','admin123')">Super Admin</button>
-          <button class="btn btn-outline-success btn-sm" onclick="fillDemo('admin','admin123')">Admin</button>
-          <button class="btn btn-outline-secondary btn-sm" onclick="fillDemo('faculty','faculty123')">Faculty</button>
-        </div>
-      </div>
     </div>
   </div>
 </div>
@@ -182,11 +172,6 @@ if (isLoggedIn()) {
       showToast('Server error. Make sure XAMPP is running.', 'danger');
     }
   });
-
-  function fillDemo(u, p) {
-    document.getElementById('username').value = u;
-    document.getElementById('password').value = p;
-  }
 </script>
 </body>
 </html>
