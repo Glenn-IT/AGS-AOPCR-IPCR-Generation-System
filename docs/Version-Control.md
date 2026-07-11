@@ -68,9 +68,9 @@ Tags are lightweight pointers to specific commits. Even as `main` moves forward,
 | Version | Tag Name | Commit Hash                              |
 | ------- | -------- | ---------------------------------------- |
 | v1.00   | v1.00    | f0255d8e2e49e71b7b87cffa52b2c8a13c75fc21 |
-| v1.01   | v1.01    | 2a9b476f658e774a927df80c665b7c02af06f83a |
-| v1.02   | v1.02    | 344a2fdeb4ffd63116689a5c739dc011bdb8ebf7 |
-| v1.03   | v1.03    | 2deb2d86ed6e93816e7d398f358404ffd0fe6a05 |
+| v1.01   | v1.01    | 47b95181f77e9c95c73c60f4eb8c1e9a6f461dbd |
+| v1.02   | v1.02    | 5096352dc3373157f2f3d7241f48c5e23ebf4237 |
+| v1.03   | v1.03    | 3182352c2cde39391a9ce79d61bac64fcabc58fa |
 | v1.04   | v1.04    | 0350e4eb4e0080649105575850133366d7599449 |
 | v1.05   | v1.05    | 358d809d27469cc94d82f94aaac4e482c97cc1c2 |
 | v1.06   | v1.06    | 4913c2aea25e944ce436b12be187759a0481689c |
