@@ -70,7 +70,7 @@ Tags are lightweight pointers to specific commits. Even as `main` moves forward,
 | v1.00   | v1.00    | f0255d8e2e49e71b7b87cffa52b2c8a13c75fc21 |
 | v1.01   | v1.01    | 47b95181f77e9c95c73c60f4eb8c1e9a6f461dbd |
 | v1.02   | v1.02    | 5096352dc3373157f2f3d7241f48c5e23ebf4237 |
-| v1.03   | v1.03    | 3182352c2cde39391a9ce79d61bac64fcabc58fa |
+| v1.03   | v1.03    | 67337f51800b4c7029718bab0c0b2b19de0394a4 |
 | v1.04   | v1.04    | 0350e4eb4e0080649105575850133366d7599449 |
 | v1.05   | v1.05    | 358d809d27469cc94d82f94aaac4e482c97cc1c2 |
 | v1.06   | v1.06    | 4913c2aea25e944ce436b12be187759a0481689c |
