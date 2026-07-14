@@ -73,6 +73,7 @@ try {
             <div class="input-group">
               <span class="input-group-text"><i class="fa-solid fa-lock"></i></span>
               <input type="password" class="form-control" id="regConfirmPw" placeholder="Re-enter password" required>
+              <button type="button" class="btn btn-outline-secondary" onclick="togglePw('regConfirmPw',this)"><i class="fa-solid fa-eye"></i></button>
             </div>
           </div>
           <div class="col-md-6">
