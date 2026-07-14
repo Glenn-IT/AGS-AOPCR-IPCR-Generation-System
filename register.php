@@ -94,7 +94,35 @@ try {
           </div>
           <div class="col-md-6">
             <label class="form-label">Position</label>
-            <input type="text" class="form-control" id="regPosition" placeholder="e.g. Instructor I">
+            <select class="form-select" id="regPosition">
+              <option value="">Select Position</option>
+              <optgroup label="Instructor">
+                <option>Instructor I</option>
+                <option>Instructor II</option>
+                <option>Instructor III</option>
+              </optgroup>
+              <optgroup label="Assistant Professor">
+                <option>Assistant Professor I</option>
+                <option>Assistant Professor II</option>
+                <option>Assistant Professor III</option>
+                <option>Assistant Professor IV</option>
+              </optgroup>
+              <optgroup label="Associate Professor">
+                <option>Associate Professor I</option>
+                <option>Associate Professor II</option>
+                <option>Associate Professor III</option>
+                <option>Associate Professor IV</option>
+                <option>Associate Professor V</option>
+              </optgroup>
+              <optgroup label="Professor">
+                <option>Professor I</option>
+                <option>Professor II</option>
+                <option>Professor III</option>
+                <option>Professor IV</option>
+                <option>Professor V</option>
+                <option>Professor VI</option>
+              </optgroup>
+            </select>
           </div>
           <div class="col-md-6">
             <label class="form-label">Role / Designation</label>
