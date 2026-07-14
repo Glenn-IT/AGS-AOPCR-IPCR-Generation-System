@@ -96,6 +96,7 @@ if (isLoggedIn()) {
           <div class="input-group">
             <span class="input-group-text"><i class="fa-solid fa-lock"></i></span>
             <input type="password" class="form-control" id="fpNewPw" placeholder="Enter new password">
+            <button type="button" class="btn btn-outline-secondary" onclick="togglePw('fpNewPw',this)"><i class="fa-solid fa-eye"></i></button>
           </div>
         </div>
         <div class="mb-3">
@@ -103,6 +104,7 @@ if (isLoggedIn()) {
           <div class="input-group">
             <span class="input-group-text"><i class="fa-solid fa-lock"></i></span>
             <input type="password" class="form-control" id="fpConfirmPw" placeholder="Confirm new password">
+            <button type="button" class="btn btn-outline-secondary" onclick="togglePw('fpConfirmPw',this)"><i class="fa-solid fa-eye"></i></button>
           </div>
         </div>
         <div id="pwStrength" class="mb-3 d-none">
@@ -139,6 +141,13 @@ if (isLoggedIn()) {
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script src="assets/js/components.js"></script>
 <script>
+  function togglePw(id, btn) {
+    const input = document.getElementById(id);
+    const icon = btn.querySelector('i');
+    input.type = input.type === 'password' ? 'text' : 'password';
+    icon.classList.toggle('fa-eye'); icon.classList.toggle('fa-eye-slash');
+  }
+
   function goStep(n) {
     document.querySelectorAll('.step-card').forEach(c => c.classList.remove('active'));
     document.getElementById('step' + n).classList.add('active');
