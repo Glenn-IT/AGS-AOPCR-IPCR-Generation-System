@@ -83,7 +83,7 @@ Tags are lightweight pointers to specific commits. Even as `main` moves forward,
 | v1.12   | v1.12    | f0690e2d862969b211a61ee7fc3e2a5e4a18a336 |
 | v1.13   | v1.13    | fd11e3897e1da2a9f82d7d8c6b9f1b74cd6bf386 |
 | v1.14   | v1.14    | da183858bd34b7b9a1b40bff46c10a019f9add8d |
-| v2.00   | v2.00    | (pending — filled in after commit)       |
+| v2.00   | v2.00    | 2562095807d580c37c4d0fcfc55b4ee0333e9321 |
 
 ---
 
