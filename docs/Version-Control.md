@@ -20,6 +20,7 @@
 | v1.13   | User: Evidence Upload                     | views/users/evidence.php                                               | 1 remaining             |
 | v1.14   | User: Account (Profile) — Full System     | views/users/account.php                                                | None — system complete  |
 | v2.00   | Custom Snapshot: Auth + SuperAdmin Dashboard + My Profile | index.php, register.php, forgot-password.php, views/superadmin/dashboard.php, views/superadmin/account.php | All other 17 views/\* pages re-gated |
+| v3.00   | Custom Snapshot: + SuperAdmin Accounts, Admin Dashboard/Profile, Faculty Dashboard/Profile | v2.00 pages + views/superadmin/accounts.php, views/admin/dashboard.php, views/admin/account.php, views/users/dashboard.php, views/users/account.php | Remaining 12 views/\* pages |
 
 ---
 
@@ -84,6 +85,7 @@ Tags are lightweight pointers to specific commits. Even as `main` moves forward,
 | v1.13   | v1.13    | fd11e3897e1da2a9f82d7d8c6b9f1b74cd6bf386 |
 | v1.14   | v1.14    | da183858bd34b7b9a1b40bff46c10a019f9add8d |
 | v2.00   | v2.00    | 2562095807d580c37c4d0fcfc55b4ee0333e9321 |
+| v3.00   | v3.00    | TBD                                       |
 
 ---
 
