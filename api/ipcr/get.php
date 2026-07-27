@@ -1,5 +1,6 @@
 <?php
 require_once '../../config/session.php';
+require_once '../../config/helpers.php';
 header('Content-Type: application/json');
 
 $user = requireAuth(['user', 'admin', 'superadmin']);
@@ -11,10 +12,12 @@ $db = getDB();
 
 if ($ipcr_id > 0) {
     $stmt = $db->prepare('SELECT f.*, u.name AS user_name, u.department_id, u.position,
-           d.name AS department_name
+           d.name AS department_name,
+           ru.name AS reviewed_by_name, ru.position AS reviewed_by_position
            FROM ipcr_forms f
            JOIN users u ON f.user_id = u.id
            LEFT JOIN departments d ON u.department_id = d.id
+           LEFT JOIN users ru ON f.reviewed_by = ru.id
            WHERE f.id = ?');
     $stmt->execute([$ipcr_id]);
     $form = $stmt->fetch();
@@ -36,10 +39,12 @@ if ($ipcr_id > 0) {
 } elseif ($timeline_id > 0) {
     // Get current user's form for a given timeline
     $stmt = $db->prepare('SELECT f.*, u.name AS user_name, u.department_id, u.position,
-           d.name AS department_name
+           d.name AS department_name,
+           ru.name AS reviewed_by_name, ru.position AS reviewed_by_position
            FROM ipcr_forms f
            JOIN users u ON f.user_id = u.id
            LEFT JOIN departments d ON u.department_id = d.id
+           LEFT JOIN users ru ON f.reviewed_by = ru.id
            WHERE f.user_id = ? AND f.timeline_id = ?
            ORDER BY f.created_at DESC LIMIT 1');
     $stmt->execute([$user['id'], $timeline_id]);
@@ -53,6 +58,11 @@ if ($ipcr_id > 0) {
     echo json_encode(['success' => false, 'error' => 'id or timeline_id required.']);
     exit;
 }
+
+// Immediate supervisor — whoever actually reviewed it, else the department head
+$sup = getImmediateSupervisor($db, $form['department_id']);
+$form['supervisor_name']     = $form['reviewed_by_name']     ?: ($sup['name'] ?? '');
+$form['supervisor_position'] = $form['reviewed_by_position'] ?: ($sup['position'] ?? '');
 
 // Load line items
 $items = $db->prepare('SELECT i.*, k.mfo, k.target, k.measure

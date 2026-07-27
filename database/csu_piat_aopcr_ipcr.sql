@@ -263,7 +263,7 @@ CREATE TABLE `ipcr_items` (
   `function_type` enum('core','strategic','support') NOT NULL,
   `success_indicator` text DEFAULT NULL,
   `accomplishment` text DEFAULT NULL,
-  `rating` tinyint(4) DEFAULT NULL CHECK (`rating` between 1 and 5),
+  `rating` decimal(2,1) DEFAULT NULL CHECK (`rating` between 1 and 5),
   `remarks` varchar(200) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 

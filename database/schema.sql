@@ -104,7 +104,7 @@ CREATE TABLE IF NOT EXISTS ipcr_items (
   function_type   ENUM('core','strategic','support') NOT NULL,
   success_indicator TEXT       DEFAULT NULL,
   accomplishment  TEXT         DEFAULT NULL,
-  rating          TINYINT      DEFAULT NULL CHECK (rating BETWEEN 1 AND 5),
+  rating          DECIMAL(2,1) DEFAULT NULL CHECK (rating BETWEEN 1 AND 5),
   remarks         VARCHAR(200) DEFAULT NULL,
   PRIMARY KEY (id),
   KEY fk_ipcr_item_form (ipcr_form_id),

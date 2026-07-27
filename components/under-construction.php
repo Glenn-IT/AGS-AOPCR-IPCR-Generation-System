@@ -1,5 +1,5 @@
 <?php
-define('CURRENT_VERSION', 'v3.00');
+define('CURRENT_VERSION', 'v4.00');
 $_uc_base = str_contains($_SERVER['PHP_SELF'] ?? '', '/views/') ? '../../' : '';
 ?>
 <!DOCTYPE html>

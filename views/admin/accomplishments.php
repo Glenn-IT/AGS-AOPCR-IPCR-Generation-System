@@ -1,4 +1,3 @@
-<?php require_once '../../components/under-construction.php'; ?>
 <?php
 require_once '../../config/session.php';
 $user = requireAuth(['admin']);
@@ -29,7 +28,6 @@ $user = requireAuth(['admin']);
       <p>Set actual accomplishments and performance ratings for IPCR submissions.</p>
     </div>
     <div class="d-flex gap-2 no-print">
-      <button class="btn btn-outline-secondary btn-sm" onclick="window.print()"><i class="fa-solid fa-print me-1"></i>Print</button>
       <button class="btn btn-primary btn-sm" onclick="saveRatings()"><i class="fa-solid fa-save me-1"></i>Save Ratings</button>
     </div>
   </div>
@@ -131,7 +129,6 @@ $user = requireAuth(['admin']);
     </div>
 
     <div class="d-flex gap-2 justify-content-end mt-3 no-print">
-      <button class="btn btn-outline-secondary" onclick="window.print()"><i class="fa-solid fa-print me-1"></i>Print</button>
       <button class="btn btn-primary" onclick="saveRatings()"><i class="fa-solid fa-save me-1"></i>Save Ratings</button>
     </div>
   </div>

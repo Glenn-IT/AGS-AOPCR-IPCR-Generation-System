@@ -1,5 +1,6 @@
 <?php
 require_once '../../config/session.php';
+require_once '../../config/helpers.php';
 header('Content-Type: application/json');
 
 $user = requireAuth(['admin', 'superadmin']);
@@ -45,7 +46,7 @@ try {
     $updateItem = $db->prepare('UPDATE ipcr_items SET rating=?, accomplishment=?, remarks=? WHERE id=? AND ipcr_form_id=?');
     foreach ($ratings as $r) {
         $updateItem->execute([
-            !empty($r['rating']) ? intval($r['rating']) : null,
+            normalizeRating($r['rating'] ?? null),
             trim($r['accomplishment'] ?? ''),
             trim($r['remarks'] ?? ''),
             intval($r['item_id']),

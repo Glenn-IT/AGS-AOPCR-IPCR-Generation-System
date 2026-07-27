@@ -228,6 +228,8 @@ $user = requireAuth(['user']);
       return html;
     }
 
+    // Reviewer if the form has been reviewed, else the department head; blank if neither.
+    const supName  = ep(f.supervisor_name);
     const finalAvg = parseFloat(f.overall_rating) || 0;
     const logoTag = _printLogo
       ? `<img src="${_printLogo}" class="logo" alt="CSU Logo">`
@@ -331,7 +333,7 @@ td, th { border:1px solid #000; padding:1.5px 3px; vertical-align:middle; font-s
     </tr>
     <tr>
       <td style="height:32px;vertical-align:bottom">
-        <div class="rev-name">&nbsp;</div><div class="rev-role">(immediate supervisor)</div>
+        <div class="rev-name">${supName || '&nbsp;'}</div><div class="rev-role">(immediate supervisor)</div>
       </td>
       <td>&nbsp;</td>
       <td style="text-align:center;vertical-align:middle">
@@ -406,7 +408,7 @@ td, th { border:1px solid #000; padding:1.5px 3px; vertical-align:middle; font-s
     <tr>
       <td class="sig-name-cell" style="border-top:1px solid #aaa">${ep(f.user_name)}</td>
       <td>&nbsp;</td>
-      <td class="sig-name-cell" style="border-top:1px solid #aaa">(immediate supervisor)</td>
+      <td class="sig-name-cell" style="border-top:1px solid #aaa">${supName || ''}<div class="rev-role">(immediate supervisor)</div></td>
       <td>&nbsp;</td>
       <td class="sig-name-cell" style="border-top:1px solid #aaa">Campus Executive Officer</td>
       <td>&nbsp;</td>

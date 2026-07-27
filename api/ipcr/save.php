@@ -1,5 +1,6 @@
 <?php
 require_once '../../config/session.php';
+require_once '../../config/helpers.php';
 header('Content-Type: application/json');
 
 $user = requireAuth(['user', 'admin']);
@@ -93,22 +94,31 @@ try {
         $ipcr_id = $db->lastInsertId();
     }
 
-    // Insert items
+    // Insert items — kpi_id is FK-constrained, so only accept ids that really exist
+    $validKpi = array_flip($db->query('SELECT id FROM kpi_items')->fetchAll(PDO::FETCH_COLUMN));
+
     $insertItem = $db->prepare('INSERT INTO ipcr_items (ipcr_form_id, kpi_id, function_type, success_indicator, accomplishment, rating, remarks) VALUES (?,?,?,?,?,?,?)');
 
     foreach ([['core', $core], ['strategic', $strategic], ['support', $support]] as [$type, $items]) {
         foreach ($items as $item) {
+            $kpiId = !empty($item['kpi_id']) ? intval($item['kpi_id']) : 0;
             $insertItem->execute([
                 $ipcr_id,
-                !empty($item['kpi_id']) ? intval($item['kpi_id']) : null,
+                isset($validKpi[$kpiId]) ? $kpiId : null,
                 $type,
                 trim($item['success_indicator'] ?? ''),
                 trim($item['accomplishment'] ?? ''),
-                !empty($item['rating']) ? intval($item['rating']) : null,
+                normalizeRating($item['rating'] ?? null),
                 trim($item['remarks'] ?? ''),
             ]);
         }
     }
+
+    // Keep the form's overall rating in step with its items
+    $avgStmt = $db->prepare('SELECT AVG(rating) FROM ipcr_items WHERE ipcr_form_id = ? AND rating IS NOT NULL');
+    $avgStmt->execute([$ipcr_id]);
+    $avg = round(floatval($avgStmt->fetchColumn()), 2);
+    $db->prepare('UPDATE ipcr_forms SET overall_rating = ? WHERE id = ?')->execute([$avg, $ipcr_id]);
 
     // Notify admin on submit
     if ($action === 'submit') {
@@ -126,6 +136,7 @@ try {
 
     $db->commit();
     echo json_encode(['success' => true, 'ipcr_id' => $ipcr_id, 'status' => $status,
+        'overall_rating' => $avg,
         'message' => $action === 'submit' ? 'IPCR submitted successfully!' : 'Draft saved.']);
 } catch (Exception $e) {
     $db->rollBack();

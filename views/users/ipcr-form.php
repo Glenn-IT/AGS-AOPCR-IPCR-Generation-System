@@ -1,4 +1,3 @@
-<?php require_once '../../components/under-construction.php'; ?>
 <?php
 require_once '../../config/session.php';
 $user = requireAuth(['user']);
@@ -148,7 +147,7 @@ $user = requireAuth(['user']);
     </div>
     <div class="col-4 text-center">
       <div style="border-top:1px solid #333;margin-top:40px;padding-top:5px;font-size:0.82rem">
-        <strong>Immediate Supervisor</strong><br><span class="text-muted">Rater</span>
+        <strong id="sigSupervisor">&nbsp;</strong><br><span class="text-muted">Immediate Supervisor / Rater</span>
       </div>
     </div>
     <div class="col-4 text-center">
@@ -174,9 +173,10 @@ $user = requireAuth(['user']);
   initLayout('user', 'ipcr-form', [{ label: 'IPCR Form' }]);
 
   const session = SESSION_USER;
-  let kpi = { core: [], strategic: [], support: [] };
+  let kpi = { core: [], strategic: [], support: [] };   // KPI catalogue (kpi_items) — never the saved rows
   let activeTimeline = null;
   let existingIpcrId = null;
+  let supervisor = null;
 
   document.getElementById('ipcrName').value = session.name;
   document.getElementById('ipcrPosition').value = session.position || '-';
@@ -184,6 +184,16 @@ $user = requireAuth(['user']);
   document.getElementById('sigName').textContent = session.name.toUpperCase();
 
   async function initForm() {
+    // Resolve the immediate supervisor for the signature blocks
+    const supRes = await fetch(API_BASE + 'user/supervisor.php', { credentials: 'include' }).then(r => r.json()).catch(() => null);
+    supervisor = supRes?.supervisor || null;
+    document.getElementById('sigSupervisor').textContent = supervisor ? supervisor.name.toUpperCase() : ' ';
+
+    // The KPI catalogue supplies MFO / Success Indicator / Target for every row,
+    // whether the form is fresh or reloaded from a saved draft.
+    const kpiRes = await fetch(`${API_BASE}kpi/list.php`, { credentials: 'include' }).then(r => r.json()).catch(() => null);
+    if (kpiRes?.grouped) kpi = kpiRes.grouped;
+
     // Load open timeline
     const tlRes = await fetch(API_BASE + 'timeline/list.php?status=open', { credentials: 'include' }).then(r => r.json()).catch(() => null);
     if (tlRes?.error) { showToast(tlRes.error, 'danger'); return; }
@@ -208,31 +218,21 @@ $user = requireAuth(['user']);
         document.getElementById('ipcrOffice').value = f.department_name || session.department_id || '';
         document.getElementById('ipcrPeriod').value = f.covered_period;
         document.getElementById('ipcrStatus').value = f.status;
-        kpi = { core: f.items.core, strategic: f.items.strategic, support: f.items.support };
         loadSection('coreBody', f.items.core);
         loadSection('strategicBody', f.items.strategic);
         loadSection('supportBody', f.items.support);
       } else {
-        // Load KPIs for fresh form
-        const kpiRes = await fetch(`${API_BASE}kpi/list.php`, { credentials: 'include' }).then(r => r.json()).catch(() => null);
-        if (kpiRes?.grouped) {
-          kpi = kpiRes.grouped;
-          loadKpiSection('coreBody', kpi.core);
-          loadKpiSection('strategicBody', kpi.strategic);
-          loadKpiSection('supportBody', kpi.support);
-        }
+        loadKpiSection('coreBody', kpi.core);
+        loadKpiSection('strategicBody', kpi.strategic);
+        loadKpiSection('supportBody', kpi.support);
         // Load dept name
         document.getElementById('ipcrOffice').value = session.department_name || session.department || '';
       }
     } else {
-      // No open timeline — load KPIs for reference but disable save/submit
-      const kpiRes = await fetch(`${API_BASE}kpi/list.php`, { credentials: 'include' }).then(r => r.json()).catch(() => null);
-      if (kpiRes?.grouped) {
-        kpi = kpiRes.grouped;
-        loadKpiSection('coreBody', kpi.core);
-        loadKpiSection('strategicBody', kpi.strategic);
-        loadKpiSection('supportBody', kpi.support);
-      }
+      // No open timeline — show the KPI catalogue for reference but disable save/submit
+      loadKpiSection('coreBody', kpi.core);
+      loadKpiSection('strategicBody', kpi.strategic);
+      loadKpiSection('supportBody', kpi.support);
       document.getElementById('ipcrOffice').value = session.department_name || session.department || '';
       document.getElementById('ipcrStatus').value = 'No open timeline';
       document.getElementById('noTimelineAlert').classList.remove('d-none');
@@ -249,7 +249,7 @@ $user = requireAuth(['user']);
   function loadKpiSection(tbodyId, items) {
     const tbody = document.getElementById(tbodyId);
     tbody.innerHTML = '';
-    items.forEach(item => {
+    (items || []).forEach(item => {
       tbody.innerHTML += `<tr>
         <td style="font-size:0.82rem;background:#fafafa;white-space:nowrap">${item.mfo}</td>
         <td style="font-size:0.82rem;background:#fafafa">${item.success_indicator}</td>
@@ -260,30 +260,32 @@ $user = requireAuth(['user']);
     });
   }
 
-  function loadSection(tbodyId, items, fromSaved) {
+  function loadSection(tbodyId, items) {
     const tbody = document.getElementById(tbodyId);
     tbody.innerHTML = '';
     const allKpi = [...(kpi.core || []), ...(kpi.strategic || []), ...(kpi.support || [])];
-    items.forEach(item => {
-      const kpiItem = allKpi.find(k => k.id === item.kpiId) || {};
+    (items || []).forEach(item => {
+      const kpiItem = allKpi.find(k => String(k.id) === String(item.kpi_id)) || {};
       tbody.innerHTML += `<tr>
-        <td style="font-size:0.82rem;background:#fafafa;white-space:nowrap">${kpiItem.mfo || '-'}</td>
+        <td style="font-size:0.82rem;background:#fafafa;white-space:nowrap">${kpiItem.mfo || item.mfo || '-'}</td>
         <td style="font-size:0.82rem;background:#fafafa">${kpiItem.success_indicator || item.success_indicator || '-'}</td>
-        <td style="font-size:0.82rem;background:#fafafa;white-space:nowrap">${kpiItem.target || '-'}</td>
+        <td style="font-size:0.82rem;background:#fafafa;white-space:nowrap">${kpiItem.target || item.target || '-'}</td>
         <td><textarea class="form-control form-control-sm" rows="2">${item.accomplishment || ''}</textarea></td>
-        <td><input type="number" class="form-control form-control-sm rating-input" min="1" max="5" step="0.5" value="${item.rating || ''}" data-kpi="${item.kpiId || ''}" oninput="computeOverallRating()"></td>
+        <td><input type="number" class="form-control form-control-sm rating-input" min="1" max="5" step="0.5" value="${item.rating || ''}" data-kpi="${item.kpi_id || ''}" oninput="computeOverallRating()"></td>
         <td><input type="text" class="form-control form-control-sm" value="${item.remarks || ''}"></td></tr>`;
     });
   }
 
-  function getRows(tbodyId, kpiList) {
+  // kpi_id comes from the row itself (data-kpi), never from the row's position —
+  // the two render paths can produce different orderings.
+  function getRows(tbodyId) {
     const rows = [];
-    document.getElementById(tbodyId).querySelectorAll('tr').forEach((tr, i) => {
+    document.getElementById(tbodyId).querySelectorAll('tr').forEach(tr => {
       const textarea  = tr.querySelector('textarea');
       const ratingInp = tr.querySelector('.rating-input');
       const remarksInp = tr.querySelectorAll('input')[1];
       rows.push({
-        kpi_id:           kpiList[i]?.id || ratingInp?.dataset?.kpi || '',
+        kpi_id:           ratingInp?.dataset?.kpi || '',
         success_indicator: tr.cells[1]?.textContent?.trim() || '',
         accomplishment:   textarea?.value || '',
         rating:           parseFloat(ratingInp?.value) || 0,
@@ -306,17 +308,17 @@ $user = requireAuth(['user']);
 
   async function saveIPCR(action = 'draft') {
     const period = document.getElementById('ipcrPeriod').value.trim();
-    if (!period) { showToast('Please enter the covered period.', 'warning'); return; }
-    if (!activeTimeline) { showToast('No open submission period found.', 'warning'); return; }
+    if (!period) { showToast('Please enter the covered period.', 'warning'); return false; }
+    if (!activeTimeline) { showToast('No open submission period found.', 'warning'); return false; }
 
     const payload = {
       action,
       ipcr_id: existingIpcrId || 0,
       timeline_id: activeTimeline.id,
       covered_period: period,
-      core:      getRows('coreBody',      kpi.core      || []),
-      strategic: getRows('strategicBody', kpi.strategic || []),
-      support:   getRows('supportBody',   kpi.support   || []),
+      core:      getRows('coreBody'),
+      strategic: getRows('strategicBody'),
+      support:   getRows('supportBody'),
     };
 
     try {
@@ -329,11 +331,13 @@ $user = requireAuth(['user']);
         existingIpcrId = data.ipcr_id;
         document.getElementById('ipcrStatus').value = data.status;
         showToast(data.message, 'success');
-      } else {
-        showToast(data.error, 'danger');
+        return true;
       }
+      showToast(data.error, 'danger');
+      return false;
     } catch {
       showToast('Server error. Make sure XAMPP is running.', 'danger');
+      return false;
     }
   }
 
@@ -358,6 +362,9 @@ $user = requireAuth(['user']);
     function esc(s) {
       return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
     }
+
+    // Blank when the department has no assigned admin — the ruled line still prints.
+    const supName = supervisor ? esc(supervisor.name) : '';
 
     function getFormRows(tbodyId) {
       const rows = [];
@@ -523,7 +530,7 @@ td, th { border:1px solid #000; padding:1.5px 3px; vertical-align:middle; font-s
     </tr>
     <tr>
       <td style="height:32px;vertical-align:bottom">
-        <div class="rev-name">&nbsp;</div>
+        <div class="rev-name">${supName || '&nbsp;'}</div>
         <div class="rev-role">(immediate supervisor)</div>
       </td>
       <td>&nbsp;</td>
@@ -601,7 +608,7 @@ td, th { border:1px solid #000; padding:1.5px 3px; vertical-align:middle; font-s
     <tr>
       <td class="sig-name-cell" style="border-top:1px solid #aaa">${esc(name)}</td>
       <td>&nbsp;</td>
-      <td class="sig-name-cell" style="border-top:1px solid #aaa">(immediate supervisor)</td>
+      <td class="sig-name-cell" style="border-top:1px solid #aaa">${supName || ''}<div class="rev-role">(immediate supervisor)</div></td>
       <td>&nbsp;</td>
       <td class="sig-name-cell" style="border-top:1px solid #aaa">Campus Executive Officer</td>
       <td>&nbsp;</td>
@@ -623,8 +630,11 @@ td, th { border:1px solid #000; padding:1.5px 3px; vertical-align:middle; font-s
 
   function submitIPCR() {
     confirmModal('Are you sure you want to submit your IPCR for review?', 'Submit IPCR', async () => {
-      await saveIPCR('submit');
-      setTimeout(() => window.location.href = 'status.php', 1000);
+      // Only leave the page if the submission actually went through, so a failure
+      // message stays on screen instead of flashing past.
+      if (await saveIPCR('submit')) {
+        setTimeout(() => window.location.href = 'status.php', 1000);
+      }
     });
   }
 </script>
