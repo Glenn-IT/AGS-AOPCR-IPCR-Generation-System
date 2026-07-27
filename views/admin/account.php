@@ -7,7 +7,7 @@ $user = requireAuth(['admin']);
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>My Profile | CSU-Piat</title>
+  <title>Account Management | CSU-Piat</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <link rel="stylesheet" href="../../assets/css/style.css">
@@ -23,7 +23,7 @@ $user = requireAuth(['admin']);
 
 <main class="main-content" id="mainContent">
   <div class="page-header">
-    <h2><i class="fa-solid fa-user-cog me-2 text-primary"></i>My Profile</h2>
+    <h2><i class="fa-solid fa-user-cog me-2 text-primary"></i>Account Management</h2>
     <p>Manage your profile, change password, and view activity logs.</p>
   </div>
 
@@ -225,7 +225,7 @@ $user = requireAuth(['admin']);
 <script src="../../assets/js/components.js"></script>
 <script>
   const session = requireAuth(['admin']);
-  initLayout('admin', 'account', [{ label: 'My Profile' }]);
+  initLayout('admin', 'account', [{ label: 'Account Management' }]);
 
   const roleLabels = { superadmin: 'Super Administrator', admin: 'Administrator', user: 'Faculty / Staff' };
   document.getElementById('profileAvatar').textContent = session.avatar || '?';

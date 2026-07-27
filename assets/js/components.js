@@ -66,12 +66,12 @@ function buildSidebar(role, activePage) {
       { icon: 'fa-bullseye', label: 'OPCR Form', href: 'set-target.php', page: 'set-target' },
       { icon: 'fa-clipboard-check', label: 'Accomplishment & Ratings', href: 'accomplishments.php', page: 'accomplishments' },
       { section: 'Management' },
-      { icon: 'fa-users', label: 'Account Management', href: 'accounts.php', page: 'accounts' },
+      { icon: 'fa-users', label: 'User Management', href: 'accounts.php', page: 'accounts' },
       { icon: 'fa-chart-bar', label: 'Reports', href: 'reports.php', page: 'reports' },
       { section: 'Configuration' },
       { icon: 'fa-gear', label: 'Settings', href: 'settings.php', page: 'settings' },
       { section: 'Account' },
-      { icon: 'fa-user-cog', label: 'My Profile', href: 'account.php', page: 'account' }
+      { icon: 'fa-user-cog', label: 'Account Management', href: 'account.php', page: 'account' }
     ],
     admin: [
       { section: 'Main' },
@@ -81,7 +81,7 @@ function buildSidebar(role, activePage) {
       { icon: 'fa-clipboard-check', label: 'Accomplishments & Ratings', href: 'accomplishments.php', page: 'accomplishments' },
       { icon: 'fa-file-alt', label: 'Reports', href: 'reports.php', page: 'reports' },
       { section: 'Account' },
-      { icon: 'fa-user-cog', label: 'My Profile', href: 'account.php', page: 'account' }
+      { icon: 'fa-user-cog', label: 'Account Management', href: 'account.php', page: 'account' }
     ],
     user: [
       { section: 'Main' },
@@ -91,7 +91,7 @@ function buildSidebar(role, activePage) {
       { icon: 'fa-paperclip', label: 'Evidence Upload', href: 'evidence.php', page: 'evidence' },
       { icon: 'fa-eye', label: 'View Status', href: 'status.php', page: 'status' },
       { section: 'Account' },
-      { icon: 'fa-user-cog', label: 'My Profile', href: 'account.php', page: 'account' }
+      { icon: 'fa-user-cog', label: 'Account Management', href: 'account.php', page: 'account' }
     ]
   };
 
@@ -169,7 +169,7 @@ function buildNavbar(pageTitle, breadcrumbs = []) {
               <div class="fw-600" style="font-size:0.88rem">${session.name || ''}</div>
               <div class="text-muted" style="font-size:0.75rem">${session.email || ''}</div>
             </div></li>
-            <li><a class="dropdown-item" href="account.php"><i class="fa-solid fa-user me-2 text-primary"></i>My Profile</a></li>
+            <li><a class="dropdown-item" href="account.php"><i class="fa-solid fa-user me-2 text-primary"></i>Account Management</a></li>
             <li><a class="dropdown-item" href="#" onclick="handleLogout(event)"><i class="fa-solid fa-right-from-bracket me-2 text-danger"></i>Logout</a></li>
           </ul>
         </div>
