@@ -1,12 +1,19 @@
-http://localhost/AGS-AOPCR-IPCR-Generation-System/views/users/status.php
 
-IPCR Form Details
+Super Admin 
+- Dashboard
+- My Profile
+/ Settings
+- Timeline Management
+- KPI Management
 
-Name: undefined
-Department: undefined
-Position: undefined
-Period: undefined
-Status: -
-Rating: - —
 
-the data is not showing properly look and fix it
+Admin 
+- Dashboard
+- My Profile
+- Accomplishment and Ratings
+
+
+Faculty/Staff
+- Dashboard
+- My Profile
+- IPCR Form

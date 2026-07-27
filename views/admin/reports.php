@@ -25,11 +25,10 @@ $user = requireAuth(['admin']);
   <div class="page-header d-flex justify-content-between align-items-start flex-wrap gap-2">
     <div>
       <h2><i class="fa-solid fa-file-alt me-2 text-primary"></i>IPCR Reports</h2>
-      <p>View, filter, and export submitted IPCR forms.</p>
+      <p>View, filter, and export submitted IPCR forms<span id="deptCaption"></span>.</p>
     </div>
     <div class="d-flex gap-2 no-print">
       <button class="btn btn-outline-success btn-sm" onclick="exportCSV()"><i class="fa-solid fa-file-excel me-1"></i>Export</button>
-      <button class="btn btn-outline-secondary btn-sm" onclick="window.print()"><i class="fa-solid fa-print me-1"></i>Print</button>
     </div>
   </div>
 
@@ -49,9 +48,7 @@ $user = requireAuth(['admin']);
         </div>
         <div class="col-md-3">
           <label class="form-label">Department</label>
-          <select class="form-select form-select-sm" id="deptFilter" onchange="applyFilter()">
-            <option value="">All Departments</option>
-          </select>
+          <input type="text" class="form-control form-control-sm bg-light" id="deptFilter" readonly>
         </div>
         <div class="col-md-3">
           <label class="form-label">Search</label>
@@ -98,7 +95,6 @@ $user = requireAuth(['admin']);
       </div>
       <div class="modal-body" id="detailBody"></div>
       <div class="modal-footer">
-        <button class="btn btn-outline-secondary btn-sm" onclick="showPrintPreview()"><i class="fa-solid fa-print me-1"></i>Print Preview</button>
         <button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
       </div>
     </div>
@@ -116,12 +112,15 @@ $user = requireAuth(['admin']);
 
   let allForms = [];
 
+  // An admin is locked to their own department — ipcr/list.php already scopes the
+  // query to it, so this is fixed context, not a filter.
+  const myDept = session.department_name || '-';
+  document.getElementById('deptFilter').value = myDept;
+  document.getElementById('deptCaption').textContent = ' for ' + myDept;
+
   async function loadReports() {
     const res = await fetch(API_BASE + 'ipcr/list.php', { credentials: 'include' }).then(r => r.json()).catch(() => null);
     allForms = res?.forms || [];
-    const deptSel = document.getElementById('deptFilter');
-    const depts = [...new Set(allForms.map(f => f.department_name).filter(Boolean))];
-    depts.forEach(d => { const o = document.createElement('option'); o.value = d; o.textContent = d; deptSel.appendChild(o); });
     applyFilter();
   }
 
@@ -130,10 +129,8 @@ $user = requireAuth(['admin']);
     const search = document.getElementById('searchInput').value.toLowerCase();
     const from = document.getElementById('dateFrom').value;
     const to = document.getElementById('dateTo').value;
-    const dept = document.getElementById('deptFilter').value;
     const filtered = allForms.filter(f =>
       (!status || f.status === status) &&
-      (!dept || f.department_name === dept) &&
       (!search || (f.user_name || '').toLowerCase().includes(search)) &&
       (!from || (f.date_submitted || '') >= from) &&
       (!to || (f.date_submitted || '') <= to)
@@ -159,10 +156,6 @@ $user = requireAuth(['admin']);
       });
     }
     document.getElementById('tableInfo').textContent = `${filtered.length} of ${allForms.length} records`;
-  }
-
-  function showPrintPreview() {
-    showToast('Use the dedicated IPCR review page for full print preview.', 'info');
   }
 
   function showDetail(f) {
