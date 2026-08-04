@@ -1,19 +1,3 @@
-
-Super Admin 
-- Dashboard
-- My Profile
-/ Settings
-- Timeline Management
-- KPI Management
-
-
-Admin 
-- Dashboard
-- My Profile
-- Accomplishment and Ratings
-
-
-Faculty/Staff
-- Dashboard
-- My Profile
-- IPCR Form
+1. KPI Management 
+-I want this kind of feature. The superadmin creates a KPI for admin - heads/deans and the admin craetes a KPI for his own department for  his teams.
+-The admin can also Set a target or a KPI for a certain faculty like sample Im the dean i have 10 faculty on my team i want to set a Target for the 5 Faculty iwant that feature function also implemented do that also on superadmin for his deans and heads

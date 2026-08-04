@@ -63,14 +63,18 @@ CREATE TABLE IF NOT EXISTS kpi_items (
   target            VARCHAR(200) DEFAULT NULL,
   measure           VARCHAR(200) DEFAULT NULL,
   department_id     VARCHAR(10)  DEFAULT NULL,
+  scope             ENUM('global','department','user') NOT NULL DEFAULT 'global',
+  assigned_to       INT          DEFAULT NULL,
   is_active         TINYINT(1)  NOT NULL DEFAULT 1,
   created_by        INT         DEFAULT NULL,
   created_at        TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (id),
   KEY fk_kpi_dept (department_id),
   KEY fk_kpi_creator (created_by),
-  CONSTRAINT fk_kpi_dept    FOREIGN KEY (department_id) REFERENCES departments (id) ON UPDATE CASCADE,
-  CONSTRAINT fk_kpi_creator FOREIGN KEY (created_by)   REFERENCES users (id) ON DELETE SET NULL
+  KEY fk_kpi_assigned (assigned_to),
+  CONSTRAINT fk_kpi_dept     FOREIGN KEY (department_id) REFERENCES departments (id) ON UPDATE CASCADE,
+  CONSTRAINT fk_kpi_creator  FOREIGN KEY (created_by)   REFERENCES users (id) ON DELETE SET NULL,
+  CONSTRAINT fk_kpi_assigned FOREIGN KEY (assigned_to)  REFERENCES users (id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- IPCR Forms

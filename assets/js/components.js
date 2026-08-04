@@ -80,6 +80,8 @@ function buildSidebar(role, activePage) {
       { icon: 'fa-file-lines', label: 'IPCR Form', href: 'ipcr-form.php', page: 'ipcr-form' },
       { icon: 'fa-clipboard-check', label: 'Accomplishments & Ratings', href: 'accomplishments.php', page: 'accomplishments' },
       { icon: 'fa-file-alt', label: 'Reports', href: 'reports.php', page: 'reports' },
+      { section: 'Management' },
+      { icon: 'fa-bullseye', label: 'KPI Management', href: 'kpi-management.php', page: 'kpi-management' },
       { section: 'Account' },
       { icon: 'fa-user-cog', label: 'Account Management', href: 'account.php', page: 'account' }
     ],

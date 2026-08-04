@@ -95,10 +95,11 @@ AGS-AOPCR-IPCR-Generation-System/
 │   │   ├── list.php                 ← GET: filtered OPCR list for admin/superadmin scope
 │   │   └── review.php               ← POST: superadmin rates OPCR items, notifies admin
 │   │
-│   ├── kpi/
-│   │   ├── list.php                 ← GET: active KPIs by category/department
-│   │   ├── save.php                 ← POST: superadmin creates/updates a KPI
-│   │   └── delete.php               ← POST: retire/deactivate a KPI
+| `api/kpi/` |
+│   │   ├── list.php                 ← GET: KPIs filtered by role/scope/department (superadmin=all, admin=dept+assigned+own, user=dept+assigned)
+│   │   ├── save.php                 ← POST: superadmin or admin creates/updates KPI with scope + assigned_to
+│   │   ├── get.php                  ← GET: single KPI by ID (for edit pre-fill)
+│   │   └── delete.php               ← POST: retire/deactivate a KPI (admin: own KPIs only)
 │   │
 │   ├── timeline/
 │   │   ├── list.php                 ← GET: timelines (open/closed filter)
@@ -140,6 +141,7 @@ AGS-AOPCR-IPCR-Generation-System/
 │   │   ├── ipcr-form.php            ← Admin's own IPCR form
 │   │   ├── review-ipcr.php          ← Rate faculty IPCR submissions from own department
 │   │   ├── accomplishments.php      ← Inline rating of faculty IPCR items
+│   │   ├── kpi-management.php       ← Create/manage KPIs for dept faculty (new)
 │   │   ├── reports.php              ← Department-scoped reports + export
 │   │   ├── set-target.php           ← Create/edit department OPCR targets
 │   │   └── account.php              ← Profile, password, activity logs
@@ -235,11 +237,13 @@ Performance indicators used to populate IPCR/OPCR forms.
 |--------|------|-------------|
 | id | INT PK | — |
 | category | ENUM | `core`, `strategic`, `support` |
-| mfo | TEXT | Major Final Output |
+| mfo | VARCHAR(100) | Major Final Output |
 | success_indicator | TEXT | Measurable target |
 | target | VARCHAR(255) | Expected value/output |
 | measure | VARCHAR(100) | Unit of measurement |
 | department_id | INT FK | NULL = applies to all departments |
+| scope | ENUM | `global` = all admins; `department` = one dept; `user` = one specific user |
+| assigned_to | INT FK | NULL unless scope=`user` — points to the specific user |
 | is_active | TINYINT | Soft delete flag |
 | created_by | INT FK | User who created it |
 
@@ -530,9 +534,10 @@ All endpoints return JSON: `{ "success": true/false, "data": ..., "message": "..
 
 | Method | Endpoint | Auth Required | Description |
 |--------|----------|---------------|-------------|
-| GET | `/api/kpi/list.php` | Yes | KPIs filtered by category/department |
-| POST | `/api/kpi/save.php` | superadmin | Create or update a KPI |
-| POST | `/api/kpi/delete.php` | superadmin | Deactivate a KPI |
+| GET | `/api/kpi/list.php` | Yes | KPIs filtered by role/scope/department |
+| POST | `/api/kpi/save.php` | superadmin/admin | Create or update a KPI (admin: dept/user scope only) |
+| GET | `/api/kpi/get.php?id=` | superadmin/admin | Fetch single KPI by ID |
+| POST | `/api/kpi/delete.php` | superadmin/admin | Deactivate a KPI (admin: own KPIs only) |
 | GET | `/api/timeline/list.php` | Yes | List timelines |
 | POST | `/api/timeline/save.php` | superadmin | Create timeline or toggle open/closed |
 | GET | `/api/dashboard/user-stats.php` | user | Personal stats |
@@ -655,7 +660,7 @@ define('DB_CHARSET', 'utf8mb4');
 | OPCR review by superadmin (rate items, approve/disapprove, notify) | Done |
 | Dashboard stats for all 3 roles | Done |
 | Dashboard charts (Chart.js) | Done |
-| KPI management (list, create, deactivate) | Done |
+| KPI management (list, create, deactivate) | ✅ Extended — now supports scope + user assignment |
 | Timeline management (create, open/close) | Done |
 | Notification system (create + mark read) | Done |
 | Department scoping for admin role | Done |
@@ -682,6 +687,17 @@ define('DB_CHARSET', 'utf8mb4');
 | Batch IPCR approval (approve multiple at once) | Planned |
 | Profile picture upload | Planned |
 | Admin drill-down reports (click stat → filtered table) | Planned |
+
+### Recently Completed (2026-08-05)
+
+| Module | Status |
+|--------|---------|
+| KPI scope system (`global` / `department` / `user`) | ✅ Done |
+| Superadmin assigns KPIs to specific Admins | ✅ Done |
+| Admin KPI Management page (`views/admin/kpi-management.php`) | ✅ Done |
+| Admin assigns KPIs to specific Faculty | ✅ Done |
+| User IPCR form scoped KPI loading + personal assignment tag | ✅ Done |
+| `api/kpi/get.php` single-KPI fetch endpoint | ✅ Done |
 R
 ---
 
