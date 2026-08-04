@@ -2,8 +2,8 @@
 require_once '../../config/session.php';
 header('Content-Type: application/json');
 
-requireAuth(['superadmin']);
-$db = getDB();
+$user = requireAuth(['superadmin', 'admin']);
+$db   = getDB();
 
 $role   = $_GET['role'] ?? '';
 $status = $_GET['status'] ?? '';
@@ -11,8 +11,20 @@ $status = $_GET['status'] ?? '';
 $where  = ['u.role != "superadmin"'];
 $params = [];
 
-if ($role !== '') { $where[] = 'u.role = ?'; $params[] = $role; }
-if ($status !== '') { $where[] = 'u.status = ?'; $params[] = $status; }
+// Enforce department scoping for admin role
+if ($user['role'] === 'admin') {
+    $where[]  = 'u.department_id = ?';
+    $params[] = $user['department_id'];
+}
+
+if ($role !== '') { 
+    $where[]  = 'u.role = ?'; 
+    $params[] = $role; 
+}
+if ($status !== '') { 
+    $where[]  = 'u.status = ?'; 
+    $params[] = $status; 
+}
 
 $sql = 'SELECT u.id, u.name, u.username, u.email, u.role, u.status, u.position, u.designation,
         u.gender, u.avatar, u.last_login, u.created_at,

@@ -29,28 +29,14 @@ $user = requireAuth(['user']);
 
   <!-- Stat Cards -->
   <div class="row g-3 mb-4">
-    <div class="col-sm-6 col-xl-3">
-      <div class="stat-card success">
-        <div class="stat-icon"><i class="fa-solid fa-circle-check"></i></div>
-        <div class="stat-value" id="approvedCount">0</div>
-        <div class="stat-label">Approved Forms</div>
-      </div>
-    </div>
-    <div class="col-sm-6 col-xl-3">
-      <div class="stat-card danger">
-        <div class="stat-icon"><i class="fa-solid fa-circle-xmark"></i></div>
-        <div class="stat-value" id="disapprovedCount">0</div>
-        <div class="stat-label">Disapproved Forms</div>
-      </div>
-    </div>
-    <div class="col-sm-6 col-xl-3">
+    <div class="col-sm-6">
       <div class="stat-card warning">
         <div class="stat-icon"><i class="fa-solid fa-clock"></i></div>
         <div class="stat-value" id="pendingCount">0</div>
         <div class="stat-label">Pending Forms</div>
       </div>
     </div>
-    <div class="col-sm-6 col-xl-3">
+    <div class="col-sm-6">
       <div class="stat-card info">
         <div class="stat-icon"><i class="fa-solid fa-star"></i></div>
         <div class="stat-value" id="latestRating">-</div>
@@ -118,8 +104,6 @@ $user = requireAuth(['user']);
     if (!res?.success) { showToast('Failed to load dashboard data.', 'danger'); return; }
 
     const counts = res.status_counts;
-    document.getElementById('approvedCount').textContent = counts.approved || 0;
-    document.getElementById('disapprovedCount').textContent = counts.disapproved || 0;
     document.getElementById('pendingCount').textContent = counts.pending || 0;
     document.getElementById('latestRating').textContent = res.latest_rating ? parseFloat(res.latest_rating).toFixed(1) : '-';
 

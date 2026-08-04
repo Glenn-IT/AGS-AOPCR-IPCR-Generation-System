@@ -205,9 +205,9 @@ $user = requireAuth(['admin']);
         existingIpcrId = f.id;
         document.getElementById('ipcrPeriod').value = f.covered_period || '';
         document.getElementById('ipcrStatus').value = f.status || 'draft';
-        loadSection('coreBody', f.items?.core || []);
-        loadSection('strategicBody', f.items?.strategic || []);
-        loadSection('supportBody', f.items?.support || []);
+        loadSection('coreBody', f.items?.core || [], kpi.core || []);
+        loadSection('strategicBody', f.items?.strategic || [], kpi.strategic || []);
+        loadSection('supportBody', f.items?.support || [], kpi.support || []);
       } else {
         document.getElementById('ipcrPeriod').value = activeTimeline.semester + ' ' + activeTimeline.academic_year;
         document.getElementById('ipcrStatus').value = 'draft';
@@ -246,7 +246,7 @@ $user = requireAuth(['admin']);
     });
   }
 
-  function loadSection(tbodyId, items) {
+  function loadSection(tbodyId, items, sectionKpi) {
     const tbody = document.getElementById(tbodyId);
     tbody.innerHTML = '';
     items.forEach(item => {
@@ -257,6 +257,19 @@ $user = requireAuth(['admin']);
         <td><textarea class="form-control form-control-sm" rows="2" data-type="accomplishment">${item.accomplishment || ''}</textarea></td>
         <td><input type="number" class="form-control form-control-sm rating-input" min="1" max="5" step="0.5" value="${item.rating || ''}" data-kpi="${item.kpi_id || ''}" oninput="computeOverallRating()"></td>
         <td><input type="text" class="form-control form-control-sm" value="${item.remarks || ''}"></td></tr>`;
+    });
+    // Surface KPIs added by SuperAdmin after this form was first saved —
+    // they have no ipcr_items row yet, so append fresh editable rows for them.
+    (sectionKpi || []).forEach(k => {
+      const already = (items || []).some(item => String(item.kpi_id) === String(k.id));
+      if (already) return;
+      tbody.innerHTML += `<tr>
+        <td style="font-size:0.82rem;background:#fafafa;white-space:nowrap">${k.mfo || '-'}</td>
+        <td style="font-size:0.82rem;background:#fafafa">${k.success_indicator || '-'}</td>
+        <td style="font-size:0.82rem;background:#fafafa;white-space:nowrap">${k.target || '-'}</td>
+        <td><textarea class="form-control form-control-sm" rows="2" data-type="accomplishment" placeholder="Describe your actual accomplishment..."></textarea></td>
+        <td><input type="number" class="form-control form-control-sm rating-input" min="1" max="5" step="0.5" placeholder="1-5" data-kpi="${k.id}" oninput="computeOverallRating()"></td>
+        <td><input type="text" class="form-control form-control-sm" placeholder="Outstanding/VS/Satisfactory..."></td></tr>`;
     });
   }
 

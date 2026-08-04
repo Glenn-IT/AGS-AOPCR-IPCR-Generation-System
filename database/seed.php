@@ -39,6 +39,7 @@ function runSeed(PDO $db): array {
     // ----------------------------------------------------------
     $adminPass   = password_hash('admin123',   PASSWORD_BCRYPT);
     $facultyPass = password_hash('faculty123', PASSWORD_BCRYPT);
+    $samplePass  = password_hash('sample123',  PASSWORD_BCRYPT);
 
     $users = [
         // Super Admin
@@ -94,6 +95,11 @@ function runSeed(PDO $db): array {
         [48, 'maria.santos2',    $facultyPass, 'user',       'Prof. Maria Santos',             'Assistant Professor I',                'CED',   'maria.santos2@piat.csu.edu.ph',   'Female', 'active',   'MS', "What is your mother's maiden name?", 'delos santos'],
         [49, 'oliver.navarro',   $facultyPass, 'user',       'Mr. Oliver Navarro',             'Instructor III',                       'CED',   'oliver.navarro@piat.csu.edu.ph',  'Male',   'active',   'ON', 'What city were you born in?',        'enrile'],
         [50, 'analiza.bueno',    $facultyPass, 'user',       'Ms. Analiza Bueno',              'Assistant Professor II',               'CED',   'analiza.bueno@piat.csu.edu.ph',   'Female', 'active',   'AB', "What is your pet's name?",           'nemo'],
+        [51, 'cics.faculty1',    $samplePass,  'user',       'Faculty One CICS',               'Instructor I',                         'CICS',  'cics.faculty1@piat.csu.edu.ph',  'Male',   'active',   'F1', "What city were you born in?",        'tuguegarao'],
+        [52, 'cics.faculty2',    $samplePass,  'user',       'Faculty Two CICS',               'Instructor II',                        'CICS',  'cics.faculty2@piat.csu.edu.ph',  'Female', 'active',   'F2', "What city were you born in?",        'tuguegarao'],
+        [53, 'cics.faculty3',    $samplePass,  'user',       'Faculty Three CICS',             'Assistant Professor I',                'CICS',  'cics.faculty3@piat.csu.edu.ph',  'Male',   'active',   'F3', "What city were you born in?",        'tuguegarao'],
+        [54, 'cics.faculty4',    $samplePass,  'user',       'Faculty Four CICS',              'Assistant Professor II',               'CICS',  'cics.faculty4@piat.csu.edu.ph',  'Female', 'active',   'F4', "What city were you born in?",        'tuguegarao'],
+        [55, 'cics.faculty5',    $samplePass,  'user',       'Faculty Five CICS',              'Instructor I',                         'CICS',  'cics.faculty5@piat.csu.edu.ph',  'Male',   'active',   'F5', "What city were you born in?",        'tuguegarao'],
     ];
 
     $stmt = $db->prepare(

@@ -39,6 +39,12 @@ $user = requireAuth(['user']);
     <strong>No active submission period.</strong> The Super Admin has not opened a submission period yet. You can view and fill in the form, but saving and submitting are disabled until a period is opened.
   </div>
 
+  <!-- KPI source info banner (populated by JS) -->
+  <div id="kpiInfoBanner" class="alert alert-info d-none no-print mb-3 py-2" role="alert" style="font-size:0.84rem">
+    <i class="fa-solid fa-circle-info me-2"></i>
+    <span id="kpiInfoText"></span>
+  </div>
+
   <!-- Print Header (visible on print only) -->
   <div class="d-none d-print-block text-center mb-3">
     <h5 class="fw-700">CAGAYAN STATE UNIVERSITY — PIAT CAMPUS</h5>
@@ -174,6 +180,7 @@ $user = requireAuth(['user']);
 
   const session = SESSION_USER;
   let kpi = { core: [], strategic: [], support: [] };   // KPI catalogue (kpi_items) — never the saved rows
+  let kpiRaw = [];  // flat list — used to detect personally-assigned KPIs
   let activeTimeline = null;
   let existingIpcrId = null;
   let supervisor = null;
@@ -191,8 +198,14 @@ $user = requireAuth(['user']);
 
     // The KPI catalogue supplies MFO / Success Indicator / Target for every row,
     // whether the form is fresh or reloaded from a saved draft.
-    const kpiRes = await fetch(`${API_BASE}kpi/list.php`, { credentials: 'include' }).then(r => r.json()).catch(() => null);
+    // Pass department_id explicitly so the server can apply scope filtering correctly
+    const kpiRes = await fetch(
+      `${API_BASE}kpi/list.php?department_id=${encodeURIComponent(session.department_id || '')}`,
+      { credentials: 'include' }
+    ).then(r => r.json()).catch(() => null);
     if (kpiRes?.grouped) kpi = kpiRes.grouped;
+    if (kpiRes?.items)   kpiRaw = kpiRes.items;
+    showKpiBanner();
 
     // Load open timeline
     const tlRes = await fetch(API_BASE + 'timeline/list.php?status=open', { credentials: 'include' }).then(r => r.json()).catch(() => null);
@@ -218,9 +231,9 @@ $user = requireAuth(['user']);
         document.getElementById('ipcrOffice').value = f.department_name || session.department_id || '';
         document.getElementById('ipcrPeriod').value = f.covered_period;
         document.getElementById('ipcrStatus').value = f.status;
-        loadSection('coreBody', f.items.core);
-        loadSection('strategicBody', f.items.strategic);
-        loadSection('supportBody', f.items.support);
+        loadSection('coreBody', f.items.core, kpi.core);
+        loadSection('strategicBody', f.items.strategic, kpi.strategic);
+        loadSection('supportBody', f.items.support, kpi.support);
       } else {
         loadKpiSection('coreBody', kpi.core);
         loadKpiSection('strategicBody', kpi.strategic);
@@ -246,21 +259,44 @@ $user = requireAuth(['user']);
 
   initForm();
 
+  // ── KPI info banner ─────────────────────────────────────────────────────
+  function showKpiBanner() {
+    const total    = kpiRaw.length;
+    const personal = kpiRaw.filter(k => k.scope === 'user' && String(k.assigned_to) === String(session.id));
+    const banner   = document.getElementById('kpiInfoBanner');
+    const text     = document.getElementById('kpiInfoText');
+    if (!banner || total === 0) return;
+    let msg = `<strong>${total}</strong> KPI indicator${total !== 1 ? 's' : ''} loaded for your IPCR form.`;
+    if (personal.length > 0) {
+      msg += ` &nbsp;<span class="badge" style="background:#f59e0b;color:#fff;font-size:0.72rem"><i class="fa-solid fa-user-tag me-1"></i>${personal.length} personally assigned to you</span>`;
+    }
+    text.innerHTML = msg;
+    banner.classList.remove('d-none');
+  }
+
+  // Returns a small badge tag when this KPI is personally assigned to the current user
+  function personalTag(item) {
+    if (item.scope === 'user' && String(item.assigned_to) === String(session.id)) {
+      return `<span title="Assigned specifically to you" style="font-size:0.65rem;background:#f59e0b;color:#fff;border-radius:4px;padding:1px 5px;margin-left:4px"><i class="fa-solid fa-user-tag"></i></span>`;
+    }
+    return '';
+  }
+
   function loadKpiSection(tbodyId, items) {
     const tbody = document.getElementById(tbodyId);
     tbody.innerHTML = '';
     (items || []).forEach(item => {
       tbody.innerHTML += `<tr>
-        <td style="font-size:0.82rem;background:#fafafa;white-space:nowrap">${item.mfo}</td>
+        <td style="font-size:0.82rem;background:#fafafa;white-space:nowrap">${item.mfo}${personalTag(item)}</td>
         <td style="font-size:0.82rem;background:#fafafa">${item.success_indicator}</td>
-        <td style="font-size:0.82rem;background:#fafafa;white-space:nowrap">${item.target}</td>
+        <td style="font-size:0.82rem;background:#fafafa;white-space:nowrap">${item.target || '—'}</td>
         <td><textarea class="form-control form-control-sm" rows="2" placeholder="Describe your actual accomplishment..."></textarea></td>
         <td><input type="number" class="form-control form-control-sm rating-input" min="1" max="5" step="0.5" placeholder="1-5" data-kpi="${item.id}" oninput="computeOverallRating()"></td>
         <td><input type="text" class="form-control form-control-sm" placeholder="Outstanding/VS/Satisfactory..."></td></tr>`;
     });
   }
 
-  function loadSection(tbodyId, items) {
+  function loadSection(tbodyId, items, sectionKpi) {
     const tbody = document.getElementById(tbodyId);
     tbody.innerHTML = '';
     const allKpi = [...(kpi.core || []), ...(kpi.strategic || []), ...(kpi.support || [])];
@@ -273,6 +309,18 @@ $user = requireAuth(['user']);
         <td><textarea class="form-control form-control-sm" rows="2">${item.accomplishment || ''}</textarea></td>
         <td><input type="number" class="form-control form-control-sm rating-input" min="1" max="5" step="0.5" value="${item.rating || ''}" data-kpi="${item.kpi_id || ''}" oninput="computeOverallRating()"></td>
         <td><input type="text" class="form-control form-control-sm" value="${item.remarks || ''}"></td></tr>`;
+    });
+    // Surface KPIs added after this form was first saved (no ipcr_items row yet)
+    (sectionKpi || []).forEach(k => {
+      const already = (items || []).some(item => String(item.kpi_id) === String(k.id));
+      if (already) return;
+      tbody.innerHTML += `<tr>
+        <td style="font-size:0.82rem;background:#fafafa;white-space:nowrap">${k.mfo || '—'}${personalTag(k)}</td>
+        <td style="font-size:0.82rem;background:#fafafa">${k.success_indicator || '—'}</td>
+        <td style="font-size:0.82rem;background:#fafafa;white-space:nowrap">${k.target || '—'}</td>
+        <td><textarea class="form-control form-control-sm" rows="2" placeholder="Describe your actual accomplishment..."></textarea></td>
+        <td><input type="number" class="form-control form-control-sm rating-input" min="1" max="5" step="0.5" placeholder="1-5" data-kpi="${k.id}" oninput="computeOverallRating()"></td>
+        <td><input type="text" class="form-control form-control-sm" placeholder="Outstanding/VS/Satisfactory..."></td></tr>`;
     });
   }
 
