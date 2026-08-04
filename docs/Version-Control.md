@@ -22,6 +22,7 @@
 | v2.00   | Custom Snapshot: Auth + SuperAdmin Dashboard + My Profile | index.php, register.php, forgot-password.php, views/superadmin/dashboard.php, views/superadmin/account.php | All other 17 views/\* pages re-gated |
 | v3.00   | Custom Snapshot: + SuperAdmin Accounts, Admin Dashboard/Profile, Faculty Dashboard/Profile | v2.00 pages + views/superadmin/accounts.php, views/admin/dashboard.php, views/admin/account.php, views/users/dashboard.php, views/users/account.php | Remaining 12 views/\* pages |
 | v4.00   | Custom Snapshot: + SuperAdmin Settings (Timeline + KPI Management), Admin Accomplishments & Ratings, Faculty IPCR Form | v3.00 pages + views/superadmin/settings.php, views/admin/accomplishments.php, views/users/ipcr-form.php | Remaining 10 views/\* pages |
+| v5.00   | Custom Snapshot: + KPI Scopes/User Assignment, Admin KPI Management, SuperAdmin/Admin Reports | v4.00 pages + views/admin/kpi-management.php, views/superadmin/reports.php, views/admin/reports.php | Remaining 8 views/\* pages |
 
 ---
 
@@ -88,6 +89,7 @@ Tags are lightweight pointers to specific commits. Even as `main` moves forward,
 | v2.00   | v2.00    | 2562095807d580c37c4d0fcfc55b4ee0333e9321 |
 | v3.00   | v3.00    | 8d74fa8a7ed16467c7ddc5de9b3198a85792276e |
 | v4.00   | v4.00    | 8c13612b624a312f0fd5ed84cd57ce78d926a2bd |
+| v5.00   | v5.00    | 46b92ebfbddbef97caaa6ab59a93c047a3862dcd |
 
 ---
 
