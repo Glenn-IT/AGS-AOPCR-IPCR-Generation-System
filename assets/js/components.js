@@ -57,6 +57,16 @@ function getRatingLabel(rating) {
   return '<span class="badge bg-dark">Poor</span>';
 }
 
+function getAdjectivalText(rating) {
+  const v = parseFloat(rating);
+  if (!v || v <= 0) return '';
+  if (v >= 4.5) return 'Outstanding';
+  if (v >= 3.5) return 'Very Satisfactory';
+  if (v >= 2.5) return 'Satisfactory';
+  if (v >= 1.5) return 'Unsatisfactory';
+  return 'Poor';
+}
+
 function buildSidebar(role, activePage) {
   const menus = {
     superadmin: [

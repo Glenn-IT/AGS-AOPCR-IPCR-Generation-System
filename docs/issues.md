@@ -1,3 +1,15 @@
-1. KPI Management 
--I want this kind of feature. The superadmin creates a KPI for admin - heads/deans and the admin craetes a KPI for his own department for  his teams.
--The admin can also Set a target or a KPI for a certain faculty like sample Im the dean i have 10 faculty on my team i want to set a Target for the 5 Faculty iwant that feature function also implemented do that also on superadmin for his deans and heads
+1. on the IPCR Form - can you add column for
+ Quality/Effectiveness |  Efficiency | Timeliness | Average ( get the total average of Q E T and rate it 1 -5 ok)
+
+
+- QET - The ratings should be 1 - 5 
+
+- and the remarks should auto compute it will get its data to the total average of Q \ E \ T \ A, 
+5 - Outstanding
+4 - Very Satisfactory
+3 - Satisfactory
+2 - Unsatisfactory
+1 - Poor
+
+ -Remove the ratings there ok 
+

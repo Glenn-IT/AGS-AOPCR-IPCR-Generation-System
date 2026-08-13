@@ -9,6 +9,7 @@ $ipcr_id    = intval($_GET['id'] ?? 0);
 $timeline_id = intval($_GET['timeline_id'] ?? 0);
 
 $db = getDB();
+ensureIpcrColumns($db);
 
 if ($ipcr_id > 0) {
     $stmt = $db->prepare('SELECT f.*, u.name AS user_name, u.department_id, u.position,
@@ -76,5 +77,14 @@ $form['items'] = [
     'strategic' => array_values(array_filter($allItems, fn($r) => $r['function_type'] === 'strategic')),
     'support'   => array_values(array_filter($allItems, fn($r) => $r['function_type'] === 'support')),
 ];
+
+// Load evidence files
+try {
+    $evStmt = $db->prepare('SELECT * FROM evidence_files WHERE ipcr_form_id = ? OR user_id = ? ORDER BY uploaded_at DESC');
+    $evStmt->execute([$form['id'], $form['user_id']]);
+    $form['evidence_files'] = $evStmt->fetchAll();
+} catch (Exception $e) {
+    $form['evidence_files'] = [];
+}
 
 echo json_encode(['success' => true, 'form' => $form]);

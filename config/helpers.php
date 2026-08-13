@@ -27,7 +27,41 @@ function getImmediateSupervisor(PDO $db, ?string $departmentId): ?array {
  */
 function normalizeRating($value): ?float {
     if ($value === null || $value === '') return null;
-    $r = round(floatval($value) * 2) / 2;
+    $r = floatval($value);
     if ($r < 1) return null;
-    return $r > 5 ? 5.0 : $r;
+    return $r > 5 ? 5.0 : round($r, 2);
+}
+
+/**
+ * Returns adjectival rating string based on 1.0 - 5.0 scale.
+ */
+function getAdjectivalRating($avg): string {
+    if ($avg === null || $avg === '') return '';
+    $v = floatval($avg);
+    if ($v >= 4.5) return 'Outstanding';
+    if ($v >= 3.5) return 'Very Satisfactory';
+    if ($v >= 2.5) return 'Satisfactory';
+    if ($v >= 1.5) return 'Unsatisfactory';
+    if ($v > 0)    return 'Poor';
+    return '';
+}
+
+/**
+ * Ensure q_rating, e_rating, t_rating columns exist in ipcr_items table.
+ */
+function ensureIpcrColumns(PDO $db): void {
+    static $done = false;
+    if ($done) return;
+    try {
+        $cols = $db->query("SHOW COLUMNS FROM ipcr_items LIKE 'q_rating'")->fetchAll();
+        if (empty($cols)) {
+            $db->exec("ALTER TABLE ipcr_items 
+                ADD COLUMN q_rating DECIMAL(3,2) DEFAULT NULL,
+                ADD COLUMN e_rating DECIMAL(3,2) DEFAULT NULL,
+                ADD COLUMN t_rating DECIMAL(3,2) DEFAULT NULL");
+        }
+    } catch (Exception $e) {
+        // Silently fail if table not present
+    }
+    $done = true;
 }

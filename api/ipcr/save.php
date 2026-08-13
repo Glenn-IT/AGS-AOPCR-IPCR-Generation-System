@@ -94,22 +94,39 @@ try {
         $ipcr_id = $db->lastInsertId();
     }
 
+    ensureIpcrColumns($db);
+
     // Insert items — kpi_id is FK-constrained, so only accept ids that really exist
     $validKpi = array_flip($db->query('SELECT id FROM kpi_items')->fetchAll(PDO::FETCH_COLUMN));
 
-    $insertItem = $db->prepare('INSERT INTO ipcr_items (ipcr_form_id, kpi_id, function_type, success_indicator, accomplishment, rating, remarks) VALUES (?,?,?,?,?,?,?)');
+    $insertItem = $db->prepare('INSERT INTO ipcr_items (ipcr_form_id, kpi_id, function_type, success_indicator, accomplishment, q_rating, e_rating, t_rating, rating, remarks) VALUES (?,?,?,?,?,?,?,?,?,?)');
 
     foreach ([['core', $core], ['strategic', $strategic], ['support', $support]] as [$type, $items]) {
         foreach ($items as $item) {
             $kpiId = !empty($item['kpi_id']) ? intval($item['kpi_id']) : 0;
+            $q = normalizeRating($item['q_rating'] ?? $item['q'] ?? null);
+            $e = normalizeRating($item['e_rating'] ?? $item['e'] ?? null);
+            $t = normalizeRating($item['t_rating'] ?? $item['t'] ?? null);
+
+            $qet = array_filter([$q, $e, $t], fn($v) => $v !== null && $v > 0);
+            $avgRating = count($qet) > 0 ? round(array_sum($qet) / count($qet), 2) : normalizeRating($item['rating'] ?? null);
+            
+            $remarks = trim($item['remarks'] ?? '');
+            if (($remarks === '' || in_array($remarks, ['Outstanding','Very Satisfactory','Satisfactory','Unsatisfactory','Poor'])) && $avgRating !== null) {
+                $remarks = getAdjectivalRating($avgRating);
+            }
+
             $insertItem->execute([
                 $ipcr_id,
                 isset($validKpi[$kpiId]) ? $kpiId : null,
                 $type,
                 trim($item['success_indicator'] ?? ''),
                 trim($item['accomplishment'] ?? ''),
-                normalizeRating($item['rating'] ?? null),
-                trim($item['remarks'] ?? ''),
+                $q,
+                $e,
+                $t,
+                $avgRating,
+                $remarks,
             ]);
         }
     }

@@ -42,16 +42,44 @@ if ($user['role'] === 'admin' && $form['department_id'] !== $user['department_id
 try {
     $db->beginTransaction();
 
+    ensureIpcrColumns($db);
+
     // Update individual item ratings if provided
-    $updateItem = $db->prepare('UPDATE ipcr_items SET rating=?, accomplishment=?, remarks=? WHERE id=? AND ipcr_form_id=?');
+    $updateItem = $db->prepare('UPDATE ipcr_items SET q_rating=?, e_rating=?, t_rating=?, rating=?, remarks=? WHERE id=? AND ipcr_form_id=?');
+    $updateItemWithAcc = $db->prepare('UPDATE ipcr_items SET q_rating=?, e_rating=?, t_rating=?, rating=?, accomplishment=?, remarks=? WHERE id=? AND ipcr_form_id=?');
+
     foreach ($ratings as $r) {
-        $updateItem->execute([
-            normalizeRating($r['rating'] ?? null),
-            trim($r['accomplishment'] ?? ''),
-            trim($r['remarks'] ?? ''),
-            intval($r['item_id']),
-            $ipcr_id,
-        ]);
+        $itemId = intval($r['item_id'] ?? 0);
+        if (!$itemId) continue;
+
+        $q = normalizeRating($r['q_rating'] ?? $r['q'] ?? null);
+        $e = normalizeRating($r['e_rating'] ?? $r['e'] ?? null);
+        $t = normalizeRating($r['t_rating'] ?? $r['t'] ?? null);
+
+        $qet = array_filter([$q, $e, $t], fn($v) => $v !== null && $v > 0);
+        $avgRating = count($qet) > 0 ? round(array_sum($qet) / count($qet), 2) : normalizeRating($r['rating'] ?? null);
+
+        $remarks = trim($r['remarks'] ?? '');
+        if (($remarks === '' || in_array($remarks, ['Outstanding','Very Satisfactory','Satisfactory','Unsatisfactory','Poor'])) && $avgRating !== null) {
+            $remarks = getAdjectivalRating($avgRating);
+        }
+
+        if (array_key_exists('accomplishment', $r)) {
+            $updateItemWithAcc->execute([
+                $q, $e, $t, $avgRating,
+                trim($r['accomplishment'] ?? ''),
+                $remarks,
+                $itemId,
+                $ipcr_id,
+            ]);
+        } else {
+            $updateItem->execute([
+                $q, $e, $t, $avgRating,
+                $remarks,
+                $itemId,
+                $ipcr_id,
+            ]);
+        }
     }
 
     // Compute overall rating from all items

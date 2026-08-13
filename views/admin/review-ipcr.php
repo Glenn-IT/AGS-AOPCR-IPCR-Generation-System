@@ -198,17 +198,22 @@ $user = requireAuth(['admin']);
         <table class="table table-bordered table-sm mb-0">
           <thead class="table-light"><tr>
             <th>MFO/KRA</th><th>Success Indicator</th><th>Accomplishment</th>
-            <th style="width:100px">Rating (1-5)</th><th>Remarks</th>
+            <th style="width:70px">Q</th><th style="width:70px">E</th><th style="width:70px">T</th><th style="width:80px">Average</th><th>Remarks</th>
           </tr></thead>
           <tbody>
-          ${items.map(item => `<tr>
+          ${items.map(item => {
+            const avg = parseFloat(item.rating) || 0;
+            return `<tr>
             <td style="font-size:0.8rem;background:#fafafa">${item.mfo || '-'}</td>
             <td style="font-size:0.8rem;background:#fafafa">${item.success_indicator || '-'}</td>
-            <td><textarea class="form-control form-control-sm" rows="1" data-id="${item.id}" data-field="accomplishment">${item.accomplishment || ''}</textarea></td>
-            <td><input type="number" class="form-control form-control-sm rating-input" min="1" max="5" step="0.5"
-                 data-id="${item.id}" data-field="rating" value="${item.rating || ''}" oninput="recompute()"></td>
-            <td><input type="text" class="form-control form-control-sm" data-id="${item.id}" data-field="remarks" value="${item.remarks || ''}"></td>
-          </tr>`).join('')}
+            <td style="font-size:0.8rem;background:#fafafa">${item.accomplishment || '-'}</td>
+            <td><input type="number" class="form-control form-control-sm rating-q" min="1" max="5" step="0.1" data-id="${item.id}" data-field="q_rating" value="${item.q_rating || ''}" placeholder="1-5" oninput="recomputeRow(this)"></td>
+            <td><input type="number" class="form-control form-control-sm rating-e" min="1" max="5" step="0.1" data-id="${item.id}" data-field="e_rating" value="${item.e_rating || ''}" placeholder="1-5" oninput="recomputeRow(this)"></td>
+            <td><input type="number" class="form-control form-control-sm rating-t" min="1" max="5" step="0.1" data-id="${item.id}" data-field="t_rating" value="${item.t_rating || ''}" placeholder="1-5" oninput="recomputeRow(this)"></td>
+            <td class="text-center fw-700 row-avg" style="font-size:0.85rem;background:#fafafa">${avg > 0 ? avg.toFixed(2) : '-'}</td>
+            <td><input type="text" class="form-control form-control-sm row-remarks bg-light" data-id="${item.id}" data-field="remarks" value="${item.remarks || (avg > 0 ? getAdjectivalText(avg) : '')}" readonly placeholder="Auto"></td>
+          </tr>`;
+          }).join('')}
           </tbody>
         </table></div>`;
     });
@@ -217,10 +222,34 @@ $user = requireAuth(['admin']);
     recompute();
   }
 
+  function recomputeRow(inputEl) {
+    const tr = inputEl.closest('tr');
+    if (!tr) return;
+    const qInp = tr.querySelector('.rating-q');
+    const eInp = tr.querySelector('.rating-e');
+    const tInp = tr.querySelector('.rating-t');
+    const avgCell = tr.querySelector('.row-avg');
+    const remarksInp = tr.querySelector('.row-remarks');
+
+    const vals = [qInp, eInp, tInp].map(i => parseFloat(i?.value)).filter(v => !isNaN(v) && v >= 1 && v <= 5);
+    if (vals.length > 0) {
+      const avg = vals.reduce((a, b) => a + b, 0) / vals.length;
+      avgCell.textContent = avg.toFixed(2);
+      remarksInp.value = getAdjectivalText(avg);
+    } else {
+      avgCell.textContent = '-';
+      remarksInp.value = '';
+    }
+    recompute();
+  }
+
   function recompute() {
-    const inputs = document.querySelectorAll('.rating-input');
+    const avgCells = document.querySelectorAll('.row-avg');
     let total = 0, count = 0;
-    inputs.forEach(inp => { const v = parseFloat(inp.value); if (!isNaN(v) && v > 0) { total += v; count++; } });
+    avgCells.forEach(cell => {
+      const v = parseFloat(cell.textContent);
+      if (!isNaN(v) && v > 0) { total += v; count++; }
+    });
     const avg = count > 0 ? (total / count).toFixed(2) : '-';
     document.getElementById('modalRatingDisplay').textContent = avg;
   }
