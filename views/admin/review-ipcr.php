@@ -206,7 +206,7 @@ $user = requireAuth(['admin']);
             return `<tr>
             <td style="font-size:0.8rem;background:#fafafa">${item.mfo || '-'}</td>
             <td style="font-size:0.8rem;background:#fafafa">${item.success_indicator || '-'}</td>
-            <td style="font-size:0.8rem;background:#fafafa">${item.accomplishment || '-'}</td>
+            <td style="font-size:0.8rem;background:#fafafa;text-align:center">${item.accomplishment !== null && item.accomplishment !== '' ? (isNaN(item.accomplishment) ? item.accomplishment : item.accomplishment + '%') : '-'}</td>
             <td><input type="number" class="form-control form-control-sm rating-q" min="1" max="5" step="0.1" data-id="${item.id}" data-field="q_rating" value="${item.q_rating || ''}" placeholder="1-5" oninput="recomputeRow(this)"></td>
             <td><input type="number" class="form-control form-control-sm rating-e" min="1" max="5" step="0.1" data-id="${item.id}" data-field="e_rating" value="${item.e_rating || ''}" placeholder="1-5" oninput="recomputeRow(this)"></td>
             <td><input type="number" class="form-control form-control-sm rating-t" min="1" max="5" step="0.1" data-id="${item.id}" data-field="t_rating" value="${item.t_rating || ''}" placeholder="1-5" oninput="recomputeRow(this)"></td>

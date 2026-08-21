@@ -198,14 +198,14 @@ $user = requireAuth(['superadmin']);
         <table class="table table-bordered table-sm mb-0">
           <thead class="table-light"><tr>
             <th>MFO/PAP</th><th>Success Indicator</th><th>Target</th>
-            <th>Actual Accomplishment</th><th style="width:100px">Rating (1-5)</th><th>Remarks</th>
+            <th style="width:130px">Actual Accomplishment</th><th style="width:100px">Rating (1-5)</th><th>Remarks</th>
           </tr></thead>
           <tbody>
           ${items.map(item => `<tr>
             <td style="font-size:0.8rem;background:#fafafa">${item.mfo || '-'}</td>
             <td style="font-size:0.8rem;background:#fafafa">${item.success_indicator || '-'}</td>
             <td style="font-size:0.8rem;background:#fafafa">${item.target || '-'}</td>
-            <td><input type="text" class="form-control form-control-sm" data-id="${item.id}" data-field="actual" value="${item.actual || ''}"></td>
+            <td><input type="number" class="form-control form-control-sm" min="1" max="100" step="1" data-id="${item.id}" data-field="actual" value="${item.actual || ''}" placeholder="1-100" oninput="validateAccInput(this)" onkeydown="enforceDigitsOnly(event)"></td>
             <td><input type="number" class="form-control form-control-sm rating-input" min="1" max="5" step="0.5"
                  data-id="${item.id}" data-field="rating" value="${item.rating || ''}" oninput="recompute()"></td>
             <td><input type="text" class="form-control form-control-sm" data-id="${item.id}" data-field="remarks" value="${item.remarks || ''}"></td>
@@ -216,6 +216,26 @@ $user = requireAuth(['superadmin']);
 
     document.getElementById('reviewBody').innerHTML = html;
     recompute();
+  }
+
+  function validateAccInput(input) {
+    if (!input) return;
+    let v = input.value;
+    if (v === '') return;
+    let num = parseInt(v, 10);
+    if (isNaN(num)) {
+      input.value = '';
+      return;
+    }
+    if (num > 100) input.value = 100;
+    else if (num < 1) input.value = 1;
+    else input.value = num;
+  }
+
+  function enforceDigitsOnly(e) {
+    if (['e', 'E', '+', '-', '.'].includes(e.key)) {
+      e.preventDefault();
+    }
   }
 
   function recompute() {

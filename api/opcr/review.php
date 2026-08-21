@@ -30,9 +30,21 @@ try {
 
     $updateItem = $db->prepare('UPDATE opcr_items SET rating=?,actual=?,remarks=? WHERE id=? AND opcr_form_id=?');
     foreach ($ratings as $r) {
+        $actualRaw = trim($r['actual'] ?? '');
+        $actual = null;
+        if ($actualRaw !== '') {
+            if (is_numeric($actualRaw)) {
+                $actNum = intval($actualRaw);
+                if ($actNum < 1) $actNum = 1;
+                if ($actNum > 100) $actNum = 100;
+                $actual = (string)$actNum;
+            } else {
+                $actual = $actualRaw;
+            }
+        }
         $updateItem->execute([
             !empty($r['rating']) ? floatval($r['rating']) : null,
-            trim($r['actual'] ?? ''),
+            $actual,
             trim($r['remarks'] ?? ''),
             intval($r['item_id']),
             $opcr_id,

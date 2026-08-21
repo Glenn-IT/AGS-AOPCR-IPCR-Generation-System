@@ -65,9 +65,21 @@ try {
         }
 
         if (array_key_exists('accomplishment', $r)) {
+            $accRaw = trim($r['accomplishment'] ?? '');
+            $acc = null;
+            if ($accRaw !== '') {
+                if (is_numeric($accRaw)) {
+                    $accNum = intval($accRaw);
+                    if ($accNum < 1) $accNum = 1;
+                    if ($accNum > 100) $accNum = 100;
+                    $acc = (string)$accNum;
+                } else {
+                    $acc = $accRaw;
+                }
+            }
             $updateItemWithAcc->execute([
                 $q, $e, $t, $avgRating,
-                trim($r['accomplishment'] ?? ''),
+                $acc,
                 $remarks,
                 $itemId,
                 $ipcr_id,

@@ -187,7 +187,7 @@ $user = requireAuth(['user']);
         <table class="table table-sm mb-3"><thead><tr><th>Indicator</th><th>Accomplishment</th><th>Rating</th><th>Remarks</th></tr></thead><tbody>
         ${items.map(item => `<tr>
           <td style="font-size:0.8rem">${item.success_indicator || '-'}</td>
-          <td style="font-size:0.8rem">${item.accomplishment || '-'}</td>
+          <td style="font-size:0.8rem;text-align:center">${item.accomplishment !== null && item.accomplishment !== '' ? (isNaN(item.accomplishment) ? item.accomplishment : item.accomplishment + '%') : '-'}</td>
           <td style="font-size:0.8rem;text-align:center">${item.rating || '-'}</td>
           <td style="font-size:0.8rem">${item.remarks || '-'}</td></tr>`).join('')}
         </tbody></table>`;
@@ -214,12 +214,13 @@ $user = requireAuth(['user']);
       for (let i = 0; i < total; i++) {
         const item = (items||[])[i] || {};
         const rat = parseFloat(item.rating) > 0 ? item.rating : '';
+        const formattedAcc = item.accomplishment !== null && item.accomplishment !== '' ? (isNaN(item.accomplishment) ? item.accomplishment : item.accomplishment + '%') : '';
         html += `<tr class="data-row">
           <td>${ep(item.mfo)}</td>
           <td>${ep(item.success_indicator)}</td>
           <td class="tc">${ep(item.target)}</td>
           <td>${ep(f.user_name)}</td>
-          <td>${ep(item.accomplishment)}</td>
+          <td class="tc">${ep(formattedAcc)}</td>
           <td class="tc">${rat}</td><td class="tc">${rat}</td><td class="tc">${rat}</td><td class="tc b">${rat}</td>
           <td>${ep(item.remarks)}</td>
         </tr>`;

@@ -217,6 +217,26 @@ $user = requireAuth(['admin']);
     });
   }
 
+  function validateAccInput(input) {
+    if (!input) return;
+    let v = input.value;
+    if (v === '') return;
+    let num = parseInt(v, 10);
+    if (isNaN(num)) {
+      input.value = '';
+      return;
+    }
+    if (num > 100) input.value = 100;
+    else if (num < 1) input.value = 1;
+    else input.value = num;
+  }
+
+  function enforceDigitsOnly(e) {
+    if (['e', 'E', '+', '-', '.'].includes(e.key)) {
+      e.preventDefault();
+    }
+  }
+
   function createRow(data = {}) {
     const tr = document.createElement('tr');
     tr.dataset.itemId = data.itemId || '';
@@ -226,7 +246,7 @@ $user = requireAuth(['admin']);
       <td><input type="text" class="form-control form-control-sm" value="${data.target || ''}" placeholder="Target"></td>
       <td><input type="number" class="form-control form-control-sm" value="${data.budget || '0'}" placeholder="0"></td>
       <td><input type="text" class="form-control form-control-sm" value="${data.measure || ''}" placeholder="Q/T/E"></td>
-      <td><input type="text" class="form-control form-control-sm" value="${data.actual || ''}" placeholder="Actual accomplishment..."></td>
+      <td><input type="number" class="form-control form-control-sm" min="1" max="100" step="1" value="${data.actual || ''}" placeholder="1-100" oninput="validateAccInput(this)" onkeydown="enforceDigitsOnly(event)"></td>
       <td><input type="number" class="form-control form-control-sm opcr-rating" min="1" max="5" step="0.01" value="${data.rating || ''}" placeholder="1-5" oninput="computeOPCRAverages()"></td>
       <td class="no-print text-center">
         <button class="btn btn-outline-danger btn-sm" onclick="this.closest('tr').remove();computeOPCRAverages()" title="Remove"><i class="fa-solid fa-trash"></i></button>
@@ -380,7 +400,7 @@ $user = requireAuth(['admin']);
           <td class="tc">${ep(r.target)}</td>
           <td class="tc">${ep(r.budget)}</td>
           <td class="tc">${ep(r.measure)}</td>
-          <td>${ep(r.actual)}</td>
+          <td class="tc">${ep(r.actual ? (isNaN(r.actual) ? r.actual : r.actual + '%') : '')}</td>
           <td class="tc">${rat}</td>
           <td class="tc">${rat}</td>
           <td class="tc">${rat}</td>

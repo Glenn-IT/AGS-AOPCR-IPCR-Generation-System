@@ -74,12 +74,24 @@ try {
     $insertItem = $db->prepare('INSERT INTO opcr_items (opcr_form_id,function_type,mfo,success_indicator,target,actual,budget,rating) VALUES (?,?,?,?,?,?,?,?)');
     foreach ([['core',$core],['strategic',$strategic],['support',$support]] as [$type,$items]) {
         foreach ($items as $item) {
+            $actualRaw = trim($item['actual'] ?? '');
+            $actual = null;
+            if ($actualRaw !== '') {
+                if (is_numeric($actualRaw)) {
+                    $actNum = intval($actualRaw);
+                    if ($actNum < 1) $actNum = 1;
+                    if ($actNum > 100) $actNum = 100;
+                    $actual = (string)$actNum;
+                } else {
+                    $actual = $actualRaw;
+                }
+            }
             $insertItem->execute([
                 $opcr_id, $type,
                 trim($item['mfo'] ?? ''),
                 trim($item['success_indicator'] ?? ''),
                 trim($item['target'] ?? ''),
-                trim($item['actual'] ?? ''),
+                $actual,
                 !empty($item['budget']) ? floatval($item['budget']) : 0,
                 !empty($item['rating']) ? floatval($item['rating']) : null,
             ]);

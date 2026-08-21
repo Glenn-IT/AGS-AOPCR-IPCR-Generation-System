@@ -116,12 +116,25 @@ try {
                 $remarks = getAdjectivalRating($avgRating);
             }
 
+            $accRaw = trim($item['accomplishment'] ?? '');
+            $acc = null;
+            if ($accRaw !== '') {
+                if (is_numeric($accRaw)) {
+                    $accNum = intval($accRaw);
+                    if ($accNum < 1) $accNum = 1;
+                    if ($accNum > 100) $accNum = 100;
+                    $acc = (string)$accNum;
+                } else {
+                    $acc = $accRaw;
+                }
+            }
+
             $insertItem->execute([
                 $ipcr_id,
                 isset($validKpi[$kpiId]) ? $kpiId : null,
                 $type,
                 trim($item['success_indicator'] ?? ''),
-                trim($item['accomplishment'] ?? ''),
+                $acc,
                 $q,
                 $e,
                 $t,

@@ -96,7 +96,7 @@ $user = requireAuth(['admin']);
     <div class="ipcr-section-header"><i class="fa-solid fa-star me-2"></i>A. CORE FUNCTION</div>
     <div class="table-responsive">
       <table class="table table-bordered mb-0">
-        <thead class="table-light" style="font-size:0.8rem"><tr><th style="width:110px">MFO / KRA</th><th>Success Indicators</th><th style="width:100px">Target</th><th>Actual Accomplishment</th><th style="width:70px">Q</th><th style="width:70px">E</th><th style="width:70px">T</th><th style="width:80px">Average</th><th>Remarks</th></tr></thead>
+        <thead class="table-light" style="font-size:0.8rem"><tr><th style="width:110px">MFO / KRA</th><th>Success Indicators</th><th style="width:100px">Target</th><th style="width:110px">Actual Accomplishment</th><th style="width:70px">Q</th><th style="width:70px">E</th><th style="width:70px">T</th><th style="width:80px">Average</th><th>Remarks</th></tr></thead>
         <tbody id="coreBody"></tbody>
       </table>
     </div>
@@ -107,7 +107,7 @@ $user = requireAuth(['admin']);
     <div class="ipcr-section-header"><i class="fa-solid fa-chess me-2"></i>B. STRATEGIC FUNCTION</div>
     <div class="table-responsive">
       <table class="table table-bordered mb-0">
-        <thead class="table-light" style="font-size:0.8rem"><tr><th style="width:110px">MFO / KRA</th><th>Success Indicators</th><th style="width:100px">Target</th><th>Actual Accomplishment</th><th style="width:70px">Q</th><th style="width:70px">E</th><th style="width:70px">T</th><th style="width:80px">Average</th><th>Remarks</th></tr></thead>
+        <thead class="table-light" style="font-size:0.8rem"><tr><th style="width:110px">MFO / KRA</th><th>Success Indicators</th><th style="width:100px">Target</th><th style="width:110px">Actual Accomplishment</th><th style="width:70px">Q</th><th style="width:70px">E</th><th style="width:70px">T</th><th style="width:80px">Average</th><th>Remarks</th></tr></thead>
         <tbody id="strategicBody"></tbody>
       </table>
     </div>
@@ -118,7 +118,7 @@ $user = requireAuth(['admin']);
     <div class="ipcr-section-header"><i class="fa-solid fa-hands-helping me-2"></i>C. SUPPORT FUNCTION</div>
     <div class="table-responsive">
       <table class="table table-bordered mb-0">
-        <thead class="table-light" style="font-size:0.8rem"><tr><th style="width:110px">MFO / KRA</th><th>Success Indicators</th><th style="width:100px">Target</th><th>Actual Accomplishment</th><th style="width:70px">Q</th><th style="width:70px">E</th><th style="width:70px">T</th><th style="width:80px">Average</th><th>Remarks</th></tr></thead>
+        <thead class="table-light" style="font-size:0.8rem"><tr><th style="width:110px">MFO / KRA</th><th>Success Indicators</th><th style="width:100px">Target</th><th style="width:110px">Actual Accomplishment</th><th style="width:70px">Q</th><th style="width:70px">E</th><th style="width:70px">T</th><th style="width:80px">Average</th><th>Remarks</th></tr></thead>
         <tbody id="supportBody"></tbody>
       </table>
     </div>
@@ -231,6 +231,26 @@ $user = requireAuth(['admin']);
 
   initForm();
 
+  function validateAccInput(input) {
+    if (!input) return;
+    let v = input.value;
+    if (v === '') return;
+    let num = parseInt(v, 10);
+    if (isNaN(num)) {
+      input.value = '';
+      return;
+    }
+    if (num > 100) input.value = 100;
+    else if (num < 1) input.value = 1;
+    else input.value = num;
+  }
+
+  function enforceDigitsOnly(e) {
+    if (['e', 'E', '+', '-', '.'].includes(e.key)) {
+      e.preventDefault();
+    }
+  }
+
   function loadKpiSection(tbodyId, items) {
     const tbody = document.getElementById(tbodyId);
     tbody.innerHTML = '';
@@ -239,7 +259,7 @@ $user = requireAuth(['admin']);
         <td style="font-size:0.82rem;background:#fafafa;white-space:nowrap">${item.mfo}</td>
         <td style="font-size:0.82rem;background:#fafafa">${item.success_indicator}</td>
         <td style="font-size:0.82rem;background:#fafafa;white-space:nowrap">${item.target}</td>
-        <td><textarea class="form-control form-control-sm" rows="2" placeholder="Describe your actual accomplishment..."></textarea></td>
+        <td><input type="number" class="form-control form-control-sm acc-input" min="1" max="100" step="1" data-type="accomplishment" placeholder="1-100" oninput="validateAccInput(this)" onkeydown="enforceDigitsOnly(event)"></td>
         <td><input type="number" class="form-control form-control-sm rating-q" min="1" max="5" step="0.1" placeholder="1-5" data-kpi="${item.id}" oninput="computeRowRating(this)"></td>
         <td><input type="number" class="form-control form-control-sm rating-e" min="1" max="5" step="0.1" placeholder="1-5" data-kpi="${item.id}" oninput="computeRowRating(this)"></td>
         <td><input type="number" class="form-control form-control-sm rating-t" min="1" max="5" step="0.1" placeholder="1-5" data-kpi="${item.id}" oninput="computeRowRating(this)"></td>
@@ -257,7 +277,7 @@ $user = requireAuth(['admin']);
         <td style="font-size:0.82rem;background:#fafafa;white-space:nowrap">${item.mfo || '-'}</td>
         <td style="font-size:0.82rem;background:#fafafa">${item.success_indicator || '-'}</td>
         <td style="font-size:0.82rem;background:#fafafa;white-space:nowrap">${item.target || '-'}</td>
-        <td><textarea class="form-control form-control-sm" rows="2" data-type="accomplishment">${item.accomplishment || ''}</textarea></td>
+        <td><input type="number" class="form-control form-control-sm acc-input" min="1" max="100" step="1" data-type="accomplishment" placeholder="1-100" value="${item.accomplishment || ''}" oninput="validateAccInput(this)" onkeydown="enforceDigitsOnly(event)"></td>
         <td><input type="number" class="form-control form-control-sm rating-q" min="1" max="5" step="0.1" value="${item.q_rating || ''}" data-kpi="${item.kpi_id || ''}" oninput="computeRowRating(this)"></td>
         <td><input type="number" class="form-control form-control-sm rating-e" min="1" max="5" step="0.1" value="${item.e_rating || ''}" data-kpi="${item.kpi_id || ''}" oninput="computeRowRating(this)"></td>
         <td><input type="number" class="form-control form-control-sm rating-t" min="1" max="5" step="0.1" value="${item.t_rating || ''}" data-kpi="${item.kpi_id || ''}" oninput="computeRowRating(this)"></td>
@@ -273,7 +293,7 @@ $user = requireAuth(['admin']);
         <td style="font-size:0.82rem;background:#fafafa;white-space:nowrap">${k.mfo || '-'}</td>
         <td style="font-size:0.82rem;background:#fafafa">${k.success_indicator || '-'}</td>
         <td style="font-size:0.82rem;background:#fafafa;white-space:nowrap">${k.target || '-'}</td>
-        <td><textarea class="form-control form-control-sm" rows="2" data-type="accomplishment" placeholder="Describe your actual accomplishment..."></textarea></td>
+        <td><input type="number" class="form-control form-control-sm acc-input" min="1" max="100" step="1" data-type="accomplishment" placeholder="1-100" oninput="validateAccInput(this)" onkeydown="enforceDigitsOnly(event)"></td>
         <td><input type="number" class="form-control form-control-sm rating-q" min="1" max="5" step="0.1" placeholder="1-5" data-kpi="${k.id}" oninput="computeRowRating(this)"></td>
         <td><input type="number" class="form-control form-control-sm rating-e" min="1" max="5" step="0.1" placeholder="1-5" data-kpi="${k.id}" oninput="computeRowRating(this)"></td>
         <td><input type="number" class="form-control form-control-sm rating-t" min="1" max="5" step="0.1" placeholder="1-5" data-kpi="${k.id}" oninput="computeRowRating(this)"></td>
@@ -285,7 +305,7 @@ $user = requireAuth(['admin']);
   function getRows(tbodyId) {
     const rows = [];
     document.getElementById(tbodyId).querySelectorAll('tr').forEach(tr => {
-      const textarea   = tr.querySelector('textarea');
+      const accInp     = tr.querySelector('.acc-input') || tr.querySelector('input[data-type="accomplishment"]') || tr.querySelector('textarea');
       const qInp       = tr.querySelector('.rating-q');
       const eInp       = tr.querySelector('.rating-e');
       const tInp       = tr.querySelector('.rating-t');
@@ -300,7 +320,7 @@ $user = requireAuth(['admin']);
       rows.push({
         kpi_id:            qInp?.dataset?.kpi || eInp?.dataset?.kpi || tInp?.dataset?.kpi || '',
         success_indicator: tr.cells[1]?.textContent?.trim() || '',
-        accomplishment:    textarea?.value || '',
+        accomplishment:    accInp?.value !== undefined ? accInp.value.trim() : '',
         q_rating:          q,
         e_rating:          e,
         t_rating:          t,
@@ -389,7 +409,7 @@ $user = requireAuth(['admin']);
       const rows = [];
       document.getElementById(tbodyId).querySelectorAll('tr').forEach(tr => {
         const tds = tr.querySelectorAll('td');
-        const textarea   = tr.querySelector('textarea');
+        const accInp     = tr.querySelector('.acc-input') || tr.querySelector('input[data-type="accomplishment"]') || tr.querySelector('textarea');
         const qInp       = tr.querySelector('.rating-q');
         const eInp       = tr.querySelector('.rating-e');
         const tInp       = tr.querySelector('.rating-t');
@@ -399,7 +419,7 @@ $user = requireAuth(['admin']);
           mfo:     tds[0]?.textContent?.trim() || '',
           si:      tds[1]?.textContent?.trim() || '',
           target:  tds[2]?.textContent?.trim() || '',
-          actual:  textarea?.value || '',
+          actual:  accInp?.value !== undefined ? accInp.value.trim() : '',
           q:       qInp?.value || '',
           e:       eInp?.value || '',
           t:       tInp?.value || '',
@@ -431,12 +451,13 @@ $user = requireAuth(['admin']);
       const total = Math.max(rows.length, minRows);
       for (let i = 0; i < total; i++) {
         const r = rows[i] || {};
+        const formattedActual = r.actual ? (isNaN(r.actual) ? r.actual : r.actual + '%') : '';
         html += `<tr class="data-row">
           <td>${esc(r.mfo)}</td>
           <td>${esc(r.si)}</td>
           <td class="tc">${esc(r.target)}</td>
           <td>${esc(name)}</td>
-          <td>${esc(r.actual)}</td>
+          <td class="tc">${esc(formattedActual)}</td>
           <td class="tc">${esc(r.q)}</td>
           <td class="tc">${esc(r.e)}</td>
           <td class="tc">${esc(r.t)}</td>
