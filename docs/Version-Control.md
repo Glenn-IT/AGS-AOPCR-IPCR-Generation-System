@@ -24,6 +24,7 @@
 | v4.00   | Custom Snapshot: + SuperAdmin Settings (Timeline + KPI Management), Admin Accomplishments & Ratings, Faculty IPCR Form | v3.00 pages + views/superadmin/settings.php, views/admin/accomplishments.php, views/users/ipcr-form.php | Remaining 10 views/\* pages |
 | v5.00   | Custom Snapshot: + KPI Scopes/User Assignment, Admin KPI Management, SuperAdmin/Admin Reports | v4.00 pages + views/admin/kpi-management.php, views/superadmin/reports.php, views/admin/reports.php | Remaining 8 views/\* pages |
 | v5.10   | Custom Snapshot: + Q, E, T Rating System, Auto-Adjectival Remarks, Read-Only Faculty Accomplishments, Target Column, View Evidence Modal, Admin & SuperAdmin Summary of Ratings + Print Feature | v5.00 pages + Enhanced IPCR Form/Review & Reports Analytics + Print | Remaining 8 views/\* pages |
+| final-v1.00 | Full System Release: All pages unlocked, numeric accomplishment constraints (1-100), full Q/E/T rating system, auto remarks, evidence management, reports & analytics | All views/* pages (All 21 pages) | None — System fully completed & unlocked |
 
 ---
 
@@ -92,6 +93,7 @@ Tags are lightweight pointers to specific commits. Even as `main` moves forward,
 | v4.00   | v4.00    | 8c13612b624a312f0fd5ed84cd57ce78d926a2bd |
 | v5.00   | v5.00    | 46b92ebfbddbef97caaa6ab59a93c047a3862dcd |
 | v5.10   | v5.10    | 6e42c5f5fe0e9a971055d69381e059ebe3be9644 |
+| final-v1.00 | final-v1.00 | [to be updated after commit] |
 
 ---
 
