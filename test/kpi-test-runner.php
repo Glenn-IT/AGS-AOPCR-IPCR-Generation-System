@@ -15,7 +15,8 @@ $tests  = [];
 /* ─────────────────────────────────────────────────────────────────────────
    Helper: run a single test
    ───────────────────────────────────────────────────────────────────────── */
-function runTest(string $id, string $name, callable $fn) use (&$tests, &$passed, &$failed): void {
+function runTest(string $id, string $name, callable $fn): void {
+    global $tests, $passed, $failed;
     try {
         [$ok, $detail] = $fn();
         if ($ok) $passed++; else $failed++;
