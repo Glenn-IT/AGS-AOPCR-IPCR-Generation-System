@@ -53,7 +53,7 @@ $user = requireAuth(['superadmin']);
         <div class="table-responsive">
           <table class="table">
             <thead><tr>
-              <th>#</th><th>Academic Year</th><th>Semester</th><th>Start Date</th><th>End Date</th><th>Submission Deadline</th><th>Status</th><th>Actions</th>
+              <th>#</th><th>Academic Year</th><th>Covered Period</th><th>Start Date</th><th>End Date</th><th>Submission Deadline</th><th>Status</th><th>Actions</th>
             </tr></thead>
             <tbody id="timelineTable"></tbody>
           </table>
@@ -120,14 +120,13 @@ $user = requireAuth(['superadmin']);
         <input type="hidden" id="tlId">
         <div class="mb-3">
           <label class="form-label">Academic Year <span class="text-danger">*</span></label>
-          <input type="text" class="form-control" id="tlYear" placeholder="e.g. 2026-2027">
+          <input type="text" class="form-control" id="tlYear" placeholder="e.g. 2026 or 2026-2027">
         </div>
         <div class="mb-3">
-          <label class="form-label">Semester <span class="text-danger">*</span></label>
+          <label class="form-label">Covered Period <span class="text-danger">*</span></label>
           <select class="form-select" id="tlSem">
-            <option>1st Semester</option>
-            <option>2nd Semester</option>
-            <option>Summer</option>
+            <option value="January to June">January to June</option>
+            <option value="July to December">July to December</option>
           </select>
         </div>
         <div class="row g-2">
@@ -319,7 +318,7 @@ $user = requireAuth(['superadmin']);
   function openTimelineModal(data = null) {
     document.getElementById('tlId').value = data?.id || '';
     document.getElementById('tlYear').value = data?.academic_year || '';
-    document.getElementById('tlSem').value = data?.semester || '1st Semester';
+    document.getElementById('tlSem').value = data?.semester || 'January to June';
     document.getElementById('tlStart').value = data?.start_date || '';
     document.getElementById('tlEnd').value = data?.end_date || '';
     document.getElementById('tlDeadline').value = data?.submission_deadline || '';

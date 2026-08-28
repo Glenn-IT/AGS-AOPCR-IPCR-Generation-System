@@ -126,9 +126,9 @@ $user = requireAuth(['superadmin']);
         <div class="col-md-4">
           <label class="form-label fw-500">Rating Period</label>
           <select class="form-select" id="opcrSemester">
-            <option value="1st Semester">1st Semester (Jan – Jun)</option>
-            <option value="2nd Semester">2nd Semester (Jul – Dec)</option>
-            <option value="Annual">Annual (Jan – Dec)</option>
+            <option value="January to June">January to June</option>
+            <option value="July to December">July to December</option>
+            <option value="Annual">Annual (January to December)</option>
           </select>
         </div>
       </div>
@@ -356,7 +356,7 @@ $user = requireAuth(['superadmin']);
   if (saved) {
     document.getElementById('opcrPeriod').value = saved.coveredPeriod || '';
     document.getElementById('opcrDate').value = saved.date || new Date().toISOString().split('T')[0];
-    document.getElementById('opcrSemester').value = saved.semester || '1st Semester';
+    document.getElementById('opcrSemester').value = saved.semester || 'January to June';
     loadRows('coreBody', saved.coreFunction || DEFAULT_CORE);
     loadRows('strategicBody', saved.strategicFunction || DEFAULT_STRATEGIC);
     loadRows('supportBody', saved.supportFunction || DEFAULT_SUPPORT);

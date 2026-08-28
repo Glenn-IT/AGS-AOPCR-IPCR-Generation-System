@@ -38,14 +38,18 @@ $user = requireAuth(['superadmin']);
     <div class="card-body">
       <div class="row g-3">
         <div class="col-md-4">
-          <label class="form-label">Select Dean / Department Head</label>
+          <label class="form-label">Position and Designation</label>
           <select class="form-select" id="selectAdmin" onchange="loadAdmin()">
-            <option value="">-- Select --</option>
+            <option value="">-- Select Position and Designation --</option>
           </select>
         </div>
         <div class="col-md-4">
           <label class="form-label">College / Office</label>
           <input type="text" class="form-control bg-light" id="accOffice" readonly>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Name of Person</label>
+          <input type="text" class="form-control bg-light" id="accName" readonly>
         </div>
         <div class="col-md-4">
           <label class="form-label">Position</label>
@@ -56,8 +60,12 @@ $user = requireAuth(['superadmin']);
           <input type="text" class="form-control bg-light" id="accPeriod" readonly>
         </div>
         <div class="col-md-4">
-          <label class="form-label">Date Submitted</label>
+          <label class="form-label">Date Received</label>
           <input type="text" class="form-control bg-light" id="accDate" readonly>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Date Reviewed</label>
+          <input type="text" class="form-control bg-light" id="accDateReviewed" readonly>
         </div>
         <div class="col-md-4">
           <label class="form-label">Current Status</label>
@@ -72,8 +80,8 @@ $user = requireAuth(['superadmin']);
     <div class="mb-3">
       <div class="ipcr-section-header"><i class="fa-solid fa-star me-2"></i>A. CORE FUNCTION</div>
       <div class="table-responsive">
-        <table class="table table-bordered mb-0">
-          <thead class="table-light"><tr><th style="width:110px">MFO/KRA</th><th>Success Indicator</th><th style="width:100px">Target</th><th>Accomplishment</th><th style="width:70px">Q</th><th style="width:70px">E</th><th style="width:70px">T</th><th style="width:80px">Average</th><th>Remarks</th></tr></thead>
+        <table class="table table-bordered mb-0 align-middle">
+          <thead class="table-light"><tr><th style="width:110px">MFO/KRA</th><th>Success Indicator</th><th style="width:100px">Target</th><th>Accomplishment</th><th style="width:70px">Q</th><th style="width:70px">E</th><th style="width:70px">T</th><th style="width:80px">Average</th><th>Remarks</th><th style="width:110px;text-align:center">Evidence</th></tr></thead>
           <tbody id="coreRatingBody"></tbody>
         </table>
       </div>
@@ -82,8 +90,8 @@ $user = requireAuth(['superadmin']);
     <div class="mb-3">
       <div class="ipcr-section-header"><i class="fa-solid fa-chess me-2"></i>B. STRATEGIC FUNCTION</div>
       <div class="table-responsive">
-        <table class="table table-bordered mb-0">
-          <thead class="table-light"><tr><th style="width:110px">MFO/KRA</th><th>Success Indicator</th><th style="width:100px">Target</th><th>Accomplishment</th><th style="width:70px">Q</th><th style="width:70px">E</th><th style="width:70px">T</th><th style="width:80px">Average</th><th>Remarks</th></tr></thead>
+        <table class="table table-bordered mb-0 align-middle">
+          <thead class="table-light"><tr><th style="width:110px">MFO/KRA</th><th>Success Indicator</th><th style="width:100px">Target</th><th>Accomplishment</th><th style="width:70px">Q</th><th style="width:70px">E</th><th style="width:70px">T</th><th style="width:80px">Average</th><th>Remarks</th><th style="width:110px;text-align:center">Evidence</th></tr></thead>
           <tbody id="strategicRatingBody"></tbody>
         </table>
       </div>
@@ -92,8 +100,8 @@ $user = requireAuth(['superadmin']);
     <div class="mb-3">
       <div class="ipcr-section-header"><i class="fa-solid fa-hands-helping me-2"></i>C. SUPPORT FUNCTION</div>
       <div class="table-responsive">
-        <table class="table table-bordered mb-0">
-          <thead class="table-light"><tr><th style="width:110px">MFO/KRA</th><th>Success Indicator</th><th style="width:100px">Target</th><th>Accomplishment</th><th style="width:70px">Q</th><th style="width:70px">E</th><th style="width:70px">T</th><th style="width:80px">Average</th><th>Remarks</th></tr></thead>
+        <table class="table table-bordered mb-0 align-middle">
+          <thead class="table-light"><tr><th style="width:110px">MFO/KRA</th><th>Success Indicator</th><th style="width:100px">Target</th><th>Accomplishment</th><th style="width:70px">Q</th><th style="width:70px">E</th><th style="width:70px">T</th><th style="width:80px">Average</th><th>Remarks</th><th style="width:110px;text-align:center">Evidence</th></tr></thead>
           <tbody id="supportRatingBody"></tbody>
         </table>
       </div>
@@ -128,7 +136,7 @@ $user = requireAuth(['superadmin']);
 
   <div id="emptyState" class="empty-state mt-4">
     <i class="fa-solid fa-user-check"></i>
-    <p>Select a Dean or Department Head above to view and rate their IPCR.</p>
+    <p>Select a Position and Designation above to view and rate their IPCR.</p>
   </div>
 </main>
 
@@ -141,6 +149,10 @@ $user = requireAuth(['superadmin']);
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body">
+        <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
+          <div id="evidenceFilterBadge" class="badge bg-primary bg-opacity-10 text-primary py-2 px-3">All Evidence</div>
+          <button type="button" class="btn btn-outline-secondary btn-sm" id="btnShowAllEv" onclick="renderEvidenceList(currentEvidence, 'All Evidence')"><i class="fa-solid fa-list me-1"></i>Show All</button>
+        </div>
         <div class="table-responsive">
           <table class="table table-bordered table-sm mb-0">
             <thead class="table-light">
@@ -176,14 +188,15 @@ $user = requireAuth(['superadmin']);
   let currentForm = null;
 
   async function initPage() {
-    // Load IPCR forms from admin-role users only
+    // Load IPCR forms from admin-role users
     const res = await fetch(API_BASE + 'ipcr/list.php').then(r => r.json()).catch(() => ({ forms: [] }));
     const forms = (res.forms || []).filter(f => f.position); // all roles visible to superadmin
     const sel = document.getElementById('selectAdmin');
     forms.forEach(f => {
       const o = document.createElement('option');
       o.value = f.id;
-      o.textContent = f.user_name + ' — ' + (f.department_name || f.department_id) + ' (' + f.covered_period + ')';
+      const pos = f.position ? (f.position + ' — ') : '';
+      o.textContent = pos + f.user_name + ' (' + (f.department_name || f.department_id || 'Campus') + ')' + (f.covered_period ? ' [' + f.covered_period + ']' : '');
       sel.appendChild(o);
     });
     if (forms.length === 0) {
@@ -193,6 +206,11 @@ $user = requireAuth(['superadmin']);
 
   let currentEvidence = [];
   let _evidenceModal = null;
+
+  function escapeHtml(str) {
+    if (!str) return '';
+    return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
 
   async function loadAdmin() {
     const id = document.getElementById('selectAdmin').value;
@@ -232,28 +250,60 @@ $user = requireAuth(['superadmin']);
     document.getElementById('evidenceCountBadge').textContent = evCount;
     document.getElementById('evidenceCountBadge2').textContent = evCount;
 
-    document.getElementById('accOffice').value   = f.department_name || '-';
-    document.getElementById('accPosition').value = f.position || '-';
-    document.getElementById('accPeriod').value   = f.covered_period;
-    document.getElementById('accDate').value     = f.date_submitted || '-';
-    document.getElementById('accStatus').value   = f.status;
-    document.getElementById('finalStatus').value = ['reviewed','approved','disapproved'].includes(f.status) ? f.status : 'reviewed';
+    document.getElementById('accOffice').value       = f.department_name || '-';
+    document.getElementById('accName').value         = f.user_name || '-';
+    document.getElementById('accPosition').value     = f.position || '-';
+    document.getElementById('accPeriod').value       = f.covered_period || '-';
+    document.getElementById('accDate').value         = f.date_submitted || '-';
+    document.getElementById('accDateReviewed').value = f.reviewed_at ? formatDate(f.reviewed_at) : (['reviewed','approved','disapproved'].includes(f.status) ? (f.reviewed_at || 'Reviewed') : 'Pending Review');
+    document.getElementById('accStatus').value       = f.status;
+    document.getElementById('finalStatus').value     = ['reviewed','approved','disapproved'].includes(f.status) ? f.status : 'reviewed';
 
-    loadRatingRows('coreRatingBody',      f.items.core      || []);
-    loadRatingRows('strategicRatingBody', f.items.strategic || []);
-    loadRatingRows('supportRatingBody',   f.items.support   || []);
+    loadRatingRows('coreRatingBody',      f.items.core      || [], 'core');
+    loadRatingRows('strategicRatingBody', f.items.strategic || [], 'strategic');
+    loadRatingRows('supportRatingBody',   f.items.support   || [], 'support');
 
     document.getElementById('formSections').classList.remove('d-none');
     document.getElementById('emptyState').style.display = 'none';
     computeOverall();
   }
 
-  function loadRatingRows(tbodyId, items) {
+  function getMatchingEvidence(categoryKey, mfoText) {
+    const list = currentEvidence || [];
+    const catSearch = categoryKey.toLowerCase();
+    const mfoSearch = (mfoText || '').toLowerCase().trim();
+
+    return list.filter(file => {
+      const fCat = (file.category || '').toLowerCase();
+      const fDesc = (file.description || '').toLowerCase();
+      const fName = (file.original_name || file.name || '').toLowerCase();
+
+      // Check if matches category
+      if (fCat.includes(catSearch) || (catSearch === 'core' && fCat.includes('core')) || (catSearch === 'strategic' && fCat.includes('strategic')) || (catSearch === 'support' && fCat.includes('support'))) {
+        return true;
+      }
+      // Check if description or filename matches MFO text
+      if (mfoSearch && (fDesc.includes(mfoSearch) || fName.includes(mfoSearch))) {
+        return true;
+      }
+      return false;
+    });
+  }
+
+  function loadRatingRows(tbodyId, items, categoryKey) {
     const tbody = document.getElementById(tbodyId);
     tbody.innerHTML = '';
     items.forEach(item => {
       const tr = document.createElement('tr');
       const avg = parseFloat(item.rating) || 0;
+      const matchedFiles = getMatchingEvidence(categoryKey, item.mfo || '');
+      const count = matchedFiles.length;
+      const mfoSafe = escapeHtml(item.mfo || '');
+
+      const evidenceBtn = count > 0
+        ? `<button type="button" class="btn btn-sm btn-outline-info d-inline-flex align-items-center gap-1" onclick="openEvidenceModalFor('${categoryKey}', '${mfoSafe}')"><i class="fa-solid fa-paperclip"></i><span>View (${count})</span></button>`
+        : `<button type="button" class="btn btn-sm btn-outline-secondary opacity-75 d-inline-flex align-items-center gap-1" onclick="openEvidenceModalFor('${categoryKey}', '${mfoSafe}')"><i class="fa-solid fa-paperclip"></i><span>0 Files</span></button>`;
+
       tr.innerHTML = `
         <td style="font-size:0.82rem;background:#fafafa;white-space:nowrap">${item.mfo || '-'}</td>
         <td style="font-size:0.82rem">${item.success_indicator || '-'}</td>
@@ -263,7 +313,8 @@ $user = requireAuth(['superadmin']);
         <td><input type="number" class="form-control form-control-sm rating-e" min="1" max="5" step="0.1" data-id="${item.id}" data-field="e_rating" value="${item.e_rating || ''}" placeholder="1-5" oninput="computeRowRating(this)"></td>
         <td><input type="number" class="form-control form-control-sm rating-t" min="1" max="5" step="0.1" data-id="${item.id}" data-field="t_rating" value="${item.t_rating || ''}" placeholder="1-5" oninput="computeRowRating(this)"></td>
         <td class="text-center fw-700 row-avg" style="font-size:0.85rem;background:#fafafa">${avg > 0 ? avg.toFixed(2) : '-'}</td>
-        <td><input type="text" class="form-control form-control-sm row-remarks bg-light" data-id="${item.id}" data-field="remarks" value="${item.remarks || (avg > 0 ? getAdjectivalText(avg) : '')}" readonly placeholder="Auto"></td>`;
+        <td><input type="text" class="form-control form-control-sm row-remarks bg-light" data-id="${item.id}" data-field="remarks" value="${item.remarks || (avg > 0 ? getAdjectivalText(avg) : '')}" readonly placeholder="Auto"></td>
+        <td class="text-center">${evidenceBtn}</td>`;
       tbody.appendChild(tr);
     });
   }
@@ -302,7 +353,7 @@ $user = requireAuth(['superadmin']);
   }
 
   async function saveRatings() {
-    if (!currentForm) { showToast('Please select a Dean or Department Head first.', 'warning'); return; }
+    if (!currentForm) { showToast('Please select a Position and Designation first.', 'warning'); return; }
 
     const ratings = [];
     document.querySelectorAll('[data-field]').forEach(el => {
@@ -326,44 +377,59 @@ $user = requireAuth(['superadmin']);
       const data = await res.json();
       if (data.success) {
         document.getElementById('accStatus').value = data.status;
+        document.getElementById('accDateReviewed').value = new Date().toLocaleDateString('en-PH');
         showToast('Ratings saved! Overall: ' + data.overall_rating.toFixed(2) + ' (' + data.status + ')', 'success');
       } else { showToast(data.error, 'danger'); }
     } catch { showToast('Server error.', 'danger'); }
   }
 
-  function openEvidenceModal() {
-    if (!currentForm) { showToast('Please select a Dean or Department Head first.', 'warning'); return; }
+  function openEvidenceModalFor(categoryKey, mfoText) {
+    if (!currentForm) { showToast('Please select a Position and Designation first.', 'warning'); return; }
+    const filtered = getMatchingEvidence(categoryKey, mfoText);
+    const label = (mfoText ? mfoText + ' (' + categoryKey.toUpperCase() + ')' : categoryKey.toUpperCase() + ' Evidence');
+    renderEvidenceList(filtered, label);
     _evidenceModal = _evidenceModal || new bootstrap.Modal(document.getElementById('evidenceModal'));
     document.getElementById('evidenceModalUser').textContent = (currentForm.user_name || 'Employee');
+    _evidenceModal.show();
+  }
 
+  function openEvidenceModal() {
+    if (!currentForm) { showToast('Please select a Position and Designation first.', 'warning'); return; }
+    renderEvidenceList(currentEvidence, 'All Evidence');
+    _evidenceModal = _evidenceModal || new bootstrap.Modal(document.getElementById('evidenceModal'));
+    document.getElementById('evidenceModalUser').textContent = (currentForm.user_name || 'Employee');
+    _evidenceModal.show();
+  }
+
+  function renderEvidenceList(files, filterLabel) {
+    document.getElementById('evidenceFilterBadge').textContent = filterLabel;
     const tbody = document.getElementById('evidenceModalTable');
     tbody.innerHTML = '';
 
-    if (!currentEvidence || currentEvidence.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="6" class="text-center py-4 text-muted"><i class="fa-solid fa-folder-open me-2"></i>No supporting evidence documents uploaded for this submission.</td></tr>`;
-    } else {
-      currentEvidence.forEach((f, i) => {
-        const name = f.original_name || f.name || 'document';
-        const ext = name.split('.').pop().toLowerCase();
-        const iconMap = { pdf: 'fa-file-pdf text-danger', doc: 'fa-file-word text-primary', docx: 'fa-file-word text-primary', jpg: 'fa-file-image text-success', jpeg: 'fa-file-image text-success', png: 'fa-file-image text-success', xlsx: 'fa-file-excel text-success' };
-        const icon = iconMap[ext] || 'fa-file text-secondary';
-        const sizeStr = f.file_size ? formatSize(f.file_size) : '-';
-        const filePath = f.file_path && f.file_path !== '#' ? (API_BASE + '../' + f.file_path) : '#';
-
-        tbody.innerHTML += `<tr>
-          <td>${i + 1}</td>
-          <td><div class="d-flex align-items-center gap-2"><i class="fa-solid ${icon}" style="font-size:1.1rem"></i><strong>${name}</strong></div></td>
-          <td><span class="badge bg-primary bg-opacity-10 text-primary">${f.category || 'Evidence'}</span></td>
-          <td style="font-size:0.82rem">${f.description || '-'}</td>
-          <td style="font-size:0.82rem">${sizeStr}</td>
-          <td>
-            ${filePath !== '#' ? `<a href="${filePath}" target="_blank" class="btn btn-outline-primary btn-sm"><i class="fa-solid fa-eye me-1"></i>View / Open</a>` : `<button class="btn btn-outline-secondary btn-sm" onclick="showToast('File stored in client uploads.', 'info')"><i class="fa-solid fa-file me-1"></i>View Document</button>`}
-          </td>
-        </tr>`;
-      });
+    if (!files || files.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="6" class="text-center py-4 text-muted"><i class="fa-solid fa-folder-open me-2"></i>No evidence documents found for ${filterLabel}.</td></tr>`;
+      return;
     }
 
-    _evidenceModal.show();
+    files.forEach((f, i) => {
+      const name = f.original_name || f.name || 'document';
+      const ext = name.split('.').pop().toLowerCase();
+      const iconMap = { pdf: 'fa-file-pdf text-danger', doc: 'fa-file-word text-primary', docx: 'fa-file-word text-primary', jpg: 'fa-file-image text-success', jpeg: 'fa-file-image text-success', png: 'fa-file-image text-success', xlsx: 'fa-file-excel text-success' };
+      const icon = iconMap[ext] || 'fa-file text-secondary';
+      const sizeStr = f.file_size ? formatSize(f.file_size) : '-';
+      const filePath = f.file_path && f.file_path !== '#' ? (API_BASE + '../' + f.file_path) : '#';
+
+      tbody.innerHTML += `<tr>
+        <td>${i + 1}</td>
+        <td><div class="d-flex align-items-center gap-2"><i class="fa-solid ${icon}" style="font-size:1.1rem"></i><strong>${name}</strong></div></td>
+        <td><span class="badge bg-primary bg-opacity-10 text-primary">${f.category || 'Evidence'}</span></td>
+        <td style="font-size:0.82rem">${f.description || '-'}</td>
+        <td style="font-size:0.82rem">${sizeStr}</td>
+        <td>
+          ${filePath !== '#' ? `<a href="${filePath}" target="_blank" class="btn btn-outline-primary btn-sm"><i class="fa-solid fa-eye me-1"></i>View / Open</a>` : `<button class="btn btn-outline-secondary btn-sm" onclick="showToast('File stored in client uploads.', 'info')"><i class="fa-solid fa-file me-1"></i>View Document</button>`}
+        </td>
+      </tr>`;
+    });
   }
 
   function formatSize(bytes) {

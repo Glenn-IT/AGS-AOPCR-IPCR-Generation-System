@@ -417,10 +417,10 @@ const KPI_CATEGORIES = {
 };
 
 const TIMELINES = [
-  { id: "t1", academicYear: "2024-2025", semester: "1st Semester", startDate: "2024-08-01", endDate: "2024-12-31", submissionDeadline: "2025-01-10", status: "closed" },
-  { id: "t2", academicYear: "2024-2025", semester: "2nd Semester", startDate: "2025-01-06", endDate: "2025-05-31", submissionDeadline: "2025-06-10", status: "closed" },
-  { id: "t3", academicYear: "2025-2026", semester: "1st Semester", startDate: "2025-08-01", endDate: "2025-12-31", submissionDeadline: "2026-01-10", status: "closed" },
-  { id: "t4", academicYear: "2025-2026", semester: "2nd Semester", startDate: "2026-01-05", endDate: "2026-05-31", submissionDeadline: "2026-06-15", status: "open" }
+  { id: "t1", academicYear: "2025", semester: "January to June", startDate: "2025-01-01", endDate: "2025-06-30", submissionDeadline: "2025-07-15", status: "closed" },
+  { id: "t2", academicYear: "2025", semester: "July to December", startDate: "2025-07-01", endDate: "2025-12-31", submissionDeadline: "2026-01-15", status: "closed" },
+  { id: "t3", academicYear: "2026", semester: "January to June", startDate: "2026-01-01", endDate: "2026-06-30", submissionDeadline: "2026-07-15", status: "open" },
+  { id: "t4", academicYear: "2026", semester: "July to December", startDate: "2026-07-01", endDate: "2026-12-31", submissionDeadline: "2027-01-15", status: "closed" }
 ];
 
 const IPCR_FORMS = [

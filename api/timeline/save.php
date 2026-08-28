@@ -14,7 +14,7 @@ $deadline = $input['submission_deadline'] ?? null;
 $status   = in_array($input['status'] ?? '', ['open', 'closed']) ? $input['status'] : 'open';
 
 if (!$year || !$semester) {
-    echo json_encode(['success' => false, 'error' => 'Academic year and semester are required.']);
+    echo json_encode(['success' => false, 'error' => 'Academic year and covered period are required.']);
     exit;
 }
 
