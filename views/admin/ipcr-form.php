@@ -81,6 +81,9 @@ $user = requireAuth(['admin']);
       <button class="btn btn-outline-info btn-sm" id="btnViewEvidence" onclick="openEvidenceModal()">
         <i class="fa-solid fa-paperclip me-1"></i>View Evidence <span class="badge bg-info text-dark ms-1" id="evidenceCountBadge">0</span>
       </button>
+      <button class="btn btn-outline-primary btn-sm" id="btnUploadEvidence" onclick="openUploadModal()">
+        <i class="fa-solid fa-cloud-arrow-up me-1"></i>Upload Evidence
+      </button>
       <button class="btn btn-outline-secondary btn-sm" onclick="window.print()">
         <i class="fa-solid fa-print me-1"></i>Print
       </button>
@@ -193,7 +196,7 @@ $user = requireAuth(['admin']);
             <th style="width:65px">T</th>
             <th style="width:75px">Average</th>
             <th style="min-width:110px">Remarks</th>
-            <th style="width:110px;text-align:center">Evidence</th>
+            <th style="width:140px;text-align:center">Evidence</th>
           </tr>
         </thead>
         <tbody id="coreBody"></tbody>
@@ -232,7 +235,7 @@ $user = requireAuth(['admin']);
             <th style="width:65px">T</th>
             <th style="width:75px">Average</th>
             <th style="min-width:110px">Remarks</th>
-            <th style="width:110px;text-align:center">Evidence</th>
+            <th style="width:140px;text-align:center">Evidence</th>
           </tr>
         </thead>
         <tbody id="strategicBody"></tbody>
@@ -271,7 +274,7 @@ $user = requireAuth(['admin']);
             <th style="width:65px">T</th>
             <th style="width:75px">Average</th>
             <th style="min-width:110px">Remarks</th>
-            <th style="width:110px;text-align:center">Evidence</th>
+            <th style="width:140px;text-align:center">Evidence</th>
           </tr>
         </thead>
         <tbody id="supportBody"></tbody>
@@ -328,6 +331,7 @@ $user = requireAuth(['admin']);
 
   <div class="d-flex gap-2 justify-content-end no-print mb-4 flex-wrap">
     <button class="btn btn-outline-info" id="btnViewEvidence2" onclick="openEvidenceModal()"><i class="fa-solid fa-paperclip me-1"></i>View Evidence <span class="badge bg-info text-dark ms-1" id="evidenceCountBadge2">0</span></button>
+    <button class="btn btn-outline-primary" id="btnUploadEvidence2" onclick="openUploadModal()"><i class="fa-solid fa-cloud-arrow-up me-1"></i>Upload Evidence</button>
     <button class="btn btn-outline-secondary" onclick="showPrintPreview()"><i class="fa-solid fa-print me-1"></i>Print Preview</button>
     <button class="btn btn-outline-primary" id="editBtn2" onclick="enableEdit()" style="display:none"><i class="fa-solid fa-pen me-1"></i>Edit</button>
     <button class="btn btn-outline-primary" id="btnSaveDraft2" onclick="saveIPCR('draft')"><i class="fa-solid fa-floppy-disk me-1"></i>Save Draft</button>
@@ -347,7 +351,10 @@ $user = requireAuth(['admin']);
       <div class="modal-body">
         <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
           <div id="evidenceFilterBadge" class="badge bg-primary bg-opacity-10 text-primary py-2 px-3">All Evidence</div>
-          <button type="button" class="btn btn-outline-secondary btn-sm" id="btnShowAllEv" onclick="renderEvidenceList(currentEvidence, 'All Evidence')"><i class="fa-solid fa-list me-1"></i>Show All</button>
+          <div class="d-flex gap-2">
+            <button type="button" class="btn btn-outline-secondary btn-sm" id="btnShowAllEv" onclick="renderEvidenceList(currentEvidence, 'All Evidence')"><i class="fa-solid fa-list me-1"></i>Show All</button>
+            <button type="button" class="btn btn-primary btn-sm" onclick="openUploadModalFromEvidence()"><i class="fa-solid fa-cloud-arrow-up me-1"></i>Upload Document</button>
+          </div>
         </div>
         <div class="table-responsive">
           <table class="table table-bordered table-sm mb-0">
@@ -367,6 +374,45 @@ $user = requireAuth(['admin']);
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Upload Evidence Modal -->
+<div class="modal fade" id="uploadEvidenceModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="fa-solid fa-cloud-arrow-up me-2 text-primary"></i>Upload Supporting Evidence</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <form id="quickUploadForm" onsubmit="submitQuickUpload(event)">
+          <div class="mb-3">
+            <label class="form-label fw-600">Category</label>
+            <select class="form-select form-select-sm" id="quickUploadCategory">
+              <option value="core">Core Function</option>
+              <option value="strategic">Strategic Function</option>
+              <option value="support">Support Function</option>
+              <option value="other">Other / Miscellaneous</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-600">MFO / Document Description</label>
+            <input type="text" class="form-control form-control-sm" id="quickUploadDesc" placeholder="e.g. Syllabus, Accomplishment Report, Certificate...">
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-600">Choose File(s)</label>
+            <input type="file" class="form-control form-control-sm" id="quickUploadFiles" multiple accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.xlsx,.xls,.gif,.txt,.zip,.csv" required>
+            <small class="text-muted">Accepted: PDF, DOC, DOCX, JPG, PNG, XLSX (Max: 20MB per file)</small>
+          </div>
+          <div id="quickUploadStatus" class="alert alert-info py-2 d-none" style="font-size:0.83rem"></div>
+          <div class="d-flex justify-content-end gap-2 mt-4">
+            <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-primary btn-sm" id="btnSubmitQuickUpload"><i class="fa-solid fa-cloud-arrow-up me-1"></i>Upload & Attach</button>
+          </div>
+        </form>
       </div>
     </div>
   </div>
@@ -489,9 +535,11 @@ $user = requireAuth(['admin']);
     const mfoSafe = esc(mfoVal);
     const cell = tr.querySelector('.evidence-cell');
     if (cell) {
-      cell.innerHTML = count > 0
+      const viewBtn = count > 0
         ? `<button type="button" class="btn btn-sm btn-outline-info d-inline-flex align-items-center gap-1" onclick="openEvidenceModalFor('${cat}', '${mfoSafe}')"><i class="fa-solid fa-paperclip"></i><span>View (${count})</span></button>`
         : `<button type="button" class="btn btn-sm btn-outline-secondary opacity-75 d-inline-flex align-items-center gap-1" onclick="openEvidenceModalFor('${cat}', '${mfoSafe}')"><i class="fa-solid fa-paperclip"></i><span>0 Files</span></button>`;
+      const uploadBtn = `<button type="button" class="btn btn-sm btn-outline-primary" title="Upload Evidence for this MFO" onclick="openUploadModalFor('${cat}', '${mfoSafe}')"><i class="fa-solid fa-cloud-arrow-up"></i></button>`;
+      cell.innerHTML = `<div class="d-inline-flex align-items-center justify-content-center gap-1">${viewBtn}${uploadBtn}</div>`;
     }
   }
 
@@ -510,9 +558,11 @@ $user = requireAuth(['admin']);
     const matchedFiles = getMatchingEvidence(categoryKey, mfoVal);
     const count = matchedFiles.length;
 
-    const evidenceBtn = count > 0
+    const viewBtn = count > 0
       ? `<button type="button" class="btn btn-sm btn-outline-info d-inline-flex align-items-center gap-1" onclick="openEvidenceModalFor('${categoryKey}', '${mfoSafe}')"><i class="fa-solid fa-paperclip"></i><span>View (${count})</span></button>`
       : `<button type="button" class="btn btn-sm btn-outline-secondary opacity-75 d-inline-flex align-items-center gap-1" onclick="openEvidenceModalFor('${categoryKey}', '${mfoSafe}')"><i class="fa-solid fa-paperclip"></i><span>0 Files</span></button>`;
+    const uploadBtn = `<button type="button" class="btn btn-sm btn-outline-primary" title="Upload Evidence for this MFO" onclick="openUploadModalFor('${categoryKey}', '${mfoSafe}')"><i class="fa-solid fa-cloud-arrow-up"></i></button>`;
+    const evidenceBtn = `<div class="d-inline-flex align-items-center justify-content-center gap-1">${viewBtn}${uploadBtn}</div>`;
 
     tr.innerHTML = `
       <td><input type="text" class="form-control form-control-sm mfo-input" value="${esc(mfoVal)}" placeholder="e.g. Instruction" oninput="updateRowEvidenceBtn(this)"></td>
@@ -697,6 +747,120 @@ $user = requireAuth(['admin']);
     if (bytes < 1024) return bytes + ' B';
     if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
     return (bytes / 1048576).toFixed(1) + ' MB';
+  }
+
+  let _uploadModal = null;
+
+  function openUploadModal() {
+    openUploadModalFor('core', '');
+  }
+
+  function openUploadModalFor(categoryKey = 'core', mfoText = '') {
+    _uploadModal = _uploadModal || new bootstrap.Modal(document.getElementById('uploadEvidenceModal'));
+    const catSelect = document.getElementById('quickUploadCategory');
+    if (catSelect) {
+      const normCat = (categoryKey || '').toLowerCase();
+      if (normCat.includes('core')) catSelect.value = 'core';
+      else if (normCat.includes('strat')) catSelect.value = 'strategic';
+      else if (normCat.includes('supp')) catSelect.value = 'support';
+      else catSelect.value = 'other';
+    }
+    const descInput = document.getElementById('quickUploadDesc');
+    if (descInput) descInput.value = mfoText || '';
+    const fileInput = document.getElementById('quickUploadFiles');
+    if (fileInput) fileInput.value = '';
+    const st = document.getElementById('quickUploadStatus');
+    if (st) st.classList.add('d-none');
+    _uploadModal.show();
+  }
+
+  function openUploadModalFromEvidence() {
+    if (_evidenceModal) _evidenceModal.hide();
+    openUploadModal();
+  }
+
+  function updateAllRowEvidenceBtns() {
+    document.querySelectorAll('tr[data-category]').forEach(tr => {
+      const mfoInp = tr.querySelector('.mfo-input');
+      if (mfoInp) updateRowEvidenceBtn(mfoInp);
+    });
+    const evCount = currentEvidence.length;
+    const b1 = document.getElementById('evidenceCountBadge');
+    const b2 = document.getElementById('evidenceCountBadge2');
+    if (b1) b1.textContent = evCount;
+    if (b2) b2.textContent = evCount;
+  }
+
+  async function submitQuickUpload(e) {
+    e.preventDefault();
+    const filesInput = document.getElementById('quickUploadFiles');
+    const fileList = filesInput?.files;
+    if (!fileList || fileList.length === 0) {
+      showToast('Please select at least one file to upload.', 'warning');
+      return;
+    }
+
+    const category = document.getElementById('quickUploadCategory').value;
+    const desc = document.getElementById('quickUploadDesc').value.trim();
+    const btn = document.getElementById('btnSubmitQuickUpload');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Uploading...';
+
+    const formData = new FormData();
+    formData.append('category', category);
+    formData.append('description', desc);
+    formData.append('user_id', session.id);
+    if (existingIpcrId) formData.append('ipcr_form_id', existingIpcrId);
+
+    Array.from(fileList).forEach(f => formData.append('files[]', f));
+
+    // Also cache Data URL locally
+    Array.from(fileList).forEach(file => {
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        const localEntry = {
+          id: Date.now() + Math.random(),
+          name: file.name,
+          original_name: file.name,
+          size: file.size,
+          file_size: file.size,
+          category,
+          description: desc || 'Uploaded evidence',
+          ext: file.name.split('.').pop().toLowerCase(),
+          data_url: evt.target.result,
+          date: new Date().toLocaleDateString('en-PH')
+        };
+        const current = JSON.parse(localStorage.getItem('csu_piat_files_' + session.id)) || [];
+        current.unshift(localEntry);
+        localStorage.setItem('csu_piat_files_' + session.id, JSON.stringify(current));
+      };
+      reader.readAsDataURL(file);
+    });
+
+    try {
+      const res = await fetch(API_BASE + 'evidence/upload.php', {
+        method: 'POST',
+        body: formData
+      });
+      const data = await res.json();
+      if (data.success && data.files) {
+        data.files.forEach(nf => {
+          currentEvidence.unshift(nf);
+        });
+        showToast(data.message || 'Evidence uploaded successfully!', 'success');
+        updateAllRowEvidenceBtns();
+        _uploadModal.hide();
+      } else {
+        showToast(data.error || 'Upload error.', 'danger');
+      }
+    } catch (err) {
+      showToast('Uploaded to local workspace.', 'info');
+      updateAllRowEvidenceBtns();
+      _uploadModal.hide();
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up me-1"></i>Upload & Attach';
+    }
   }
 
   async function initForm() {

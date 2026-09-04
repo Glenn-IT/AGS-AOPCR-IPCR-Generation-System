@@ -29,6 +29,7 @@ $user = requireAuth(['user']);
     </div>
     <div class="d-flex gap-2 no-print flex-wrap">
       <button class="btn btn-outline-info btn-sm" id="btnViewEvidence" onclick="openEvidenceModal()"><i class="fa-solid fa-paperclip me-1"></i>View Evidence <span class="badge bg-info text-dark ms-1" id="evidenceCountBadge">0</span></button>
+      <button class="btn btn-outline-primary btn-sm" id="btnUploadEvidence" onclick="openUploadModal()"><i class="fa-solid fa-cloud-arrow-up me-1"></i>Upload Evidence</button>
       <button class="btn btn-outline-secondary btn-sm" onclick="window.print()"><i class="fa-solid fa-print me-1"></i>Print</button>
       <button class="btn btn-outline-primary btn-sm" id="btnSaveDraft" onclick="saveIPCR('draft')"><i class="fa-solid fa-floppy-disk me-1"></i>Save Draft</button>
       <button class="btn btn-success btn-sm" id="btnSubmit" onclick="submitIPCR()"><i class="fa-solid fa-paper-plane me-1"></i>Submit</button>
@@ -103,7 +104,7 @@ $user = requireAuth(['user']);
     <div class="ipcr-section-header"><i class="fa-solid fa-star me-2"></i>A. CORE FUNCTION</div>
     <div class="table-responsive">
       <table class="table table-bordered mb-0">
-        <thead class="table-light" style="font-size:0.8rem"><tr><th style="width:110px">MFO / KRA</th><th>Success Indicators</th><th style="width:100px">Target</th><th style="width:110px">Actual Accomplishment</th><th style="width:70px">Q</th><th style="width:70px">E</th><th style="width:70px">T</th><th style="width:80px">Average</th><th>Remarks</th><th style="width:110px;text-align:center">Evidence</th></tr></thead>
+        <thead class="table-light" style="font-size:0.8rem"><tr><th style="width:110px">MFO / KRA</th><th>Success Indicators</th><th style="width:100px">Target</th><th style="width:110px">Actual Accomplishment</th><th style="width:70px">Q</th><th style="width:70px">E</th><th style="width:70px">T</th><th style="width:80px">Average</th><th>Remarks</th><th style="width:140px;text-align:center">Evidence</th></tr></thead>
         <tbody id="coreBody"></tbody>
       </table>
     </div>
@@ -114,7 +115,7 @@ $user = requireAuth(['user']);
     <div class="ipcr-section-header"><i class="fa-solid fa-chess me-2"></i>B. STRATEGIC FUNCTION</div>
     <div class="table-responsive">
       <table class="table table-bordered mb-0">
-        <thead class="table-light" style="font-size:0.8rem"><tr><th style="width:110px">MFO / KRA</th><th>Success Indicators</th><th style="width:100px">Target</th><th style="width:110px">Actual Accomplishment</th><th style="width:70px">Q</th><th style="width:70px">E</th><th style="width:70px">T</th><th style="width:80px">Average</th><th>Remarks</th><th style="width:110px;text-align:center">Evidence</th></tr></thead>
+        <thead class="table-light" style="font-size:0.8rem"><tr><th style="width:110px">MFO / KRA</th><th>Success Indicators</th><th style="width:100px">Target</th><th style="width:110px">Actual Accomplishment</th><th style="width:70px">Q</th><th style="width:70px">E</th><th style="width:70px">T</th><th style="width:80px">Average</th><th>Remarks</th><th style="width:140px;text-align:center">Evidence</th></tr></thead>
         <tbody id="strategicBody"></tbody>
       </table>
     </div>
@@ -125,7 +126,7 @@ $user = requireAuth(['user']);
     <div class="ipcr-section-header"><i class="fa-solid fa-hands-helping me-2"></i>C. SUPPORT FUNCTION</div>
     <div class="table-responsive">
       <table class="table table-bordered mb-0">
-        <thead class="table-light" style="font-size:0.8rem"><tr><th style="width:110px">MFO / KRA</th><th>Success Indicators</th><th style="width:100px">Target</th><th style="width:110px">Actual Accomplishment</th><th style="width:70px">Q</th><th style="width:70px">E</th><th style="width:70px">T</th><th style="width:80px">Average</th><th>Remarks</th><th style="width:110px;text-align:center">Evidence</th></tr></thead>
+        <thead class="table-light" style="font-size:0.8rem"><tr><th style="width:110px">MFO / KRA</th><th>Success Indicators</th><th style="width:100px">Target</th><th style="width:110px">Actual Accomplishment</th><th style="width:70px">Q</th><th style="width:70px">E</th><th style="width:70px">T</th><th style="width:80px">Average</th><th>Remarks</th><th style="width:140px;text-align:center">Evidence</th></tr></thead>
         <tbody id="supportBody"></tbody>
       </table>
     </div>
@@ -166,6 +167,7 @@ $user = requireAuth(['user']);
 
   <div class="d-flex gap-2 justify-content-end mt-3 no-print flex-wrap">
     <button class="btn btn-outline-info" id="btnViewEvidence2" onclick="openEvidenceModal()"><i class="fa-solid fa-paperclip me-1"></i>View Evidence <span class="badge bg-info text-dark ms-1" id="evidenceCountBadge2">0</span></button>
+    <button class="btn btn-outline-primary" id="btnUploadEvidence2" onclick="openUploadModal()"><i class="fa-solid fa-cloud-arrow-up me-1"></i>Upload Evidence</button>
     <button class="btn btn-outline-secondary" onclick="showPrintPreview()"><i class="fa-solid fa-print me-1"></i>Print Preview</button>
     <button class="btn btn-outline-primary" id="btnSaveDraft2" onclick="saveIPCR('draft')"><i class="fa-solid fa-floppy-disk me-1"></i>Save Draft</button>
     <button class="btn btn-success" id="btnSubmit2" onclick="submitIPCR()"><i class="fa-solid fa-paper-plane me-1"></i>Submit for Review</button>
@@ -183,7 +185,10 @@ $user = requireAuth(['user']);
       <div class="modal-body">
         <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
           <div id="evidenceFilterBadge" class="badge bg-primary bg-opacity-10 text-primary py-2 px-3">All Evidence</div>
-          <button type="button" class="btn btn-outline-secondary btn-sm" id="btnShowAllEv" onclick="renderEvidenceList(currentEvidence, 'All Evidence')"><i class="fa-solid fa-list me-1"></i>Show All</button>
+          <div class="d-flex gap-2">
+            <button type="button" class="btn btn-outline-secondary btn-sm" id="btnShowAllEv" onclick="renderEvidenceList(currentEvidence, 'All Evidence')"><i class="fa-solid fa-list me-1"></i>Show All</button>
+            <button type="button" class="btn btn-primary btn-sm" onclick="openUploadModalFromEvidence()"><i class="fa-solid fa-cloud-arrow-up me-1"></i>Upload Document</button>
+          </div>
         </div>
         <div class="table-responsive">
           <table class="table table-bordered table-sm mb-0">
@@ -207,7 +212,45 @@ $user = requireAuth(['user']);
     </div>
   </div>
 </div>
-</main>
+
+<!-- Upload Evidence Modal -->
+<div class="modal fade" id="uploadEvidenceModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="fa-solid fa-cloud-arrow-up me-2 text-primary"></i>Upload Supporting Evidence</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <form id="quickUploadForm" onsubmit="submitQuickUpload(event)">
+          <div class="mb-3">
+            <label class="form-label fw-600">Category</label>
+            <select class="form-select form-select-sm" id="quickUploadCategory">
+              <option value="core">Core Function</option>
+              <option value="strategic">Strategic Function</option>
+              <option value="support">Support Function</option>
+              <option value="other">Other / Miscellaneous</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-600">MFO / Document Description</label>
+            <input type="text" class="form-control form-control-sm" id="quickUploadDesc" placeholder="e.g. Syllabus, Class Record, Research Output...">
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-600">Choose File(s)</label>
+            <input type="file" class="form-control form-control-sm" id="quickUploadFiles" multiple accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.xlsx,.xls,.gif,.txt,.zip,.csv" required>
+            <small class="text-muted">Accepted: PDF, DOC, DOCX, JPG, PNG, XLSX (Max: 20MB per file)</small>
+          </div>
+          <div id="quickUploadStatus" class="alert alert-info py-2 d-none" style="font-size:0.83rem"></div>
+          <div class="d-flex justify-content-end gap-2 mt-4">
+            <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-primary btn-sm" id="btnSubmitQuickUpload"><i class="fa-solid fa-cloud-arrow-up me-1"></i>Upload & Attach</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
 
 <div id="footer-container"></div>
 
@@ -312,6 +355,121 @@ $user = requireAuth(['user']);
     if (bytes < 1024) return bytes + ' B';
     if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
     return (bytes / 1048576).toFixed(1) + ' MB';
+  }
+
+  let _uploadModal = null;
+
+  function openUploadModal() {
+    openUploadModalFor('core', '');
+  }
+
+  function openUploadModalFor(categoryKey = 'core', mfoText = '') {
+    _uploadModal = _uploadModal || new bootstrap.Modal(document.getElementById('uploadEvidenceModal'));
+    const catSelect = document.getElementById('quickUploadCategory');
+    if (catSelect) {
+      const normCat = (categoryKey || '').toLowerCase();
+      if (normCat.includes('core')) catSelect.value = 'core';
+      else if (normCat.includes('strat')) catSelect.value = 'strategic';
+      else if (normCat.includes('supp')) catSelect.value = 'support';
+      else catSelect.value = 'other';
+    }
+    const descInput = document.getElementById('quickUploadDesc');
+    if (descInput) descInput.value = mfoText || '';
+    const fileInput = document.getElementById('quickUploadFiles');
+    if (fileInput) fileInput.value = '';
+    const st = document.getElementById('quickUploadStatus');
+    if (st) st.classList.add('d-none');
+    _uploadModal.show();
+  }
+
+  function openUploadModalFromEvidence() {
+    if (_evidenceModal) _evidenceModal.hide();
+    openUploadModal();
+  }
+
+  function updateAllEvidenceButtons() {
+    document.querySelectorAll('.evidence-cell').forEach(cell => {
+      const cat = cell.dataset.cat || 'core';
+      const mfo = cell.dataset.mfo || '';
+      cell.innerHTML = getEvidenceBtn(cat, mfo);
+    });
+    const evCount = currentEvidence.length;
+    const b1 = document.getElementById('evidenceCountBadge');
+    const b2 = document.getElementById('evidenceCountBadge2');
+    if (b1) b1.textContent = evCount;
+    if (b2) b2.textContent = evCount;
+  }
+
+  async function submitQuickUpload(e) {
+    e.preventDefault();
+    const filesInput = document.getElementById('quickUploadFiles');
+    const fileList = filesInput?.files;
+    if (!fileList || fileList.length === 0) {
+      showToast('Please select at least one file to upload.', 'warning');
+      return;
+    }
+
+    const category = document.getElementById('quickUploadCategory').value;
+    const desc = document.getElementById('quickUploadDesc').value.trim();
+    const btn = document.getElementById('btnSubmitQuickUpload');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Uploading...';
+
+    const formData = new FormData();
+    formData.append('category', category);
+    formData.append('description', desc);
+    formData.append('user_id', session.id);
+    if (existingIpcrId) formData.append('ipcr_form_id', existingIpcrId);
+
+    Array.from(fileList).forEach(f => formData.append('files[]', f));
+
+    // Also cache Data URL locally
+    Array.from(fileList).forEach(file => {
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        const localEntry = {
+          id: Date.now() + Math.random(),
+          name: file.name,
+          original_name: file.name,
+          size: file.size,
+          file_size: file.size,
+          category,
+          description: desc || 'Uploaded evidence',
+          ext: file.name.split('.').pop().toLowerCase(),
+          data_url: evt.target.result,
+          date: new Date().toLocaleDateString('en-PH')
+        };
+        const current = JSON.parse(localStorage.getItem('csu_piat_files_' + session.id)) || [];
+        current.unshift(localEntry);
+        localStorage.setItem('csu_piat_files_' + session.id, JSON.stringify(current));
+      };
+      reader.readAsDataURL(file);
+    });
+
+    try {
+      const res = await fetch(API_BASE + 'evidence/upload.php', {
+        method: 'POST',
+        body: formData
+      });
+      const data = await res.json();
+      if (data.success && data.files) {
+        data.files.forEach(nf => {
+          currentEvidence.unshift(nf);
+        });
+        showToast(data.message || 'Evidence uploaded successfully!', 'success');
+        updateAllEvidenceButtons();
+        _uploadModal.hide();
+      } else {
+        showToast(data.error || 'Upload error.', 'danger');
+      }
+    } catch (err) {
+      showToast('Uploaded to local workspace.', 'info');
+      updateAllEvidenceButtons();
+      _uploadModal.hide();
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up me-1"></i>Upload & Attach';
+    }
   }
 
   async function initForm() {
@@ -469,10 +627,12 @@ $user = requireAuth(['user']);
   function getEvidenceBtn(categoryKey, mfoText) {
     const matchedFiles = getMatchingEvidence(categoryKey, mfoText || '');
     const count = matchedFiles.length;
-    const mfoSafe = (mfoText || '').replace(/'/g, "\\'");
-    return count > 0
+    const mfoSafe = (mfoText || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+    const viewBtn = count > 0
       ? `<button type="button" class="btn btn-sm btn-outline-info d-inline-flex align-items-center gap-1" onclick="openEvidenceModalFor('${categoryKey}', '${mfoSafe}')"><i class="fa-solid fa-paperclip"></i><span>View (${count})</span></button>`
       : `<button type="button" class="btn btn-sm btn-outline-secondary opacity-75 d-inline-flex align-items-center gap-1" onclick="openEvidenceModalFor('${categoryKey}', '${mfoSafe}')"><i class="fa-solid fa-paperclip"></i><span>0 Files</span></button>`;
+    const uploadBtn = `<button type="button" class="btn btn-sm btn-outline-primary" title="Upload Evidence for this MFO" onclick="openUploadModalFor('${categoryKey}', '${mfoSafe}')"><i class="fa-solid fa-cloud-arrow-up"></i></button>`;
+    return `<div class="d-inline-flex align-items-center justify-content-center gap-1">${viewBtn}${uploadBtn}</div>`;
   }
 
   function loadKpiSection(tbodyId, items, categoryKey = 'core') {
@@ -480,6 +640,7 @@ $user = requireAuth(['user']);
     tbody.innerHTML = '';
     (items || []).forEach(item => {
       const evidenceBtn = getEvidenceBtn(categoryKey, item.mfo);
+      const mfoAttr = (item.mfo || '').replace(/"/g, '&quot;');
       tbody.innerHTML += `<tr>
         <td style="font-size:0.82rem;background:#fafafa;white-space:nowrap">${item.mfo}${personalTag(item)}</td>
         <td style="font-size:0.82rem;background:#fafafa">${item.success_indicator}</td>
@@ -490,7 +651,7 @@ $user = requireAuth(['user']);
         <td><input type="number" class="form-control form-control-sm rating-t" min="1" max="5" step="0.1" placeholder="1-5" data-kpi="${item.id}" oninput="computeRowRating(this)"></td>
         <td class="text-center fw-700 row-avg" style="font-size:0.85rem;background:#fafafa">-</td>
         <td><input type="text" class="form-control form-control-sm row-remarks bg-light" placeholder="Auto" readonly></td>
-        <td class="text-center">${evidenceBtn}</td></tr>`;
+        <td class="text-center evidence-cell" data-cat="${categoryKey}" data-mfo="${mfoAttr}">${evidenceBtn}</td></tr>`;
     });
   }
 
@@ -503,6 +664,7 @@ $user = requireAuth(['user']);
       const avg = parseFloat(item.rating) || 0;
       const mfo = kpiItem.mfo || item.mfo || '-';
       const evidenceBtn = getEvidenceBtn(categoryKey, mfo);
+      const mfoAttr = (mfo || '').replace(/"/g, '&quot;');
       tbody.innerHTML += `<tr>
         <td style="font-size:0.82rem;background:#fafafa;white-space:nowrap">${mfo}</td>
         <td style="font-size:0.82rem;background:#fafafa">${kpiItem.success_indicator || item.success_indicator || '-'}</td>
@@ -513,13 +675,14 @@ $user = requireAuth(['user']);
         <td><input type="number" class="form-control form-control-sm rating-t" min="1" max="5" step="0.1" value="${item.t_rating || ''}" data-kpi="${item.kpi_id || ''}" oninput="computeRowRating(this)"></td>
         <td class="text-center fw-700 row-avg" style="font-size:0.85rem;background:#fafafa">${avg > 0 ? avg.toFixed(2) : '-'}</td>
         <td><input type="text" class="form-control form-control-sm row-remarks bg-light" value="${item.remarks || (avg > 0 ? getAdjectivalText(avg) : '')}" readonly placeholder="Auto"></td>
-        <td class="text-center">${evidenceBtn}</td></tr>`;
+        <td class="text-center evidence-cell" data-cat="${categoryKey}" data-mfo="${mfoAttr}">${evidenceBtn}</td></tr>`;
     });
     // Surface KPIs added after this form was first saved (no ipcr_items row yet)
     (sectionKpi || []).forEach(k => {
       const already = (items || []).some(item => String(item.kpi_id) === String(k.id));
       if (already) return;
       const evidenceBtn = getEvidenceBtn(categoryKey, k.mfo);
+      const mfoAttr = (k.mfo || '').replace(/"/g, '&quot;');
       tbody.innerHTML += `<tr>
         <td style="font-size:0.82rem;background:#fafafa;white-space:nowrap">${k.mfo || '—'}${personalTag(k)}</td>
         <td style="font-size:0.82rem;background:#fafafa">${k.success_indicator || '—'}</td>
@@ -530,7 +693,7 @@ $user = requireAuth(['user']);
         <td><input type="number" class="form-control form-control-sm rating-t" min="1" max="5" step="0.1" placeholder="1-5" data-kpi="${k.id}" oninput="computeRowRating(this)"></td>
         <td class="text-center fw-700 row-avg" style="font-size:0.85rem;background:#fafafa">-</td>
         <td><input type="text" class="form-control form-control-sm row-remarks bg-light" placeholder="Auto" readonly></td>
-        <td class="text-center">${evidenceBtn}</td></tr>`;
+        <td class="text-center evidence-cell" data-cat="${categoryKey}" data-mfo="${mfoAttr}">${evidenceBtn}</td></tr>`;
     });
   }
 
