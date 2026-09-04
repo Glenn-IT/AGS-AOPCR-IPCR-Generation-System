@@ -712,9 +712,19 @@ $user = requireAuth(['user']);
       const t = parseFloat(tInp?.value) || 0;
       const a = parseFloat(avgCell?.textContent) || 0;
 
+      const mfoCell = tr.cells[0];
+      let mfoText = '';
+      if (mfoCell) {
+        const clone = mfoCell.cloneNode(true);
+        clone.querySelectorAll('span').forEach(s => s.remove());
+        mfoText = clone.textContent.trim();
+      }
+
       rows.push({
         kpi_id:            qInp?.dataset?.kpi || eInp?.dataset?.kpi || tInp?.dataset?.kpi || '',
+        mfo:               mfoText,
         success_indicator: tr.cells[1]?.textContent?.trim() || '',
+        target:            tr.cells[2]?.textContent?.trim() || '',
         accomplishment:    accInp?.value !== undefined ? accInp.value.trim() : '',
         q_rating:          q,
         e_rating:          e,

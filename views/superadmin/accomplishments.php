@@ -33,14 +33,28 @@ $user = requireAuth(['superadmin']);
     </div>
   </div>
 
-  <!-- Select Dean/Head -->
+  <!-- Select Dean/Head/Faculty -->
   <div class="card mb-3">
     <div class="card-body">
       <div class="row g-3">
-        <div class="col-md-4">
-          <label class="form-label">Position and Designation</label>
-          <select class="form-select" id="selectAdmin" onchange="loadAdmin()">
-            <option value="">-- Select Position and Designation --</option>
+        <div class="col-md-3">
+          <label class="form-label fw-600">Department / College</label>
+          <select class="form-select form-select-sm" id="filterDept" onchange="filterSubmissions()">
+            <option value="">All Departments / Colleges</option>
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label fw-600">Role / Position Category</label>
+          <select class="form-select form-select-sm" id="filterRole" onchange="filterSubmissions()">
+            <option value="">All Roles</option>
+            <option value="admin">Deans & Department Heads</option>
+            <option value="user">Faculty & Staff Members</option>
+          </select>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label fw-600">Employee IPCR Submission <span class="text-danger">*</span></label>
+          <select class="form-select form-select-sm" id="selectAdmin" onchange="loadAdmin()">
+            <option value="">-- Select Employee IPCR Submission --</option>
           </select>
         </div>
         <div class="col-md-4">
@@ -190,17 +204,48 @@ $user = requireAuth(['superadmin']);
 
   const session = SESSION_USER;
   let currentForm = null;
+  let allForms = [];
 
   async function initPage() {
-    // Load IPCR forms from admin-role users (Deans / Department Heads)
-    let res = await fetch(API_BASE + 'ipcr/list.php?target_role=admin').then(r => r.json()).catch(() => ({ forms: [] }));
-    let forms = res.forms || [];
-    if (forms.length === 0) {
-      // Fallback to all forms if no admin-specific filter returned
-      res = await fetch(API_BASE + 'ipcr/list.php').then(r => r.json()).catch(() => ({ forms: [] }));
-      forms = (res.forms || []).filter(f => f.position);
+    // Load departments & all IPCR submissions
+    const [deptRes, ipcrRes] = await Promise.all([
+      fetch(API_BASE + 'departments/list.php', { credentials: 'include' }).then(r => r.json()).catch(() => ({ departments: [] })),
+      fetch(API_BASE + 'ipcr/list.php', { credentials: 'include' }).then(r => r.json()).catch(() => ({ forms: [] }))
+    ]);
+
+    const deptSel = document.getElementById('filterDept');
+    if (deptSel && deptRes.departments) {
+      deptRes.departments.forEach(d => {
+        const opt = document.createElement('option');
+        opt.value = d.id;
+        opt.textContent = d.name + ' (' + d.id + ')';
+        deptSel.appendChild(opt);
+      });
     }
+
+    allForms = ipcrRes.forms || [];
+    populateSubmissions(allForms);
+  }
+
+  function filterSubmissions() {
+    const dept = document.getElementById('filterDept')?.value || '';
+    const role = document.getElementById('filterRole')?.value || '';
+
+    let filtered = allForms;
+    if (dept) {
+      filtered = filtered.filter(f => f.department_id === dept);
+    }
+    if (role) {
+      filtered = filtered.filter(f => f.user_role === role);
+    }
+
+    populateSubmissions(filtered);
+  }
+
+  function populateSubmissions(forms) {
     const sel = document.getElementById('selectAdmin');
+    sel.innerHTML = '<option value="">-- Select Employee IPCR Submission --</option>';
+
     forms.forEach(f => {
       const o = document.createElement('option');
       o.value = f.id;
@@ -209,11 +254,17 @@ $user = requireAuth(['superadmin']);
       if (f.updated_at && f.updated_at !== f.created_at) {
         editedText = ' (Edited: ' + formatDateTime(f.updated_at) + ')';
       }
-      o.textContent = pos + f.user_name + ' (' + (f.department_name || f.department_id || 'Campus') + ')' + (f.covered_period ? ' [' + f.covered_period + ']' : '') + editedText;
+      const roleTag = f.user_role === 'admin' ? '[Dean/Head]' : '[Faculty/Staff]';
+      o.textContent = roleTag + ' ' + pos + f.user_name + ' (' + (f.department_name || f.department_id || 'Campus') + ')' + (f.covered_period ? ' [' + f.covered_period + ']' : '') + editedText;
       sel.appendChild(o);
     });
+
     if (forms.length === 0) {
-      document.getElementById('emptyState').innerHTML = '<i class="fa-solid fa-inbox"></i><p>No IPCR submissions found.</p>';
+      document.getElementById('emptyState').innerHTML = '<i class="fa-solid fa-inbox"></i><p>No IPCR submissions found matching selected filters.</p>';
+      document.getElementById('formSections').classList.add('d-none');
+      document.getElementById('emptyState').style.display = '';
+    } else {
+      document.getElementById('emptyState').innerHTML = '<i class="fa-solid fa-user-check"></i><p>Select an Employee IPCR Submission above to view and rate their functions.</p>';
     }
   }
 
@@ -309,6 +360,10 @@ $user = requireAuth(['superadmin']);
   function loadRatingRows(tbodyId, items, categoryKey) {
     const tbody = document.getElementById(tbodyId);
     tbody.innerHTML = '';
+    if (!items || items.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="10" class="text-center py-3 text-muted" style="font-size:0.82rem"><i class="fa-solid fa-inbox me-1"></i>No ${categoryKey} function items in this submission.</td></tr>`;
+      return;
+    }
     items.forEach(item => {
       const tr = document.createElement('tr');
       const avg = parseFloat(item.rating) || 0;

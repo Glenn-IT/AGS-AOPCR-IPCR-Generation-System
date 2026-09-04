@@ -590,7 +590,11 @@ $user = requireAuth(['admin']);
     const cat = tbodyId.replace('Body', '');
     const tbody = document.getElementById(tbodyId);
     tbody.innerHTML = '';
-    (items || []).forEach(item => tbody.appendChild(createRow(item, cat)));
+    if (items && items.length > 0) {
+      items.forEach(item => tbody.appendChild(createRow(item, cat)));
+    } else {
+      tbody.appendChild(createRow({}, cat));
+    }
   }
 
   function getRows(tbodyId) {
