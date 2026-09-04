@@ -72,31 +72,9 @@ $user = requireAuth(['admin']);
     <hr>
   </div>
 
-  <div class="page-header d-flex justify-content-between align-items-start flex-wrap gap-2">
-    <div>
-      <h2><i class="fa-solid fa-file-lines me-2 text-primary"></i>IPCR Form</h2>
-      <p class="mb-0">Individual Performance Commitment and Review | Administrator Level | CSU-Piat</p>
-    </div>
-    <div class="d-flex gap-2 flex-wrap no-print">
-      <button class="btn btn-outline-info btn-sm" id="btnViewEvidence" onclick="openEvidenceModal()">
-        <i class="fa-solid fa-paperclip me-1"></i>View Evidence <span class="badge bg-info text-dark ms-1" id="evidenceCountBadge">0</span>
-      </button>
-      <button class="btn btn-outline-primary btn-sm" id="btnUploadEvidence" onclick="openUploadModal()">
-        <i class="fa-solid fa-cloud-arrow-up me-1"></i>Upload Evidence
-      </button>
-      <button class="btn btn-outline-secondary btn-sm" onclick="window.print()">
-        <i class="fa-solid fa-print me-1"></i>Print
-      </button>
-      <button class="btn btn-outline-primary btn-sm" id="editBtn" onclick="enableEdit()" style="display:none">
-        <i class="fa-solid fa-pen me-1"></i>Edit
-      </button>
-      <button class="btn btn-outline-primary btn-sm" id="btnSaveDraft" onclick="saveIPCR('draft')">
-        <i class="fa-solid fa-floppy-disk me-1"></i>Save Draft
-      </button>
-      <button class="btn btn-primary btn-sm" id="confirmBtn" onclick="submitIPCR()">
-        <i class="fa-solid fa-paper-plane me-1"></i>Confirm & Submit
-      </button>
-    </div>
+  <div class="page-header">
+    <h2><i class="fa-solid fa-file-lines me-2 text-primary"></i>IPCR Form</h2>
+    <p class="mb-0">Individual Performance Commitment and Review | Administrator Level | CSU-Piat</p>
   </div>
 
   <div id="noTimelineAlert" class="alert alert-warning d-none no-print" role="alert">
