@@ -73,3 +73,32 @@ function ensureIpcrColumns(PDO $db): void {
     }
     $done = true;
 }
+
+/**
+ * Ensure q_rating, e_rating, t_rating, measure, remarks, rating DECIMAL exist in opcr_items table.
+ */
+function ensureOpcrColumns(PDO $db): void {
+    static $done = false;
+    if ($done) return;
+    try {
+        $cols = $db->query("SHOW COLUMNS FROM opcr_items LIKE 'q_rating'")->fetchAll();
+        if (empty($cols)) {
+            $db->exec("ALTER TABLE opcr_items 
+                ADD COLUMN q_rating DECIMAL(3,2) DEFAULT NULL,
+                ADD COLUMN e_rating DECIMAL(3,2) DEFAULT NULL,
+                ADD COLUMN t_rating DECIMAL(3,2) DEFAULT NULL");
+        }
+        $mCols = $db->query("SHOW COLUMNS FROM opcr_items LIKE 'measure'")->fetchAll();
+        if (empty($mCols)) {
+            $db->exec("ALTER TABLE opcr_items 
+                ADD COLUMN measure VARCHAR(200) DEFAULT NULL,
+                ADD COLUMN remarks VARCHAR(200) DEFAULT NULL");
+        }
+        // Ensure rating can store decimal values like 4.67
+        $db->exec("ALTER TABLE opcr_items MODIFY COLUMN rating DECIMAL(3,2) DEFAULT NULL");
+    } catch (Exception $e) {
+        // Silently fail if table not present
+    }
+    $done = true;
+}
+

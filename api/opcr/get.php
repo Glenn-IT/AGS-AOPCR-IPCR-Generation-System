@@ -1,5 +1,6 @@
 <?php
 require_once '../../config/session.php';
+require_once '../../config/helpers.php';
 header('Content-Type: application/json');
 
 $user = requireAuth(['admin', 'superadmin']);
@@ -8,6 +9,7 @@ $opcr_id    = intval($_GET['id'] ?? 0);
 $timeline_id = intval($_GET['timeline_id'] ?? 0);
 
 $db = getDB();
+ensureOpcrColumns($db);
 
 if ($opcr_id > 0) {
     $stmt = $db->prepare('SELECT f.*, u.name AS admin_name, u.position, d.name AS department_name
