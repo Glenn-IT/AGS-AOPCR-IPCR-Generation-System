@@ -99,7 +99,7 @@ try {
     // Insert items — kpi_id is FK-constrained, so only accept ids that really exist
     $validKpi = array_flip($db->query('SELECT id FROM kpi_items')->fetchAll(PDO::FETCH_COLUMN));
 
-    $insertItem = $db->prepare('INSERT INTO ipcr_items (ipcr_form_id, kpi_id, function_type, success_indicator, accomplishment, q_rating, e_rating, t_rating, rating, remarks) VALUES (?,?,?,?,?,?,?,?,?,?)');
+    $insertItem = $db->prepare('INSERT INTO ipcr_items (ipcr_form_id, kpi_id, function_type, mfo, success_indicator, target, budget, measure, accomplishment, q_rating, e_rating, t_rating, rating, remarks) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)');
 
     foreach ([['core', $core], ['strategic', $strategic], ['support', $support]] as [$type, $items]) {
         foreach ($items as $item) {
@@ -129,11 +129,20 @@ try {
                 }
             }
 
+            $mfo = trim($item['mfo'] ?? '');
+            $target = trim($item['target'] ?? '');
+            $budget = floatval($item['budget'] ?? 0);
+            $measure = trim($item['measure'] ?? '');
+
             $insertItem->execute([
                 $ipcr_id,
                 isset($validKpi[$kpiId]) ? $kpiId : null,
                 $type,
+                $mfo ?: null,
                 trim($item['success_indicator'] ?? ''),
+                $target ?: null,
+                $budget,
+                $measure ?: null,
                 $acc,
                 $q,
                 $e,

@@ -67,6 +67,20 @@ function getAdjectivalText(rating) {
   return 'Poor';
 }
 
+function getCategoryBadge(category) {
+  const cat = (category || 'Other').toLowerCase();
+  if (cat.includes('core')) {
+    return `<span class="badge" style="background:#FFEADB;color:#B91C1C;border:1px solid #FDBA74;font-size:0.75rem;font-weight:600;padding:4px 8px"><i class="fa-solid fa-star me-1" style="font-size:0.7rem"></i>${category || 'Core Function'}</span>`;
+  }
+  if (cat.includes('strategic')) {
+    return `<span class="badge" style="background:#EDE9FE;color:#5B21B6;border:1px solid #DDD6FE;font-size:0.75rem;font-weight:600;padding:4px 8px"><i class="fa-solid fa-chess me-1" style="font-size:0.7rem"></i>${category || 'Strategic Function'}</span>`;
+  }
+  if (cat.includes('support')) {
+    return `<span class="badge" style="background:#E0F2FE;color:#0369A1;border:1px solid #BAE6FD;font-size:0.75rem;font-weight:600;padding:4px 8px"><i class="fa-solid fa-hands-helping me-1" style="font-size:0.7rem"></i>${category || 'Support Function'}</span>`;
+  }
+  return `<span class="badge bg-secondary text-white" style="font-size:0.75rem;font-weight:500;padding:4px 8px">${category || 'Other'}</span>`;
+}
+
 function buildSidebar(role, activePage) {
   const menus = {
     superadmin: [
@@ -88,6 +102,7 @@ function buildSidebar(role, activePage) {
       { icon: 'fa-gauge', label: 'Dashboard', href: 'dashboard.php', page: 'dashboard' },
       { section: 'IPCR / Performance' },
       { icon: 'fa-file-lines', label: 'IPCR Form', href: 'ipcr-form.php', page: 'ipcr-form' },
+      { icon: 'fa-paperclip', label: 'Evidence Upload', href: 'evidence.php', page: 'evidence' },
       { icon: 'fa-clipboard-check', label: 'Accomplishments & Ratings', href: 'accomplishments.php', page: 'accomplishments' },
       { icon: 'fa-file-alt', label: 'Reports', href: 'reports.php', page: 'reports' },
       { section: 'Management' },

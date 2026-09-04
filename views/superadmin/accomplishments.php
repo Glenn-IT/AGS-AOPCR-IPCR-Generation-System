@@ -422,7 +422,7 @@ $user = requireAuth(['superadmin']);
       tbody.innerHTML += `<tr>
         <td>${i + 1}</td>
         <td><div class="d-flex align-items-center gap-2"><i class="fa-solid ${icon}" style="font-size:1.1rem"></i><strong>${name}</strong></div></td>
-        <td><span class="badge bg-primary bg-opacity-10 text-primary">${f.category || 'Evidence'}</span></td>
+        <td>${getCategoryBadge(f.category || 'Evidence')}</td>
         <td style="font-size:0.82rem">${f.description || '-'}</td>
         <td style="font-size:0.82rem">${sizeStr}</td>
         <td>

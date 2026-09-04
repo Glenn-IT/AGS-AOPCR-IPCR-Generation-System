@@ -66,7 +66,11 @@ $form['supervisor_name']     = $form['reviewed_by_name']     ?: ($sup['name'] ??
 $form['supervisor_position'] = $form['reviewed_by_position'] ?: ($sup['position'] ?? '');
 
 // Load line items
-$items = $db->prepare('SELECT i.*, k.mfo, k.target, k.measure
+$items = $db->prepare('SELECT i.*, 
+    COALESCE(NULLIF(i.mfo, ""), k.mfo) AS mfo, 
+    COALESCE(NULLIF(i.target, ""), k.target) AS target, 
+    COALESCE(NULLIF(i.measure, ""), k.measure) AS measure,
+    COALESCE(i.budget, 0) AS budget
     FROM ipcr_items i LEFT JOIN kpi_items k ON i.kpi_id = k.id
     WHERE i.ipcr_form_id = ? ORDER BY i.id');
 $items->execute([$form['id']]);

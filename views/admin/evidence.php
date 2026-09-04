@@ -1,13 +1,13 @@
 <?php
 require_once '../../config/session.php';
-$user = requireAuth(['user']);
+$user = requireAuth(['admin']);
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Evidence Upload | CSU-Piat</title>
+  <title>Evidence Upload | CSU-Piat Admin</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <link rel="stylesheet" href="../../assets/css/style.css">
@@ -24,7 +24,7 @@ $user = requireAuth(['user']);
 <main class="main-content" id="mainContent">
   <div class="page-header">
     <h2><i class="fa-solid fa-paperclip me-2 text-primary"></i>Evidence Upload</h2>
-    <p>Upload supporting documents for your IPCR submission.</p>
+    <p>Upload supporting documents for your IPCR / Performance submission.</p>
   </div>
 
   <!-- Upload Card -->
@@ -55,7 +55,7 @@ $user = requireAuth(['user']);
         </div>
         <div class="col-md-6">
           <label class="form-label">Description</label>
-          <input type="text" class="form-control form-control-sm" id="fileDesc" placeholder="Brief description of the document...">
+          <input type="text" class="form-control form-control-sm" id="fileDesc" placeholder="Brief description of the document (e.g. Instruction, Syllabi, Reports)...">
         </div>
       </div>
     </div>
@@ -82,8 +82,8 @@ $user = requireAuth(['user']);
 <script src="../../assets/js/auth.js"></script>
 <script src="../../assets/js/components.js"></script>
 <script>
-  const session = requireAuth(['user']);
-  initLayout('user', 'evidence', [{ label: 'Evidence Upload' }]);
+  const session = requireAuth(['admin']);
+  initLayout('admin', 'evidence', [{ label: 'Evidence Upload' }]);
 
   const storageKey = `csu_piat_files_${session.id}`;
 

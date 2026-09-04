@@ -7,7 +7,7 @@ $user = requireAuth(['admin']);
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>IPCR Form | CSU-Piat</title>
+  <title>IPCR Form | CSU-Piat Admin</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <link rel="stylesheet" href="../../assets/css/style.css">
@@ -15,6 +15,47 @@ $user = requireAuth(['admin']);
   window.SESSION_USER = <?= json_encode($user, JSON_HEX_TAG | JSON_UNESCAPED_UNICODE) ?>;
   const API_BASE = '<?= BASE_URL ?>api/';
   </script>
+  <style>
+    .ipcr-section-header {
+      background: linear-gradient(135deg, #821131, #C7253E);
+      color: #fff;
+      padding: 0.6rem 1rem;
+      border-radius: 6px 6px 0 0;
+      font-weight: 600;
+      font-size: 0.88rem;
+      letter-spacing: 0.03em;
+    }
+    .ipcr-section-header .btn-light {
+      font-size: 0.75rem;
+      padding: 2px 10px;
+      border-radius: 4px;
+    }
+    .opcr-summary-bar {
+      background: #FFF4E6;
+      border: 1px solid #FABC3F55;
+      border-radius: 8px;
+      padding: 0.75rem 1.25rem;
+      font-size: 0.85rem;
+    }
+    .print-header { display: none; }
+    @media print {
+      .no-print { display: none !important; }
+      .print-header { display: block; text-align: center; margin-bottom: 1rem; }
+      .print-header h4 { font-size: 14pt; font-weight: 700; }
+      .print-header p { font-size: 10pt; margin: 0; }
+      .ipcr-section-header { background: #333 !important; -webkit-print-color-adjust: exact; }
+      body { font-size: 10pt; }
+      table { font-size: 9pt; }
+    }
+    .avg-row td { background: #FFF4E6 !important; font-weight: 600; }
+    .rating-badge {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+  </style>
 </head>
 <body>
 <div id="toast-container"></div>
@@ -22,15 +63,33 @@ $user = requireAuth(['admin']);
 <div id="navbar-container"></div>
 
 <main class="main-content" id="mainContent">
+
+  <!-- Print Header (hidden on screen) -->
+  <div class="print-header">
+    <h4>CAGAYAN STATE UNIVERSITY — PIAT CAMPUS</h4>
+    <p>Individual Performance Commitment and Review (IPCR)</p>
+    <p id="printDeptHeader">College / Office</p>
+    <hr>
+  </div>
+
   <div class="page-header d-flex justify-content-between align-items-start flex-wrap gap-2">
     <div>
       <h2><i class="fa-solid fa-file-lines me-2 text-primary"></i>IPCR Form</h2>
-      <p>Individual Performance Commitment and Review | CSU-Piat</p>
+      <p class="mb-0">Individual Performance Commitment and Review | Administrator Level | CSU-Piat</p>
     </div>
-    <div class="d-flex gap-2 no-print">
-      <button class="btn btn-outline-secondary btn-sm" onclick="window.print()"><i class="fa-solid fa-print me-1"></i>Print</button>
-      <button class="btn btn-outline-primary btn-sm" id="btnSaveDraft" onclick="saveIPCR('draft')"><i class="fa-solid fa-floppy-disk me-1"></i>Save Draft</button>
-      <button class="btn btn-success btn-sm" id="btnSubmit" onclick="submitIPCR()"><i class="fa-solid fa-paper-plane me-1"></i>Submit</button>
+    <div class="d-flex gap-2 flex-wrap no-print">
+      <button class="btn btn-outline-secondary btn-sm" onclick="window.print()">
+        <i class="fa-solid fa-print me-1"></i>Print
+      </button>
+      <button class="btn btn-outline-primary btn-sm" id="editBtn" onclick="enableEdit()" style="display:none">
+        <i class="fa-solid fa-pen me-1"></i>Edit
+      </button>
+      <button class="btn btn-outline-primary btn-sm" id="btnSaveDraft" onclick="saveIPCR('draft')">
+        <i class="fa-solid fa-floppy-disk me-1"></i>Save Draft
+      </button>
+      <button class="btn btn-primary btn-sm" id="confirmBtn" onclick="submitIPCR()">
+        <i class="fa-solid fa-paper-plane me-1"></i>Confirm & Submit
+      </button>
     </div>
   </div>
 
@@ -39,129 +98,234 @@ $user = requireAuth(['admin']);
     <strong>No active submission period.</strong> The Super Admin has not opened a submission period yet. You can view and fill in the form, but saving and submitting are disabled until a period is opened.
   </div>
 
-  <!-- Print Header (visible on print only) -->
-  <div class="d-none d-print-block text-center mb-3">
-    <h5 class="fw-700">CAGAYAN STATE UNIVERSITY — PIAT CAMPUS</h5>
-    <h6>INDIVIDUAL PERFORMANCE COMMITMENT AND REVIEW (IPCR)</h6>
-    <p style="font-size:0.85rem">Ytawes District, Piat, Cagayan | Founded 1954</p>
+  <!-- Status Summary Banner -->
+  <div class="opcr-summary-bar mb-3 d-flex align-items-center gap-3 flex-wrap">
+    <span><i class="fa-solid fa-circle-info text-primary me-1"></i><strong>Status:</strong> <span id="statusBadge" class="badge bg-secondary ms-1">Draft</span></span>
+    <span><i class="fa-solid fa-calendar text-primary me-1"></i><strong>Period:</strong> <span id="summaryPeriod">—</span></span>
+    <span><i class="fa-solid fa-star text-primary me-1"></i><strong>Final Average:</strong> <span id="summaryRating">—</span></span>
+    <span class="ms-auto text-muted" style="font-size:0.78rem">Last saved: <span id="lastSaved">Not yet saved</span></span>
   </div>
 
-  <!-- Form Header -->
+  <!-- Form Header / Commitment Details -->
   <div class="card mb-3">
+    <div class="card-header"><h6 class="mb-0"><i class="fa-solid fa-id-card me-2 text-primary"></i>Commitment Details</h6></div>
     <div class="card-body">
       <div class="row g-3">
         <div class="col-md-4">
-          <label class="form-label">College / Office</label>
+          <label class="form-label fw-500">College / Office</label>
           <input type="text" class="form-control bg-light" id="ipcrOffice" readonly>
         </div>
         <div class="col-md-4">
-          <label class="form-label">Name</label>
+          <label class="form-label fw-500">Name of Administrator / Head</label>
           <input type="text" class="form-control bg-light" id="ipcrName" readonly>
         </div>
         <div class="col-md-4">
-          <label class="form-label">Position</label>
+          <label class="form-label fw-500">Position / Designation</label>
           <input type="text" class="form-control bg-light" id="ipcrPosition" readonly>
         </div>
         <div class="col-md-4">
-          <label class="form-label">Covered Period <span class="text-danger">*</span></label>
-          <input type="text" class="form-control" id="ipcrPeriod" placeholder="e.g. January - June 2026">
+          <label class="form-label fw-500">Covered Period <span class="text-danger">*</span></label>
+          <input type="text" class="form-control" id="ipcrPeriod" placeholder="e.g. January – June 2026">
         </div>
         <div class="col-md-4">
-          <label class="form-label">Date</label>
+          <label class="form-label fw-500">Date Prepared</label>
           <input type="date" class="form-control" id="ipcrDate">
         </div>
         <div class="col-md-4">
-          <label class="form-label">Status</label>
-          <input type="text" class="form-control bg-light" id="ipcrStatus" readonly>
+          <label class="form-label fw-500">Rating Period</label>
+          <select class="form-select" id="ipcrSemester">
+            <option value="January to June">January to June</option>
+            <option value="July to December">July to December</option>
+            <option value="Annual">Annual (January to December)</option>
+          </select>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Legend -->
-  <div class="card mb-3 no-print">
-    <div class="card-body py-2">
-      <small class="text-muted"><strong>Rating Scale:</strong>
-        <span class="text-success ms-2">5 — Outstanding</span>
-        <span class="text-primary ms-2">4 — Very Satisfactory</span>
-        <span class="text-warning ms-2">3 — Satisfactory</span>
-        <span class="text-danger ms-2">2 — Unsatisfactory</span>
-        <span class="text-danger ms-2">1 — Poor</span>
-      </small>
+  <!-- Instructions Accordion -->
+  <div class="accordion mb-3 no-print" id="instructionAccordion">
+    <div class="accordion-item border-0 shadow-sm">
+      <h2 class="accordion-header">
+        <button class="accordion-button collapsed py-2" type="button" data-bs-toggle="collapse" data-bs-target="#instrBody" style="font-size:0.85rem;background:#FFF4E6">
+          <i class="fa-solid fa-circle-question me-2 text-primary"></i> How to fill out this IPCR form
+        </button>
+      </h2>
+      <div id="instrBody" class="accordion-collapse collapse">
+        <div class="accordion-body" style="font-size:0.83rem">
+          <ul class="mb-0">
+            <li><strong>MFO / PAP</strong> — Major Final Output / Program, Activity, or Project (e.g., Instruction, Research, Accreditation).</li>
+            <li><strong>Success Indicator</strong> — A specific, measurable commitment (Target + Measure).</li>
+            <li><strong>Target</strong> — The numeric goal or percentage you commit to achieve.</li>
+            <li><strong>Budget Required</strong> — Estimated budget in Philippine Peso (0 if none needed).</li>
+            <li><strong>Measure</strong> — How it will be measured: <em>Q</em>=Quality, <em>Qn</em>=Quantity, <em>T</em>=Timeliness, <em>E</em>=Efficiency.</li>
+            <li><strong>Actual Accomplishment</strong> — Your actual achievement (percentage 1-100 or quantity delivered).</li>
+            <li><strong>Rating Scale</strong> — 5: Outstanding (4.50–5.00), 4: Very Satisfactory (3.50–4.49), 3: Satisfactory (2.50–3.49), 2: Unsatisfactory (1.50–2.49), 1: Poor (1.00–1.49).</li>
+          </ul>
+        </div>
+      </div>
     </div>
   </div>
 
-  <!-- Core Function -->
+  <!-- ── A. CORE FUNCTION ── -->
   <div class="mb-3">
-    <div class="ipcr-section-header"><i class="fa-solid fa-star me-2"></i>A. CORE FUNCTION</div>
+    <div class="ipcr-section-header d-flex justify-content-between align-items-center">
+      <span><i class="fa-solid fa-star me-2"></i>A. CORE FUNCTIONS</span>
+      <button class="btn btn-sm btn-light no-print" onclick="addRow('coreBody')">
+        <i class="fa-solid fa-plus me-1"></i>Add Row
+      </button>
+    </div>
     <div class="table-responsive">
-      <table class="table table-bordered mb-0">
-        <thead class="table-light" style="font-size:0.8rem"><tr><th style="width:110px">MFO / KRA</th><th>Success Indicators</th><th style="width:100px">Target</th><th style="width:110px">Actual Accomplishment</th><th style="width:70px">Q</th><th style="width:70px">E</th><th style="width:70px">T</th><th style="width:80px">Average</th><th>Remarks</th></tr></thead>
+      <table class="table table-bordered mb-0" id="coreTable">
+        <thead class="table-light" style="font-size:0.8rem">
+          <tr>
+            <th style="min-width:140px">MFO / PAP</th>
+            <th style="min-width:200px">Success Indicator</th>
+            <th style="min-width:90px">Target</th>
+            <th style="min-width:90px">Budget (₱)</th>
+            <th style="min-width:80px">Measure</th>
+            <th style="min-width:100px">Actual Acc.</th>
+            <th style="width:65px">Q</th>
+            <th style="width:65px">E</th>
+            <th style="width:65px">T</th>
+            <th style="width:75px">Average</th>
+            <th style="min-width:110px">Remarks</th>
+            <th class="no-print text-center" style="width:50px">Del</th>
+          </tr>
+        </thead>
         <tbody id="coreBody"></tbody>
+        <tfoot>
+          <tr class="avg-row">
+            <td colspan="9" class="text-end fw-600" style="font-size:0.83rem">Average Rating — Core Function:</td>
+            <td id="coreAvg" class="text-center fw-700">—</td>
+            <td colspan="2" class="no-print"></td>
+          </tr>
+        </tfoot>
       </table>
     </div>
   </div>
 
-  <!-- Strategic Function -->
+  <!-- ── B. STRATEGIC FUNCTION ── -->
   <div class="mb-3">
-    <div class="ipcr-section-header"><i class="fa-solid fa-chess me-2"></i>B. STRATEGIC FUNCTION</div>
+    <div class="ipcr-section-header d-flex justify-content-between align-items-center">
+      <span><i class="fa-solid fa-chess me-2"></i>B. STRATEGIC FUNCTIONS</span>
+      <button class="btn btn-sm btn-light no-print" onclick="addRow('strategicBody')">
+        <i class="fa-solid fa-plus me-1"></i>Add Row
+      </button>
+    </div>
     <div class="table-responsive">
-      <table class="table table-bordered mb-0">
-        <thead class="table-light" style="font-size:0.8rem"><tr><th style="width:110px">MFO / KRA</th><th>Success Indicators</th><th style="width:100px">Target</th><th style="width:110px">Actual Accomplishment</th><th style="width:70px">Q</th><th style="width:70px">E</th><th style="width:70px">T</th><th style="width:80px">Average</th><th>Remarks</th></tr></thead>
+      <table class="table table-bordered mb-0" id="strategicTable">
+        <thead class="table-light" style="font-size:0.8rem">
+          <tr>
+            <th style="min-width:140px">MFO / PAP</th>
+            <th style="min-width:200px">Success Indicator</th>
+            <th style="min-width:90px">Target</th>
+            <th style="min-width:90px">Budget (₱)</th>
+            <th style="min-width:80px">Measure</th>
+            <th style="min-width:100px">Actual Acc.</th>
+            <th style="width:65px">Q</th>
+            <th style="width:65px">E</th>
+            <th style="width:65px">T</th>
+            <th style="width:75px">Average</th>
+            <th style="min-width:110px">Remarks</th>
+            <th class="no-print text-center" style="width:50px">Del</th>
+          </tr>
+        </thead>
         <tbody id="strategicBody"></tbody>
+        <tfoot>
+          <tr class="avg-row">
+            <td colspan="9" class="text-end fw-600" style="font-size:0.83rem">Average Rating — Strategic Function:</td>
+            <td id="strategicAvg" class="text-center fw-700">—</td>
+            <td colspan="2" class="no-print"></td>
+          </tr>
+        </tfoot>
       </table>
     </div>
   </div>
 
-  <!-- Support Function -->
+  <!-- ── C. SUPPORT FUNCTION ── -->
   <div class="mb-3">
-    <div class="ipcr-section-header"><i class="fa-solid fa-hands-helping me-2"></i>C. SUPPORT FUNCTION</div>
+    <div class="ipcr-section-header d-flex justify-content-between align-items-center">
+      <span><i class="fa-solid fa-hands-helping me-2"></i>C. SUPPORT FUNCTIONS</span>
+      <button class="btn btn-sm btn-light no-print" onclick="addRow('supportBody')">
+        <i class="fa-solid fa-plus me-1"></i>Add Row
+      </button>
+    </div>
     <div class="table-responsive">
-      <table class="table table-bordered mb-0">
-        <thead class="table-light" style="font-size:0.8rem"><tr><th style="width:110px">MFO / KRA</th><th>Success Indicators</th><th style="width:100px">Target</th><th style="width:110px">Actual Accomplishment</th><th style="width:70px">Q</th><th style="width:70px">E</th><th style="width:70px">T</th><th style="width:80px">Average</th><th>Remarks</th></tr></thead>
+      <table class="table table-bordered mb-0" id="supportTable">
+        <thead class="table-light" style="font-size:0.8rem">
+          <tr>
+            <th style="min-width:140px">MFO / PAP</th>
+            <th style="min-width:200px">Success Indicator</th>
+            <th style="min-width:90px">Target</th>
+            <th style="min-width:90px">Budget (₱)</th>
+            <th style="min-width:80px">Measure</th>
+            <th style="min-width:100px">Actual Acc.</th>
+            <th style="width:65px">Q</th>
+            <th style="width:65px">E</th>
+            <th style="width:65px">T</th>
+            <th style="width:75px">Average</th>
+            <th style="min-width:110px">Remarks</th>
+            <th class="no-print text-center" style="width:50px">Del</th>
+          </tr>
+        </thead>
         <tbody id="supportBody"></tbody>
+        <tfoot>
+          <tr class="avg-row">
+            <td colspan="9" class="text-end fw-600" style="font-size:0.83rem">Average Rating — Support Function:</td>
+            <td id="supportAvg" class="text-center fw-700">—</td>
+            <td colspan="2" class="no-print"></td>
+          </tr>
+        </tfoot>
       </table>
     </div>
   </div>
 
-  <!-- Overall Rating Summary -->
-  <div class="card mb-3" id="overallRatingCard" style="background:#FFF4E6">
-    <div class="card-body d-flex align-items-center justify-content-between flex-wrap gap-2 py-3">
+  <!-- Computed Final Overall Rating -->
+  <div class="card mb-4 border-primary">
+    <div class="card-body d-flex align-items-center justify-content-between flex-wrap gap-2" style="background:#FFF4E6">
       <div>
         <h6 class="mb-0 fw-700"><i class="fa-solid fa-calculator me-2 text-primary"></i>Computed Overall Rating</h6>
-        <small class="text-muted">Average of all rated performance indicators</small>
+        <small class="text-muted">Computed from Core, Strategic, and Support rated indicators</small>
       </div>
       <div class="d-flex align-items-center gap-3">
-        <span class="fs-4 fw-700 text-primary" id="overallRatingDisplay">-</span>
-        <span id="overallRatingLabel"></span>
+        <span class="fs-4 fw-700 text-primary" id="finalAvgDisplay">—</span>
+        <span id="finalRatingLabel" class="rating-badge bg-secondary text-white">Not yet rated</span>
       </div>
     </div>
   </div>
 
-  <!-- Signature Block (for print) -->
-  <div class="row g-3 mt-3">
-    <div class="col-4 text-center">
-      <div style="border-top:1px solid #333;margin-top:40px;padding-top:5px;font-size:0.82rem">
-        <strong id="sigName"></strong><br><span class="text-muted">Ratee</span>
-      </div>
-    </div>
-    <div class="col-4 text-center">
-      <div style="border-top:1px solid #333;margin-top:40px;padding-top:5px;font-size:0.82rem">
-        <strong>Campus Executive Officer</strong><br><span class="text-muted">Rater</span>
-      </div>
-    </div>
-    <div class="col-4 text-center">
-      <div style="border-top:1px solid #333;margin-top:40px;padding-top:5px;font-size:0.82rem">
-        <strong>University President</strong><br><span class="text-muted">Approving Authority</span>
+  <!-- Certification & Signatures Card -->
+  <div class="card mb-4">
+    <div class="card-header"><h6 class="mb-0"><i class="fa-solid fa-pen-nib me-2 text-primary"></i>Certification & Signatures</h6></div>
+    <div class="card-body">
+      <p style="font-size:0.83rem" class="mb-3">I hereby commit to deliver and agree to be rated on the attainment of the following targets in accordance with the indicated measures for the covered period.</p>
+      <div class="row g-4">
+        <div class="col-md-4 text-center">
+          <div style="border-bottom:1px solid #333;margin-bottom:4px;height:48px"></div>
+          <strong style="font-size:0.82rem" id="sigName"></strong><br>
+          <small class="text-muted">Ratee (Administrator / Head)</small>
+        </div>
+        <div class="col-md-4 text-center">
+          <div style="border-bottom:1px solid #333;margin-bottom:4px;height:48px"></div>
+          <strong style="font-size:0.82rem">HITLER C. DANGATAN, Ph.D.</strong><br>
+          <small class="text-muted">Campus Executive Officer (Rater)</small>
+        </div>
+        <div class="col-md-4 text-center">
+          <div style="border-bottom:1px solid #333;margin-bottom:4px;height:48px"></div>
+          <strong style="font-size:0.82rem">University President</strong><br>
+          <small class="text-muted">Approving Authority</small>
+        </div>
       </div>
     </div>
   </div>
 
-  <div class="d-flex gap-2 justify-content-end mt-3 no-print">
+  <div class="d-flex gap-2 justify-content-end no-print mb-4 flex-wrap">
     <button class="btn btn-outline-secondary" onclick="showPrintPreview()"><i class="fa-solid fa-print me-1"></i>Print Preview</button>
     <button class="btn btn-outline-primary" id="btnSaveDraft2" onclick="saveIPCR('draft')"><i class="fa-solid fa-floppy-disk me-1"></i>Save Draft</button>
-    <button class="btn btn-success" id="btnSubmit2" onclick="submitIPCR()"><i class="fa-solid fa-paper-plane me-1"></i>Submit for Review</button>
+    <button class="btn btn-primary" id="confirmBtn2" onclick="submitIPCR()"><i class="fa-solid fa-paper-plane me-1"></i>Confirm & Submit</button>
   </div>
+
 </main>
 
 <div id="footer-container"></div>
@@ -175,61 +339,62 @@ $user = requireAuth(['admin']);
 
   let activeTimeline = null;
   let existingIpcrId = 0;
+  let isReadOnly = false;
 
+  // Pre-fill header
+  document.getElementById('ipcrOffice').value = session.department_name || session.department || 'Administrator Office';
   document.getElementById('ipcrName').value = session.name;
-  document.getElementById('ipcrPosition').value = session.position || '-';
+  document.getElementById('ipcrPosition').value = session.position || 'Administrator';
   document.getElementById('ipcrDate').value = new Date().toISOString().split('T')[0];
   document.getElementById('sigName').textContent = session.name.toUpperCase();
+  document.getElementById('printDeptHeader').textContent = session.department_name || session.department || 'Administrator Office';
 
-  async function initForm() {
-    const [kpiRes, tlRes] = await Promise.all([
-      fetch(API_BASE + 'kpi/list.php', { credentials: 'include' }).then(r => r.json()).catch(() => null),
-      fetch(API_BASE + 'timeline/list.php?status=open', { credentials: 'include' }).then(r => r.json()).catch(() => null),
-    ]);
+  function updatePeriodSummary() {
+    const p = document.getElementById('ipcrPeriod').value;
+    document.getElementById('summaryPeriod').textContent = p || '—';
+  }
+  document.getElementById('ipcrPeriod').addEventListener('input', updatePeriodSummary);
 
-    const kpi = kpiRes?.grouped || {};
-    activeTimeline = (tlRes?.timelines || [])[0] || null;
-
-    document.getElementById('ipcrOffice').value = session.department_name || session.department || '-';
-
-    if (activeTimeline) {
-      const deadline = new Date(activeTimeline.submission_deadline);
-      const daysLeft = Math.ceil((deadline - new Date()) / 86400000);
-      showToast(daysLeft > 0 ? `Deadline: ${formatDate(activeTimeline.submission_deadline)} (${daysLeft} day(s) left)` : 'Submission deadline has passed.', daysLeft > 0 ? 'info' : 'warning');
-
-      // Try to load existing form for this timeline
-      const existRes = await fetch(API_BASE + 'ipcr/get.php?timeline_id=' + activeTimeline.id, { credentials: 'include' }).then(r => r.json()).catch(() => null);
-      if (existRes?.form) {
-        const f = existRes.form;
-        existingIpcrId = f.id;
-        document.getElementById('ipcrPeriod').value = f.covered_period || '';
-        document.getElementById('ipcrStatus').value = f.status || 'draft';
-        loadSection('coreBody', f.items?.core || [], kpi.core || []);
-        loadSection('strategicBody', f.items?.strategic || [], kpi.strategic || []);
-        loadSection('supportBody', f.items?.support || [], kpi.support || []);
-      } else {
-        document.getElementById('ipcrPeriod').value = activeTimeline.semester + ' ' + activeTimeline.academic_year;
-        document.getElementById('ipcrStatus').value = 'draft';
-        loadKpiSection('coreBody', kpi.core || []);
-        loadKpiSection('strategicBody', kpi.strategic || []);
-        loadKpiSection('supportBody', kpi.support || []);
-      }
-    } else {
-      document.getElementById('ipcrStatus').value = 'No open timeline';
-      loadKpiSection('coreBody', kpi.core || []);
-      loadKpiSection('strategicBody', kpi.strategic || []);
-      loadKpiSection('supportBody', kpi.support || []);
-      document.getElementById('noTimelineAlert').classList.remove('d-none');
-      ['btnSaveDraft', 'btnSubmit', 'btnSaveDraft2', 'btnSubmit2'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) { el.disabled = true; el.title = 'No active submission period is open.'; }
-      });
-    }
-
-    computeOverallRating();
+  function setStatus(status) {
+    const badge = document.getElementById('statusBadge');
+    const map = {
+      draft:       ['bg-secondary', 'Draft'],
+      pending:     ['bg-warning text-dark', 'Pending Review'],
+      reviewed:    ['bg-info text-dark', 'Reviewed'],
+      approved:    ['bg-success', 'Approved'],
+      disapproved: ['bg-danger', 'Disapproved']
+    };
+    const [cls, label] = map[status] || ['bg-secondary', status];
+    badge.className = `badge ${cls} ms-1`;
+    badge.textContent = label;
   }
 
-  initForm();
+  function setReadOnly(on) {
+    isReadOnly = on;
+    const allInputs = document.querySelectorAll('#coreBody input, #strategicBody input, #supportBody input, #ipcrPeriod, #ipcrDate, #ipcrSemester');
+    allInputs.forEach(i => i.disabled = on);
+    document.querySelectorAll('.no-print button').forEach(b => {
+      if (b.id !== 'editBtn' && b.id !== 'confirmBtn') b.disabled = on;
+    });
+    const editBtn = document.getElementById('editBtn');
+    if (editBtn) editBtn.style.display = on ? 'inline-flex' : 'none';
+    const confirmBtn = document.getElementById('confirmBtn');
+    if (confirmBtn) confirmBtn.style.display = on ? 'none' : 'inline-flex';
+    const saveDraftBtn = document.getElementById('btnSaveDraft');
+    if (saveDraftBtn) saveDraftBtn.style.display = on ? 'none' : 'inline-flex';
+    const saveDraftBtn2 = document.getElementById('btnSaveDraft2');
+    if (saveDraftBtn2) saveDraftBtn2.style.display = on ? 'none' : 'inline-flex';
+    const confirmBtn2 = document.getElementById('confirmBtn2');
+    if (confirmBtn2) confirmBtn2.style.display = on ? 'none' : 'inline-flex';
+  }
+
+  function enableEdit() {
+    confirmModal('Allow editing of this form? Status will revert to Draft.', 'Enable Edit', () => {
+      setReadOnly(false);
+      setStatus('draft');
+      showToast('IPCR is now editable. Remember to re-submit after making changes.', 'info');
+    });
+  }
 
   function validateAccInput(input) {
     if (!input) return;
@@ -251,76 +416,79 @@ $user = requireAuth(['admin']);
     }
   }
 
-  function loadKpiSection(tbodyId, items) {
-    const tbody = document.getElementById(tbodyId);
-    tbody.innerHTML = '';
-    items.forEach(item => {
-      tbody.innerHTML += `<tr>
-        <td style="font-size:0.82rem;background:#fafafa;white-space:nowrap">${item.mfo}</td>
-        <td style="font-size:0.82rem;background:#fafafa">${item.success_indicator}</td>
-        <td style="font-size:0.82rem;background:#fafafa;white-space:nowrap">${item.target}</td>
-        <td><input type="number" class="form-control form-control-sm acc-input" min="1" max="100" step="1" data-type="accomplishment" placeholder="1-100" oninput="validateAccInput(this)" onkeydown="enforceDigitsOnly(event)"></td>
-        <td><input type="number" class="form-control form-control-sm rating-q" min="1" max="5" step="0.1" placeholder="1-5" data-kpi="${item.id}" oninput="computeRowRating(this)"></td>
-        <td><input type="number" class="form-control form-control-sm rating-e" min="1" max="5" step="0.1" placeholder="1-5" data-kpi="${item.id}" oninput="computeRowRating(this)"></td>
-        <td><input type="number" class="form-control form-control-sm rating-t" min="1" max="5" step="0.1" placeholder="1-5" data-kpi="${item.id}" oninput="computeRowRating(this)"></td>
-        <td class="text-center fw-700 row-avg" style="font-size:0.85rem;background:#fafafa">-</td>
-        <td><input type="text" class="form-control form-control-sm row-remarks bg-light" placeholder="Auto" readonly></td></tr>`;
-    });
+  function esc(val) {
+    return (val || '').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   }
 
-  function loadSection(tbodyId, items, sectionKpi) {
+  function createRow(data = {}) {
+    const tr = document.createElement('tr');
+    tr.dataset.kpiId = data.kpi_id || data.kpiId || '';
+    const q = data.q_rating !== undefined ? data.q_rating : (data.q || '');
+    const e = data.e_rating !== undefined ? data.e_rating : (data.e || '');
+    const t = data.t_rating !== undefined ? data.t_rating : (data.t || '');
+    const avg = parseFloat(data.rating) || 0;
+    const actual = data.accomplishment !== undefined ? data.accomplishment : (data.actual || '');
+    const remarks = data.remarks || (avg > 0 ? getAdjectivalText(avg) : '');
+
+    tr.innerHTML = `
+      <td><input type="text" class="form-control form-control-sm mfo-input" value="${esc(data.mfo || '')}" placeholder="e.g. Instruction"></td>
+      <td><input type="text" class="form-control form-control-sm si-input" value="${esc(data.success_indicator || data.successIndicator || '')}" placeholder="Success indicator..."></td>
+      <td><input type="text" class="form-control form-control-sm target-input text-center" style="width:90px" value="${esc(data.target || '')}" placeholder="100%"></td>
+      <td><input type="number" class="form-control form-control-sm budget-input text-end" style="width:90px" value="${data.budget || 0}" min="0" placeholder="0"></td>
+      <td><input type="text" class="form-control form-control-sm measure-input text-center" style="width:80px" value="${esc(data.measure || 'Q/T/E')}" placeholder="Q/T/E"></td>
+      <td><input type="number" class="form-control form-control-sm acc-input text-center" min="1" max="100" step="1" style="width:90px" value="${esc(actual)}" placeholder="1-100" oninput="validateAccInput(this)" onkeydown="enforceDigitsOnly(event)"></td>
+      <td><input type="number" class="form-control form-control-sm rating-q text-center" min="1" max="5" step="0.1" style="width:60px" value="${q}" placeholder="1-5" oninput="computeRowRating(this)"></td>
+      <td><input type="number" class="form-control form-control-sm rating-e text-center" min="1" max="5" step="0.1" style="width:60px" value="${e}" placeholder="1-5" oninput="computeRowRating(this)"></td>
+      <td><input type="number" class="form-control form-control-sm rating-t text-center" min="1" max="5" step="0.1" style="width:60px" value="${t}" placeholder="1-5" oninput="computeRowRating(this)"></td>
+      <td class="text-center fw-700 row-avg" style="font-size:0.85rem;background:#fafafa">${avg > 0 ? avg.toFixed(2) : '-'}</td>
+      <td><input type="text" class="form-control form-control-sm row-remarks bg-light" value="${esc(remarks)}" placeholder="Auto" readonly></td>
+      <td class="no-print text-center">
+        <button class="btn btn-outline-danger btn-sm px-2" onclick="confirmModal('Remove this row?','Delete Row',()=>{ this.closest('tr').remove(); computeAverages(); })" title="Delete row">
+          <i class="fa-solid fa-trash" style="font-size:0.7rem"></i>
+        </button>
+      </td>`;
+    return tr;
+  }
+
+  function addRow(tbodyId) {
+    document.getElementById(tbodyId).appendChild(createRow());
+    computeAverages();
+  }
+
+  function loadRows(tbodyId, items) {
     const tbody = document.getElementById(tbodyId);
     tbody.innerHTML = '';
-    items.forEach(item => {
-      const avg = parseFloat(item.rating) || 0;
-      tbody.innerHTML += `<tr>
-        <td style="font-size:0.82rem;background:#fafafa;white-space:nowrap">${item.mfo || '-'}</td>
-        <td style="font-size:0.82rem;background:#fafafa">${item.success_indicator || '-'}</td>
-        <td style="font-size:0.82rem;background:#fafafa;white-space:nowrap">${item.target || '-'}</td>
-        <td><input type="number" class="form-control form-control-sm acc-input" min="1" max="100" step="1" data-type="accomplishment" placeholder="1-100" value="${item.accomplishment || ''}" oninput="validateAccInput(this)" onkeydown="enforceDigitsOnly(event)"></td>
-        <td><input type="number" class="form-control form-control-sm rating-q" min="1" max="5" step="0.1" value="${item.q_rating || ''}" data-kpi="${item.kpi_id || ''}" oninput="computeRowRating(this)"></td>
-        <td><input type="number" class="form-control form-control-sm rating-e" min="1" max="5" step="0.1" value="${item.e_rating || ''}" data-kpi="${item.kpi_id || ''}" oninput="computeRowRating(this)"></td>
-        <td><input type="number" class="form-control form-control-sm rating-t" min="1" max="5" step="0.1" value="${item.t_rating || ''}" data-kpi="${item.kpi_id || ''}" oninput="computeRowRating(this)"></td>
-        <td class="text-center fw-700 row-avg" style="font-size:0.85rem;background:#fafafa">${avg > 0 ? avg.toFixed(2) : '-'}</td>
-        <td><input type="text" class="form-control form-control-sm row-remarks bg-light" value="${item.remarks || (avg > 0 ? getAdjectivalText(avg) : '')}" readonly placeholder="Auto"></td></tr>`;
-    });
-    // Surface KPIs added by SuperAdmin after this form was first saved —
-    // they have no ipcr_items row yet, so append fresh editable rows for them.
-    (sectionKpi || []).forEach(k => {
-      const already = (items || []).some(item => String(item.kpi_id) === String(k.id));
-      if (already) return;
-      tbody.innerHTML += `<tr>
-        <td style="font-size:0.82rem;background:#fafafa;white-space:nowrap">${k.mfo || '-'}</td>
-        <td style="font-size:0.82rem;background:#fafafa">${k.success_indicator || '-'}</td>
-        <td style="font-size:0.82rem;background:#fafafa;white-space:nowrap">${k.target || '-'}</td>
-        <td><input type="number" class="form-control form-control-sm acc-input" min="1" max="100" step="1" data-type="accomplishment" placeholder="1-100" oninput="validateAccInput(this)" onkeydown="enforceDigitsOnly(event)"></td>
-        <td><input type="number" class="form-control form-control-sm rating-q" min="1" max="5" step="0.1" placeholder="1-5" data-kpi="${k.id}" oninput="computeRowRating(this)"></td>
-        <td><input type="number" class="form-control form-control-sm rating-e" min="1" max="5" step="0.1" placeholder="1-5" data-kpi="${k.id}" oninput="computeRowRating(this)"></td>
-        <td><input type="number" class="form-control form-control-sm rating-t" min="1" max="5" step="0.1" placeholder="1-5" data-kpi="${k.id}" oninput="computeRowRating(this)"></td>
-        <td class="text-center fw-700 row-avg" style="font-size:0.85rem;background:#fafafa">-</td>
-        <td><input type="text" class="form-control form-control-sm row-remarks bg-light" placeholder="Auto" readonly></td></tr>`;
-    });
+    (items || []).forEach(item => tbody.appendChild(createRow(item)));
   }
 
   function getRows(tbodyId) {
     const rows = [];
     document.getElementById(tbodyId).querySelectorAll('tr').forEach(tr => {
-      const accInp     = tr.querySelector('.acc-input') || tr.querySelector('input[data-type="accomplishment"]') || tr.querySelector('textarea');
+      const mfoInp     = tr.querySelector('.mfo-input');
+      const siInp      = tr.querySelector('.si-input');
+      const targetInp  = tr.querySelector('.target-input');
+      const budgetInp  = tr.querySelector('.budget-input');
+      const measureInp = tr.querySelector('.measure-input');
+      const accInp     = tr.querySelector('.acc-input');
       const qInp       = tr.querySelector('.rating-q');
       const eInp       = tr.querySelector('.rating-e');
       const tInp       = tr.querySelector('.rating-t');
       const avgCell    = tr.querySelector('.row-avg');
       const remarksInp = tr.querySelector('.row-remarks');
 
-      const q = parseFloat(qInp?.value) || 0;
-      const e = parseFloat(eInp?.value) || 0;
-      const t = parseFloat(tInp?.value) || 0;
-      const a = parseFloat(avgCell?.textContent) || 0;
+      const q = parseFloat(qInp?.value) || null;
+      const e = parseFloat(eInp?.value) || null;
+      const t = parseFloat(tInp?.value) || null;
+      const a = parseFloat(avgCell?.textContent) || null;
 
       rows.push({
-        kpi_id:            qInp?.dataset?.kpi || eInp?.dataset?.kpi || tInp?.dataset?.kpi || '',
-        success_indicator: tr.cells[1]?.textContent?.trim() || '',
-        accomplishment:    accInp?.value !== undefined ? accInp.value.trim() : '',
+        kpi_id:            tr.dataset.kpiId || '',
+        mfo:               mfoInp?.value.trim() || '',
+        success_indicator: siInp?.value.trim() || '',
+        target:            targetInp?.value.trim() || '',
+        budget:            budgetInp?.value || '0',
+        measure:           measureInp?.value.trim() || '',
+        accomplishment:    accInp?.value.trim() || '',
         q_rating:          q,
         e_rating:          e,
         t_rating:          t,
@@ -349,44 +517,159 @@ $user = requireAuth(['admin']);
       avgCell.textContent = '-';
       remarksInp.value = '';
     }
-    computeOverallRating();
+    computeAverages();
   }
 
-  function computeOverallRating() {
-    const avgCells = document.querySelectorAll('.row-avg');
-    let total = 0, count = 0;
-    avgCells.forEach(cell => {
-      const v = parseFloat(cell.textContent);
-      if (!isNaN(v) && v > 0) { total += v; count++; }
+  function computeAverages() {
+    ['core', 'strategic', 'support'].forEach(section => {
+      const avgCells = document.querySelectorAll(`#${section}Body .row-avg`);
+      const vals = Array.from(avgCells).map(c => parseFloat(c.textContent)).filter(v => !isNaN(v) && v > 0);
+      const avg = vals.length ? (vals.reduce((a, b) => a + b, 0) / vals.length) : null;
+      document.getElementById(`${section}Avg`).textContent = avg !== null ? avg.toFixed(2) : '—';
     });
-    const avg = count > 0 ? (total / count) : 0;
-    const el = document.getElementById('overallRatingDisplay');
-    const labelEl = document.getElementById('overallRatingLabel');
-    if (el) el.textContent = avg > 0 ? avg.toFixed(2) : '-';
-    if (labelEl) labelEl.innerHTML = avg > 0 ? getRatingLabel(avg) : '';
+
+    // Final Overall Average
+    const allRowAvgs = Array.from(document.querySelectorAll('.row-avg')).map(c => parseFloat(c.textContent)).filter(v => !isNaN(v) && v > 0);
+    const finalAvg = allRowAvgs.length ? (allRowAvgs.reduce((a, b) => a + b, 0) / allRowAvgs.length) : null;
+
+    const display = document.getElementById('finalAvgDisplay');
+    const summary = document.getElementById('summaryRating');
+    const label = document.getElementById('finalRatingLabel');
+
+    if (finalAvg !== null && finalAvg > 0) {
+      const valStr = finalAvg.toFixed(2);
+      display.textContent = valStr;
+      summary.textContent = valStr;
+      if (finalAvg >= 4.5) { label.className = 'rating-badge bg-success text-white'; label.textContent = 'Outstanding'; label.style.background = ''; }
+      else if (finalAvg >= 3.5) { label.className = 'rating-badge text-white'; label.style.background = '#E85C0D'; label.textContent = 'Very Satisfactory'; }
+      else if (finalAvg >= 2.5) { label.className = 'rating-badge text-dark'; label.style.background = '#FABC3F'; label.textContent = 'Satisfactory'; }
+      else if (finalAvg >= 1.5) { label.className = 'rating-badge bg-danger text-white'; label.style.background = ''; label.textContent = 'Unsatisfactory'; }
+      else { label.className = 'rating-badge bg-dark text-white'; label.style.background = ''; label.textContent = 'Poor'; }
+    } else {
+      display.textContent = '—';
+      summary.textContent = '—';
+      label.className = 'rating-badge bg-secondary text-white';
+      label.textContent = 'Not yet rated';
+      label.style.background = '';
+    }
   }
+
+  async function initForm() {
+    const [kpiRes, tlRes] = await Promise.all([
+      fetch(API_BASE + 'kpi/list.php', { credentials: 'include' }).then(r => r.json()).catch(() => null),
+      fetch(API_BASE + 'timeline/list.php?status=open', { credentials: 'include' }).then(r => r.json()).catch(() => null),
+    ]);
+
+    const kpi = kpiRes?.grouped || {};
+    activeTimeline = (tlRes?.timelines || [])[0] || null;
+
+    if (activeTimeline) {
+      const deadline = new Date(activeTimeline.submission_deadline);
+      const daysLeft = Math.ceil((deadline - new Date()) / 86400000);
+      showToast(daysLeft > 0 ? `Deadline: ${formatDate(activeTimeline.submission_deadline)} (${daysLeft} day(s) left)` : 'Submission deadline has passed.', daysLeft > 0 ? 'info' : 'warning');
+
+      // Try to load existing form for this timeline
+      const existRes = await fetch(API_BASE + 'ipcr/get.php?timeline_id=' + activeTimeline.id, { credentials: 'include' }).then(r => r.json()).catch(() => null);
+      if (existRes?.form) {
+        const f = existRes.form;
+        existingIpcrId = f.id;
+        document.getElementById('ipcrPeriod').value = f.covered_period || '';
+        document.getElementById('ipcrOffice').value = f.department_name || session.department_name || session.department || 'Administrator Office';
+        document.getElementById('printDeptHeader').textContent = f.department_name || session.department_name || session.department || 'Administrator Office';
+        document.getElementById('lastSaved').textContent = f.updated_at ? new Date(f.updated_at).toLocaleString('en-PH') : 'Saved';
+        setStatus(f.status || 'draft');
+
+        loadRows('coreBody', f.items?.core?.length ? f.items.core : kpi.core || []);
+        loadRows('strategicBody', f.items?.strategic?.length ? f.items.strategic : kpi.strategic || []);
+        loadRows('supportBody', f.items?.support?.length ? f.items.support : kpi.support || []);
+
+        if (['pending', 'reviewed', 'approved'].includes(f.status)) {
+          setReadOnly(true);
+        }
+      } else {
+        document.getElementById('ipcrPeriod').value = activeTimeline.semester + ' ' + activeTimeline.academic_year;
+        setStatus('draft');
+        loadRows('coreBody', kpi.core || []);
+        loadRows('strategicBody', kpi.strategic || []);
+        loadRows('supportBody', kpi.support || []);
+      }
+    } else {
+      document.getElementById('noTimelineAlert').classList.remove('d-none');
+      setStatus('draft');
+      loadRows('coreBody', kpi.core || []);
+      loadRows('strategicBody', kpi.strategic || []);
+      loadRows('supportBody', kpi.support || []);
+      ['btnSaveDraft', 'confirmBtn', 'btnSaveDraft2', 'confirmBtn2'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) { el.disabled = true; el.title = 'No active submission period is open.'; }
+      });
+    }
+
+    updatePeriodSummary();
+    computeAverages();
+  }
+
+  initForm();
 
   async function saveIPCR(action = 'draft') {
     const period = document.getElementById('ipcrPeriod').value.trim();
-    if (!period) { showToast('Please enter the covered period.', 'warning'); return; }
-    if (!activeTimeline) { showToast('No open submission period found.', 'warning'); return; }
-    const res = await fetch(API_BASE + 'ipcr/save.php', {
-      method: 'POST', credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        action, ipcr_id: existingIpcrId || 0,
-        timeline_id: activeTimeline.id,
-        covered_period: period,
-        core: getRows('coreBody'),
-        strategic: getRows('strategicBody'),
-        support: getRows('supportBody'),
-      })
-    }).then(r => r.json()).catch(() => null);
-    if (res?.success) {
-      existingIpcrId = res.ipcr_id;
-      document.getElementById('ipcrStatus').value = res.status;
-      showToast(action === 'submit' ? 'IPCR submitted!' : 'Draft saved!', 'success');
-    } else showToast(res?.error || 'Failed to save IPCR.', 'danger');
+    if (!period) { showToast('Please enter the covered period.', 'warning'); return false; }
+    if (!activeTimeline) { showToast('No open submission period found.', 'warning'); return false; }
+
+    const coreRows = getRows('coreBody');
+    if (coreRows.length === 0) { showToast('At least one Core Function row is required.', 'warning'); return false; }
+
+    const payload = {
+      action,
+      ipcr_id: existingIpcrId || 0,
+      timeline_id: activeTimeline.id,
+      covered_period: period,
+      core:      coreRows,
+      strategic: getRows('strategicBody'),
+      support:   getRows('supportBody'),
+    };
+
+    try {
+      const res = await fetch(API_BASE + 'ipcr/save.php', {
+        method: 'POST', credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      }).then(r => r.json()).catch(() => null);
+
+      if (res?.success) {
+        existingIpcrId = res.ipcr_id;
+        setStatus(res.status);
+        document.getElementById('lastSaved').textContent = new Date().toLocaleString('en-PH');
+        if (action === 'submit') {
+          setReadOnly(true);
+        }
+        showToast(action === 'submit' ? 'IPCR submitted for review!' : 'Draft saved successfully!', 'success');
+        return true;
+      } else {
+        showToast(res?.error || 'Failed to save IPCR.', 'danger');
+        return false;
+      }
+    } catch {
+      showToast('Server error. Make sure XAMPP is running.', 'danger');
+      return false;
+    }
+  }
+
+  function submitIPCR() {
+    if (activeTimeline) {
+      const deadline = new Date(activeTimeline.submission_deadline);
+      deadline.setHours(23, 59, 59);
+      if (new Date() > deadline) {
+        showToast('The submission deadline has passed. Contact the Super Administrator.', 'warning');
+        return;
+      }
+    }
+    confirmModal('Submit your IPCR for review by the Campus Executive Officer?', 'Submit IPCR', async () => {
+      const ok = await saveIPCR('submit');
+      if (ok) {
+        setTimeout(() => window.location.href = 'dashboard.php', 1200);
+      }
+    });
   }
 
   // Preload logo for print preview
@@ -403,23 +686,29 @@ $user = requireAuth(['admin']);
 
     if (!period) { showToast('Please enter the covered period before previewing.', 'warning'); return; }
 
-    function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+    function ep(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
     function getFormRows(tbodyId) {
       const rows = [];
       document.getElementById(tbodyId).querySelectorAll('tr').forEach(tr => {
-        const tds = tr.querySelectorAll('td');
-        const accInp     = tr.querySelector('.acc-input') || tr.querySelector('input[data-type="accomplishment"]') || tr.querySelector('textarea');
+        const mfoInp     = tr.querySelector('.mfo-input');
+        const siInp      = tr.querySelector('.si-input');
+        const targetInp  = tr.querySelector('.target-input');
+        const budgetInp  = tr.querySelector('.budget-input');
+        const measureInp = tr.querySelector('.measure-input');
+        const accInp     = tr.querySelector('.acc-input');
         const qInp       = tr.querySelector('.rating-q');
         const eInp       = tr.querySelector('.rating-e');
         const tInp       = tr.querySelector('.rating-t');
         const avgCell    = tr.querySelector('.row-avg');
         const remarksInp = tr.querySelector('.row-remarks');
         rows.push({
-          mfo:     tds[0]?.textContent?.trim() || '',
-          si:      tds[1]?.textContent?.trim() || '',
-          target:  tds[2]?.textContent?.trim() || '',
-          actual:  accInp?.value !== undefined ? accInp.value.trim() : '',
+          mfo:     mfoInp?.value.trim() || '',
+          si:      siInp?.value.trim() || '',
+          target:  targetInp?.value.trim() || '',
+          budget:  budgetInp?.value || '0',
+          measure: measureInp?.value.trim() || '',
+          actual:  accInp?.value.trim() || '',
           q:       qInp?.value || '',
           e:       eInp?.value || '',
           t:       tInp?.value || '',
@@ -453,23 +742,23 @@ $user = requireAuth(['admin']);
         const r = rows[i] || {};
         const formattedActual = r.actual ? (isNaN(r.actual) ? r.actual : r.actual + '%') : '';
         html += `<tr class="data-row">
-          <td>${esc(r.mfo)}</td>
-          <td>${esc(r.si)}</td>
-          <td class="tc">${esc(r.target)}</td>
-          <td>${esc(name)}</td>
-          <td class="tc">${esc(formattedActual)}</td>
-          <td class="tc">${esc(r.q)}</td>
-          <td class="tc">${esc(r.e)}</td>
-          <td class="tc">${esc(r.t)}</td>
-          <td class="tc b">${esc(r.a)}</td>
-          <td>${esc(r.remarks)}</td>
+          <td>${ep(r.mfo)}</td>
+          <td>${ep(r.si)}</td>
+          <td class="tc">${ep(r.target)}</td>
+          <td class="tc">${ep(name)}</td>
+          <td class="tc">${ep(formattedActual)}</td>
+          <td class="tc">${ep(r.q)}</td>
+          <td class="tc">${ep(r.e)}</td>
+          <td class="tc">${ep(r.t)}</td>
+          <td class="tc b">${ep(r.a)}</td>
+          <td>${ep(r.remarks)}</td>
         </tr>`;
       }
       return html;
     }
 
     const logoTag = _printLogo ? `<img src="${_printLogo}" class="logo" alt="CSU Logo">` : `<div class="logo-ph"></div>`;
-    const html = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>IPCR — ${esc(name)}</title><style>
+    const html = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>IPCR — ${ep(name)}</title><style>
 *{margin:0;padding:0;box-sizing:border-box;}body{font-family:'Times New Roman',Times,serif;font-size:7.8pt;color:#000;background:#fff;}
 @page{size:letter landscape;margin:.35in .3in;}@media print{.no-print{display:none!important;}}
 .no-print{position:fixed;top:10px;right:14px;z-index:999;display:flex;gap:8px;}
@@ -503,38 +792,23 @@ td,th{border:1px solid #000;padding:1.5px 3px;vertical-align:middle;font-size:7.
 <div class="no-print"><button class="btn-pdf" onclick="window.print()">&#128438; Print / Save as PDF</button><button class="btn-cls" onclick="window.close()">&#x2715; Close</button></div>
 <div class="form-outer">
 <div class="hdr-row"><div class="annex">ANNEX A</div><div class="hdr-inner">${logoTag}<div class="univ-text"><div class="republic">Republic of the Philippines</div><div class="univ">CAGAYAN STATE UNIVERSITY</div><div class="campus">Piat Campus, Piat, Cagayan</div></div></div><div class="form-title">INDIVIDUAL PERFORMANCE COMMITMENT AND REVIEW FORM (IPCR)</div></div>
-<div class="div-field"><span class="uline">&nbsp;${esc(office)}&nbsp;</span><span class="field-lbl">Division/Office/College</span></div>
-<div class="commit-wrap"><div class="commit-left">I,&nbsp;<span style="border-bottom:1px solid #000;padding:0 4px">${esc(name)}</span>,&nbsp;<span style="border-bottom:1px solid #000;padding:0 4px">${esc(pos)}</span>, commit to deliver and agree to be rated on the attainment of the following targets in accordance with the indicated measures for<br>the period&nbsp;<span style="border-bottom:1px solid #000;padding:0 4px">${esc(period)}</span>.</div><div class="commit-right"><span class="sig-line">${esc(name)}<br><span style="font-size:6.5pt;font-style:italic">(name of employee)</span></span><div class="date-line">Date:&nbsp;<span style="border-bottom:1px solid #000;padding:0 4px">${esc(date)}</span></div></div></div>
+<div class="div-field"><span class="uline">&nbsp;${ep(office)}&nbsp;</span><span class="field-lbl">Division/Office/College</span></div>
+<div class="commit-wrap"><div class="commit-left">I,&nbsp;<span style="border-bottom:1px solid #000;padding:0 4px">${ep(name)}</span>,&nbsp;<span style="border-bottom:1px solid #000;padding:0 4px">${ep(pos)}</span>, commit to deliver and agree to be rated on the attainment of the following targets in accordance with the indicated measures for<br>the period&nbsp;<span style="border-bottom:1px solid #000;padding:0 4px">${ep(period)}</span>.</div><div class="commit-right"><span class="sig-line">${ep(name)}<br><span style="font-size:6.5pt;font-style:italic">(name of employee)</span></span><div class="date-line">Date:&nbsp;<span style="border-bottom:1px solid #000;padding:0 4px">${ep(date)}</span></div></div></div>
 <table class="rev-table"><tr><th style="width:35%">REVIEWED BY</th><th style="width:10%">DATE</th><th style="width:45%">APPROVED BY</th><th style="width:10%">DATE</th></tr>
-<tr><td style="height:32px;vertical-align:bottom"><div class="rev-name">&nbsp;</div><div class="rev-role">(Campus Executive Officer)</div></td><td>&nbsp;</td><td style="text-align:center;vertical-align:middle"><div class="rev-name">University President</div><div class="rev-role">CSU System Administration</div></td><td>&nbsp;</td></tr></table>
+<tr><td style="height:32px;vertical-align:bottom"><div class="rev-name">HITLER C. DANGATAN, Ph.D.</div><div class="rev-role">(Campus Executive Officer)</div></td><td>&nbsp;</td><td style="text-align:center;vertical-align:middle"><div class="rev-name">University President</div><div class="rev-role">CSU System Administration</div></td><td>&nbsp;</td></tr></table>
 <table class="data-table"><colgroup><col style="width:18%"><col style="width:20%"><col style="width:8%"><col style="width:10%"><col style="width:17%"><col style="width:3%"><col style="width:3%"><col style="width:3%"><col style="width:3%"><col style="width:15%"></colgroup>
-<thead><tr><th rowspan="2">MFO/KRA</th><th rowspan="2">SUCCESS INDICATORS</th><th rowspan="2">TARGET</th><th rowspan="2">INDIVIDUALS ACCOUNTABLE</th><th rowspan="2">ACTUAL ACCOMPLISHMENTS</th><th colspan="4">RATING</th><th rowspan="2">REMARKS</th></tr><tr><th>Q<sup>1</sup></th><th>E<sup>2</sup></th><th>T<sup>3</sup></th><th>A<sup>4</sup></th></tr></thead>
-<tbody><tr class="sec-row"><td colspan="10">A. CORE FUNCTION</td></tr>${buildRows(core,4)}<tr class="sec-row"><td colspan="10">B. STRATEGIC FUNCTION</td></tr>${buildRows(strategic,3)}<tr class="sec-row"><td colspan="10">C. SUPPORT FUNCTION</td></tr>${buildRows(support,3)}</tbody></table>
+<thead><tr><th rowspan="2">MFO/PAP</th><th rowspan="2">SUCCESS INDICATORS</th><th rowspan="2">TARGET</th><th rowspan="2">INDIVIDUALS ACCOUNTABLE</th><th rowspan="2">ACTUAL ACCOMPLISHMENTS</th><th colspan="4">RATING</th><th rowspan="2">REMARKS</th></tr><tr><th>Q<sup>1</sup></th><th>E<sup>2</sup></th><th>T<sup>3</sup></th><th>A<sup>4</sup></th></tr></thead>
+<tbody><tr class="sec-row"><td colspan="10">A. CORE FUNCTIONS</td></tr>${buildRows(core,4)}<tr class="sec-row"><td colspan="10">B. STRATEGIC FUNCTIONS</td></tr>${buildRows(strategic,3)}<tr class="sec-row"><td colspan="10">C. SUPPORT FUNCTIONS</td></tr>${buildRows(support,3)}</tbody></table>
 <table class="summary-table"><tr><td class="lbl" style="width:20%">AVERAGE RATING:</td><td class="val">${finalAvg||''}</td></tr><tr><td class="lbl">FINAL AVERAGE RATING:</td><td class="val">${finalAvg||''}</td></tr><tr><td class="lbl">ADJECTIVAL RATING:</td><td class="val">${finalAvg?adj(finalAvg):''}</td></tr></table>
 <table class="sig-tbl"><tr><th style="width:18%">DISCUSSED WITH</th><th style="width:9%">DATE</th><th style="width:28%">ASSESSED BY</th><th style="width:9%">DATE</th><th style="width:27%">FINAL RATING BY</th><th style="width:9%">DATE</th></tr>
 <tr style="height:52px"><td>&nbsp;</td><td>&nbsp;</td><td class="certify">I certify that I discussed my assessment of the performance with the employee</td><td>&nbsp;</td><td class="sig-name-cell">Campus Executive Officer</td><td>&nbsp;</td></tr>
-<tr><td class="sig-name-cell" style="border-top:1px solid #aaa">${esc(name)}</td><td>&nbsp;</td><td class="sig-name-cell" style="border-top:1px solid #aaa">(Campus Executive Officer)</td><td>&nbsp;</td><td class="sig-name-cell" style="border-top:1px solid #aaa">University President</td><td>&nbsp;</td></tr>
+<tr><td class="sig-name-cell" style="border-top:1px solid #aaa">${ep(name)}</td><td>&nbsp;</td><td class="sig-name-cell" style="border-top:1px solid #aaa">HITLER C. DANGATAN, Ph.D.<div class="rev-role">(Campus Executive Officer)</div></td><td>&nbsp;</td><td class="sig-name-cell" style="border-top:1px solid #aaa">University President</td><td>&nbsp;</td></tr>
 <tr><td colspan="6" class="legend-note">Legend: 1:Quality &nbsp; 2:Efficiency &nbsp; 3:Timeliness &nbsp; 4:Average</td></tr></table>
 </div><script>setTimeout(()=>window.print(),700);<\/script></body></html>`;
 
     const w = window.open('', '_blank');
     if (!w) { showToast('Please allow popups for this site to use Print Preview.', 'warning'); return; }
     w.document.write(html); w.document.close();
-  }
-
-  function submitIPCR() {
-    if (activeTimeline) {
-      const deadline = new Date(activeTimeline.submission_deadline);
-      deadline.setHours(23, 59, 59);
-      if (new Date() > deadline) {
-        showToast('The submission deadline has passed. Contact the Campus Executive Officer.', 'warning');
-        return;
-      }
-    }
-    confirmModal('Submit your IPCR for review by the Campus Executive Officer?', 'Submit IPCR', () => {
-      saveIPCR('submit');
-      setTimeout(() => window.location.href = 'dashboard.php', 1000);
-    });
   }
 </script>
 </body>

@@ -47,7 +47,7 @@ function getAdjectivalRating($avg): string {
 }
 
 /**
- * Ensure q_rating, e_rating, t_rating columns exist in ipcr_items table.
+ * Ensure q_rating, e_rating, t_rating, mfo, target, budget, measure columns exist in ipcr_items table.
  */
 function ensureIpcrColumns(PDO $db): void {
     static $done = false;
@@ -59,6 +59,14 @@ function ensureIpcrColumns(PDO $db): void {
                 ADD COLUMN q_rating DECIMAL(3,2) DEFAULT NULL,
                 ADD COLUMN e_rating DECIMAL(3,2) DEFAULT NULL,
                 ADD COLUMN t_rating DECIMAL(3,2) DEFAULT NULL");
+        }
+        $mfoCols = $db->query("SHOW COLUMNS FROM ipcr_items LIKE 'mfo'")->fetchAll();
+        if (empty($mfoCols)) {
+            $db->exec("ALTER TABLE ipcr_items 
+                ADD COLUMN mfo VARCHAR(100) DEFAULT NULL,
+                ADD COLUMN target VARCHAR(200) DEFAULT NULL,
+                ADD COLUMN budget DECIMAL(12,2) NOT NULL DEFAULT 0.00,
+                ADD COLUMN measure VARCHAR(200) DEFAULT NULL");
         }
     } catch (Exception $e) {
         // Silently fail if table not present

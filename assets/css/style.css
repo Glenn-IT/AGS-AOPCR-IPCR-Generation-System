@@ -19,8 +19,11 @@
 .btn-primary:hover, .btn-primary:focus { background-color: var(--primary-dark) !important; border-color: var(--primary-dark) !important; }
 .btn-outline-primary { color: var(--primary) !important; border-color: var(--primary) !important; }
 .btn-outline-primary:hover { background-color: var(--primary) !important; color: #fff !important; }
-.text-primary { color: var(--primary) !important; }
 .bg-primary { background-color: var(--primary) !important; }
+.bg-primary.bg-opacity-10 { background-color: rgba(232, 92, 13, 0.12) !important; }
+.bg-primary.bg-opacity-25 { background-color: rgba(232, 92, 13, 0.25) !important; }
+.bg-primary.bg-opacity-50 { background-color: rgba(232, 92, 13, 0.50) !important; }
+.bg-primary.bg-opacity-75 { background-color: rgba(232, 92, 13, 0.75) !important; }
 .border-primary { border-color: var(--primary) !important; }
 .nav-tabs .nav-link.active { border-color: var(--primary) !important; color: var(--primary) !important; }
 .nav-pills .nav-link.active { background-color: var(--primary) !important; color: #fff !important; }
