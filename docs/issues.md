@@ -1,5 +1,10 @@
-Admin side
-    - follow the OPCR format of the superadmin to the IPCR form of the admin
-    - add also the evidence feature just like the staff/faculty
+Superadmin / admin side
+    - http://localhost/AGS-AOPCR-IPCR-Generation-System/views/superadmin/set-target.php
+    - http://localhost/AGS-AOPCR-IPCR-Generation-System/views/admin/ipcr-form.php
 
-Check the whole system first so that you know what to do ok 
+    remove the delete function on those and can you make it a edit button like if the admin submit the IPCR he can still edit it and it will show on the superadmin when did it edeited ok 
+
+
+Admin side
+    - why is the ipcr form the the admin submit shows on here http://localhost/AGS-AOPCR-IPCR-Generation-System/views/admin/accomplishments.php it should not show on there it will only show on the superadmin side ok since that is for his group only for his dept ok
+    

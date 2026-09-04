@@ -190,7 +190,6 @@ $user = requireAuth(['admin']);
             <th style="width:65px">T</th>
             <th style="width:75px">Average</th>
             <th style="min-width:110px">Remarks</th>
-            <th class="no-print text-center" style="width:50px">Del</th>
           </tr>
         </thead>
         <tbody id="coreBody"></tbody>
@@ -198,7 +197,7 @@ $user = requireAuth(['admin']);
           <tr class="avg-row">
             <td colspan="9" class="text-end fw-600" style="font-size:0.83rem">Average Rating — Core Function:</td>
             <td id="coreAvg" class="text-center fw-700">—</td>
-            <td colspan="2" class="no-print"></td>
+            <td></td>
           </tr>
         </tfoot>
       </table>
@@ -228,7 +227,6 @@ $user = requireAuth(['admin']);
             <th style="width:65px">T</th>
             <th style="width:75px">Average</th>
             <th style="min-width:110px">Remarks</th>
-            <th class="no-print text-center" style="width:50px">Del</th>
           </tr>
         </thead>
         <tbody id="strategicBody"></tbody>
@@ -236,7 +234,7 @@ $user = requireAuth(['admin']);
           <tr class="avg-row">
             <td colspan="9" class="text-end fw-600" style="font-size:0.83rem">Average Rating — Strategic Function:</td>
             <td id="strategicAvg" class="text-center fw-700">—</td>
-            <td colspan="2" class="no-print"></td>
+            <td></td>
           </tr>
         </tfoot>
       </table>
@@ -266,7 +264,6 @@ $user = requireAuth(['admin']);
             <th style="width:65px">T</th>
             <th style="width:75px">Average</th>
             <th style="min-width:110px">Remarks</th>
-            <th class="no-print text-center" style="width:50px">Del</th>
           </tr>
         </thead>
         <tbody id="supportBody"></tbody>
@@ -274,7 +271,7 @@ $user = requireAuth(['admin']);
           <tr class="avg-row">
             <td colspan="9" class="text-end fw-600" style="font-size:0.83rem">Average Rating — Support Function:</td>
             <td id="supportAvg" class="text-center fw-700">—</td>
-            <td colspan="2" class="no-print"></td>
+            <td></td>
           </tr>
         </tfoot>
       </table>
@@ -322,6 +319,7 @@ $user = requireAuth(['admin']);
 
   <div class="d-flex gap-2 justify-content-end no-print mb-4 flex-wrap">
     <button class="btn btn-outline-secondary" onclick="showPrintPreview()"><i class="fa-solid fa-print me-1"></i>Print Preview</button>
+    <button class="btn btn-outline-primary" id="editBtn2" onclick="enableEdit()" style="display:none"><i class="fa-solid fa-pen me-1"></i>Edit</button>
     <button class="btn btn-outline-primary" id="btnSaveDraft2" onclick="saveIPCR('draft')"><i class="fa-solid fa-floppy-disk me-1"></i>Save Draft</button>
     <button class="btn btn-primary" id="confirmBtn2" onclick="submitIPCR()"><i class="fa-solid fa-paper-plane me-1"></i>Confirm & Submit</button>
   </div>
@@ -373,26 +371,19 @@ $user = requireAuth(['admin']);
     isReadOnly = on;
     const allInputs = document.querySelectorAll('#coreBody input, #strategicBody input, #supportBody input, #ipcrPeriod, #ipcrDate, #ipcrSemester');
     allInputs.forEach(i => i.disabled = on);
-    document.querySelectorAll('.no-print button').forEach(b => {
-      if (b.id !== 'editBtn' && b.id !== 'confirmBtn') b.disabled = on;
-    });
-    const editBtn = document.getElementById('editBtn');
-    if (editBtn) editBtn.style.display = on ? 'inline-flex' : 'none';
-    const confirmBtn = document.getElementById('confirmBtn');
-    if (confirmBtn) confirmBtn.style.display = on ? 'none' : 'inline-flex';
-    const saveDraftBtn = document.getElementById('btnSaveDraft');
-    if (saveDraftBtn) saveDraftBtn.style.display = on ? 'none' : 'inline-flex';
-    const saveDraftBtn2 = document.getElementById('btnSaveDraft2');
-    if (saveDraftBtn2) saveDraftBtn2.style.display = on ? 'none' : 'inline-flex';
-    const confirmBtn2 = document.getElementById('confirmBtn2');
-    if (confirmBtn2) confirmBtn2.style.display = on ? 'none' : 'inline-flex';
+    const editBtns = [document.getElementById('editBtn'), document.getElementById('editBtn2')];
+    editBtns.forEach(b => { if (b) b.style.display = on ? 'inline-flex' : 'none'; });
+    const actionBtns = [document.getElementById('confirmBtn'), document.getElementById('confirmBtn2'), document.getElementById('btnSaveDraft'), document.getElementById('btnSaveDraft2')];
+    actionBtns.forEach(b => { if (b) b.style.display = on ? 'none' : 'inline-flex'; });
+    const addBtns = document.querySelectorAll('.ipcr-section-header button');
+    addBtns.forEach(b => b.disabled = on);
   }
 
   function enableEdit() {
-    confirmModal('Allow editing of this form? Status will revert to Draft.', 'Enable Edit', () => {
+    confirmModal('Allow editing of this IPCR? You can make changes and re-submit for review.', 'Enable Edit', () => {
       setReadOnly(false);
       setStatus('draft');
-      showToast('IPCR is now editable. Remember to re-submit after making changes.', 'info');
+      showToast('IPCR is now editable. Remember to click Confirm & Submit after making changes.', 'info');
     });
   }
 
@@ -441,12 +432,7 @@ $user = requireAuth(['admin']);
       <td><input type="number" class="form-control form-control-sm rating-e text-center" min="1" max="5" step="0.1" style="width:60px" value="${e}" placeholder="1-5" oninput="computeRowRating(this)"></td>
       <td><input type="number" class="form-control form-control-sm rating-t text-center" min="1" max="5" step="0.1" style="width:60px" value="${t}" placeholder="1-5" oninput="computeRowRating(this)"></td>
       <td class="text-center fw-700 row-avg" style="font-size:0.85rem;background:#fafafa">${avg > 0 ? avg.toFixed(2) : '-'}</td>
-      <td><input type="text" class="form-control form-control-sm row-remarks bg-light" value="${esc(remarks)}" placeholder="Auto" readonly></td>
-      <td class="no-print text-center">
-        <button class="btn btn-outline-danger btn-sm px-2" onclick="confirmModal('Remove this row?','Delete Row',()=>{ this.closest('tr').remove(); computeAverages(); })" title="Delete row">
-          <i class="fa-solid fa-trash" style="font-size:0.7rem"></i>
-        </button>
-      </td>`;
+      <td><input type="text" class="form-control form-control-sm row-remarks bg-light" value="${esc(remarks)}" placeholder="Auto" readonly></td>`;
     return tr;
   }
 

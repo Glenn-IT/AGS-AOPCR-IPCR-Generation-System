@@ -31,6 +31,12 @@ function formatDate(dateStr) {
   return isNaN(d) ? dateStr : d.toLocaleDateString('en-PH', { year: 'numeric', month: 'short', day: 'numeric' });
 }
 
+function formatDateTime(dateStr) {
+  if (!dateStr || dateStr === '-') return '-';
+  const d = new Date(dateStr);
+  return isNaN(d) ? dateStr : d.toLocaleDateString('en-PH', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+}
+
 function getStatusBadge(status) {
   const map = {
     draft:       ['bg-secondary', 'Draft'],

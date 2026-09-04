@@ -176,7 +176,6 @@ $user = requireAuth(['superadmin']);
             <th style="min-width:100px">Budget (₱)</th>
             <th style="min-width:90px">Measure</th>
             <th style="min-width:90px">Avg. Rating</th>
-            <th class="no-print text-center" style="width:50px">Del</th>
           </tr>
         </thead>
         <tbody id="coreBody"></tbody>
@@ -184,7 +183,6 @@ $user = requireAuth(['superadmin']);
           <tr class="avg-row">
             <td colspan="5" class="text-end fw-600" style="font-size:0.83rem">Average Rating — Core Function:</td>
             <td id="coreAvg" class="text-center fw-700">—</td>
-            <td class="no-print"></td>
           </tr>
         </tfoot>
       </table>
@@ -209,7 +207,6 @@ $user = requireAuth(['superadmin']);
             <th style="min-width:100px">Budget (₱)</th>
             <th style="min-width:90px">Measure</th>
             <th style="min-width:90px">Avg. Rating</th>
-            <th class="no-print text-center" style="width:50px">Del</th>
           </tr>
         </thead>
         <tbody id="strategicBody"></tbody>
@@ -217,7 +214,6 @@ $user = requireAuth(['superadmin']);
           <tr class="avg-row">
             <td colspan="5" class="text-end fw-600" style="font-size:0.83rem">Average Rating — Strategic Function:</td>
             <td id="strategicAvg" class="text-center fw-700">—</td>
-            <td class="no-print"></td>
           </tr>
         </tfoot>
       </table>
@@ -242,7 +238,6 @@ $user = requireAuth(['superadmin']);
             <th style="min-width:100px">Budget (₱)</th>
             <th style="min-width:90px">Measure</th>
             <th style="min-width:90px">Avg. Rating</th>
-            <th class="no-print text-center" style="width:50px">Del</th>
           </tr>
         </thead>
         <tbody id="supportBody"></tbody>
@@ -250,7 +245,6 @@ $user = requireAuth(['superadmin']);
           <tr class="avg-row">
             <td colspan="5" class="text-end fw-600" style="font-size:0.83rem">Average Rating — Support Function:</td>
             <td id="supportAvg" class="text-center fw-700">—</td>
-            <td class="no-print"></td>
           </tr>
         </tfoot>
       </table>
@@ -386,12 +380,7 @@ $user = requireAuth(['superadmin']);
       <td><input type="text" class="form-control form-control-sm text-center" style="width:90px" value="${esc(data.target)}" placeholder="90%"></td>
       <td><input type="number" class="form-control form-control-sm text-end" style="width:90px" value="${data.budget || 0}" min="0" placeholder="0"></td>
       <td><input type="text" class="form-control form-control-sm text-center" style="width:80px" value="${esc(data.measure)}" placeholder="Q/T"></td>
-      <td><input type="number" class="form-control form-control-sm text-center rating-input" style="width:80px" value="${data.rating || ''}" min="1" max="5" step="0.01" placeholder="1–5" oninput="computeAverages()"></td>
-      <td class="no-print text-center">
-        <button class="btn btn-outline-danger btn-sm px-2" onclick="confirmModal('Remove this row?','Delete Row',()=>{ this.closest('tr').remove(); computeAverages(); })" title="Delete row">
-          <i class="fa-solid fa-trash" style="font-size:0.7rem"></i>
-        </button>
-      </td>`;
+      <td><input type="number" class="form-control form-control-sm text-center rating-input" style="width:80px" value="${data.rating || ''}" min="1" max="5" step="0.01" placeholder="1–5" oninput="computeAverages()"></td>`;
     return tr;
   }
 

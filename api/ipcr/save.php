@@ -74,8 +74,8 @@ try {
             exit;
         }
 
-        $db->prepare('UPDATE ipcr_forms SET timeline_id=?, covered_period=?, status=?, date_submitted=? WHERE id=?')
-           ->execute([$timeline_id, $covered_period, $status, $action === 'submit' ? date('Y-m-d') : null, $ipcr_id]);
+        $db->prepare('UPDATE ipcr_forms SET timeline_id=?, covered_period=?, status=?, date_submitted=?, updated_at=NOW() WHERE id=?')
+           ->execute([$timeline_id, $covered_period, $status, $action === 'submit' ? date('Y-m-d') : ($existing['date_submitted'] ?? null), $ipcr_id]);
 
         $db->prepare('DELETE FROM ipcr_items WHERE ipcr_form_id = ?')->execute([$ipcr_id]);
     } else {
@@ -88,7 +88,7 @@ try {
             exit;
         }
 
-        $db->prepare('INSERT INTO ipcr_forms (user_id, timeline_id, covered_period, status, date_submitted) VALUES (?,?,?,?,?)')
+        $db->prepare('INSERT INTO ipcr_forms (user_id, timeline_id, covered_period, status, date_submitted, updated_at) VALUES (?,?,?,?,?,NOW())')
            ->execute([$user['id'], $timeline_id, $covered_period, $status, $action === 'submit' ? date('Y-m-d') : null]);
 
         $ipcr_id = $db->lastInsertId();
@@ -159,16 +159,25 @@ try {
     $avg = round(floatval($avgStmt->fetchColumn()), 2);
     $db->prepare('UPDATE ipcr_forms SET overall_rating = ? WHERE id = ?')->execute([$avg, $ipcr_id]);
 
-    // Notify admin on submit
+    // Notify on submit
     if ($action === 'submit') {
-        $adminQ = $db->prepare('SELECT id FROM users WHERE role="admin" AND department_id=(SELECT department_id FROM users WHERE id=?) AND status="active" LIMIT 1');
-        $adminQ->execute([$user['id']]);
-        $admin = $adminQ->fetch();
-        if ($admin) {
-            $db->prepare('INSERT INTO notifications (user_id, type, message) VALUES (?,?,?)')
-               ->execute([$admin['id'], 'info', $user['name'] . ' submitted an IPCR form for ' . $covered_period . '.']);
+        if ($user['role'] === 'admin') {
+            $saQ = $db->query('SELECT id FROM users WHERE role="superadmin" AND status="active"');
+            while ($sa = $saQ->fetch()) {
+                $db->prepare('INSERT INTO notifications (user_id, type, message) VALUES (?,?,?)')
+                   ->execute([$sa['id'], 'info', $user['name'] . ' (' . ($user['position'] ?? 'Admin') . ') submitted/updated their IPCR form for ' . $covered_period . '.']);
+            }
+            addLog($user['id'], 'Submitted/Updated IPCR form for ' . $covered_period);
+        } else {
+            $adminQ = $db->prepare('SELECT id FROM users WHERE role="admin" AND department_id=(SELECT department_id FROM users WHERE id=?) AND status="active" LIMIT 1');
+            $adminQ->execute([$user['id']]);
+            $admin = $adminQ->fetch();
+            if ($admin) {
+                $db->prepare('INSERT INTO notifications (user_id, type, message) VALUES (?,?,?)')
+                   ->execute([$admin['id'], 'info', $user['name'] . ' submitted an IPCR form for ' . $covered_period . '.']);
+            }
+            addLog($user['id'], 'Submitted IPCR form for ' . $covered_period);
         }
-        addLog($user['id'], 'Submitted IPCR form for ' . $covered_period);
     } else {
         addLog($user['id'], 'Saved IPCR draft for ' . ($covered_period ?: 'current period'));
     }

@@ -9,6 +9,7 @@ $db = getDB();
 $status      = $_GET['status'] ?? '';
 $timeline_id = intval($_GET['timeline_id'] ?? 0);
 $dept_id     = $_GET['department_id'] ?? '';
+$target_role = $_GET['target_role'] ?? '';
 
 $where  = ['1=1'];
 $params = [];
@@ -17,9 +18,10 @@ if ($user['role'] === 'user') {
     $where[]  = 'f.user_id = ?';
     $params[] = $user['id'];
 } elseif ($user['role'] === 'admin') {
-    // Admin sees only their department's users
-    $where[]  = 'u.department_id = ?';
+    // Admin sees only their department's faculty/staff (excluding themselves and other admins)
+    $where[]  = 'u.department_id = ? AND u.role = "user" AND f.user_id != ?';
     $params[] = $user['department_id'];
+    $params[] = $user['id'];
 } else {
     // Superadmin — optional dept filter
     if ($dept_id !== '') {
@@ -28,6 +30,10 @@ if ($user['role'] === 'user') {
     }
 }
 
+if ($target_role !== '') {
+    $where[]  = 'u.role = ?';
+    $params[] = $target_role;
+}
 if ($status !== '') {
     $where[]  = 'f.status = ?';
     $params[] = $status;
@@ -38,8 +44,8 @@ if ($timeline_id > 0) {
 }
 
 $sql = 'SELECT f.id, f.user_id, f.timeline_id, f.covered_period, f.date_submitted,
-        f.status, f.overall_rating, f.remarks, f.reviewed_at, f.created_at,
-        u.name AS user_name, u.position, u.department_id,
+        f.status, f.overall_rating, f.remarks, f.reviewed_at, f.created_at, f.updated_at,
+        u.name AS user_name, u.position, u.role AS user_role, u.department_id,
         d.name AS department_name,
         t.academic_year, t.semester,
         ru.name AS reviewed_by_name

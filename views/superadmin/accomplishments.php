@@ -60,8 +60,12 @@ $user = requireAuth(['superadmin']);
           <input type="text" class="form-control bg-light" id="accPeriod" readonly>
         </div>
         <div class="col-md-4">
-          <label class="form-label">Date Received</label>
+          <label class="form-label">Date Received / Submitted</label>
           <input type="text" class="form-control bg-light" id="accDate" readonly>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Last Edited Date</label>
+          <input type="text" class="form-control bg-light text-primary fw-semibold" id="accDateEdited" readonly>
         </div>
         <div class="col-md-4">
           <label class="form-label">Date Reviewed</label>
@@ -188,15 +192,24 @@ $user = requireAuth(['superadmin']);
   let currentForm = null;
 
   async function initPage() {
-    // Load IPCR forms from admin-role users
-    const res = await fetch(API_BASE + 'ipcr/list.php').then(r => r.json()).catch(() => ({ forms: [] }));
-    const forms = (res.forms || []).filter(f => f.position); // all roles visible to superadmin
+    // Load IPCR forms from admin-role users (Deans / Department Heads)
+    let res = await fetch(API_BASE + 'ipcr/list.php?target_role=admin').then(r => r.json()).catch(() => ({ forms: [] }));
+    let forms = res.forms || [];
+    if (forms.length === 0) {
+      // Fallback to all forms if no admin-specific filter returned
+      res = await fetch(API_BASE + 'ipcr/list.php').then(r => r.json()).catch(() => ({ forms: [] }));
+      forms = (res.forms || []).filter(f => f.position);
+    }
     const sel = document.getElementById('selectAdmin');
     forms.forEach(f => {
       const o = document.createElement('option');
       o.value = f.id;
       const pos = f.position ? (f.position + ' — ') : '';
-      o.textContent = pos + f.user_name + ' (' + (f.department_name || f.department_id || 'Campus') + ')' + (f.covered_period ? ' [' + f.covered_period + ']' : '');
+      let editedText = '';
+      if (f.updated_at && f.updated_at !== f.created_at) {
+        editedText = ' (Edited: ' + formatDateTime(f.updated_at) + ')';
+      }
+      o.textContent = pos + f.user_name + ' (' + (f.department_name || f.department_id || 'Campus') + ')' + (f.covered_period ? ' [' + f.covered_period + ']' : '') + editedText;
       sel.appendChild(o);
     });
     if (forms.length === 0) {
@@ -254,7 +267,8 @@ $user = requireAuth(['superadmin']);
     document.getElementById('accName').value         = f.user_name || '-';
     document.getElementById('accPosition').value     = f.position || '-';
     document.getElementById('accPeriod').value       = f.covered_period || '-';
-    document.getElementById('accDate').value         = f.date_submitted || '-';
+    document.getElementById('accDate').value         = f.date_submitted ? formatDate(f.date_submitted) : (f.created_at ? formatDate(f.created_at) : '-');
+    document.getElementById('accDateEdited').value   = (f.updated_at && f.updated_at !== f.created_at) ? formatDateTime(f.updated_at) : (f.date_submitted ? formatDateTime(f.date_submitted) : 'Not edited');
     document.getElementById('accDateReviewed').value = f.reviewed_at ? formatDate(f.reviewed_at) : (['reviewed','approved','disapproved'].includes(f.status) ? (f.reviewed_at || 'Reviewed') : 'Pending Review');
     document.getElementById('accStatus').value       = f.status;
     document.getElementById('finalStatus').value     = ['reviewed','approved','disapproved'].includes(f.status) ? f.status : 'reviewed';
