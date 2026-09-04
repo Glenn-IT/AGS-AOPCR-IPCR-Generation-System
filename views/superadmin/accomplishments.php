@@ -243,15 +243,17 @@ $user = requireAuth(['superadmin']);
     if (f.user_id) {
       const lsFiles = JSON.parse(localStorage.getItem('csu_piat_files_' + f.user_id)) || [];
       lsFiles.forEach(lf => {
-        if (!userFiles.some(uf => (uf.original_name === lf.name || uf.name === lf.name))) {
+        if (!userFiles.some(uf => (uf.original_name === lf.name || uf.name === lf.name || uf.id === lf.id))) {
           userFiles.push({
             id: lf.id,
-            original_name: lf.name,
+            original_name: lf.name || lf.original_name,
+            name: lf.name || lf.original_name,
             category: lf.category || 'Evidence',
             description: lf.description || 'No description',
-            file_size: lf.size || 0,
-            uploaded_at: lf.date || '',
-            file_path: lf.path || '#'
+            file_size: lf.size || lf.file_size || 0,
+            uploaded_at: lf.date || lf.uploaded_at || '',
+            file_path: lf.file_path || lf.path || '',
+            data_url: lf.data_url || lf.file_url || ''
           });
         }
       });
@@ -430,8 +432,19 @@ $user = requireAuth(['superadmin']);
       const ext = name.split('.').pop().toLowerCase();
       const iconMap = { pdf: 'fa-file-pdf text-danger', doc: 'fa-file-word text-primary', docx: 'fa-file-word text-primary', jpg: 'fa-file-image text-success', jpeg: 'fa-file-image text-success', png: 'fa-file-image text-success', xlsx: 'fa-file-excel text-success' };
       const icon = iconMap[ext] || 'fa-file text-secondary';
-      const sizeStr = f.file_size ? formatSize(f.file_size) : '-';
-      const filePath = f.file_path && f.file_path !== '#' ? (API_BASE + '../' + f.file_path) : '#';
+      const sizeStr = (f.file_size || f.size) ? formatSize(f.file_size || f.size) : '-';
+      let filePath = '';
+      if (f.file_path && f.file_path !== '#') {
+        filePath = f.file_path.startsWith('http') ? f.file_path : (API_BASE + '../' + f.file_path.replace(/^\/+/, ''));
+      } else if (f.data_url) {
+        filePath = f.data_url;
+      } else if (f.file_url) {
+        filePath = f.file_url;
+      }
+
+      const actionHtml = filePath
+        ? `<a href="${filePath}" target="_blank" class="btn btn-outline-primary btn-sm"><i class="fa-solid fa-eye me-1"></i>View / Open</a>`
+        : `<button type="button" class="btn btn-outline-secondary btn-sm" onclick="showToast('Physical file not saved on server yet. Please upload via Evidence Upload.', 'warning')"><i class="fa-solid fa-file me-1"></i>Document Details</button>`;
 
       tbody.innerHTML += `<tr>
         <td>${i + 1}</td>
@@ -439,9 +452,7 @@ $user = requireAuth(['superadmin']);
         <td>${getCategoryBadge(f.category || 'Evidence')}</td>
         <td style="font-size:0.82rem">${f.description || '-'}</td>
         <td style="font-size:0.82rem">${sizeStr}</td>
-        <td>
-          ${filePath !== '#' ? `<a href="${filePath}" target="_blank" class="btn btn-outline-primary btn-sm"><i class="fa-solid fa-eye me-1"></i>View / Open</a>` : `<button class="btn btn-outline-secondary btn-sm" onclick="showToast('File stored in client uploads.', 'info')"><i class="fa-solid fa-file me-1"></i>View Document</button>`}
-        </td>
+        <td>${actionHtml}</td>
       </tr>`;
     });
   }

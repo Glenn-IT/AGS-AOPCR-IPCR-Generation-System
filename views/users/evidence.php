@@ -86,31 +86,105 @@ $user = requireAuth(['user']);
   initLayout('user', 'evidence', [{ label: 'Evidence Upload' }]);
 
   const storageKey = `csu_piat_files_${session.id}`;
+  let fileListCache = [];
 
-  function getFiles() { return JSON.parse(localStorage.getItem(storageKey)) || []; }
-  function saveFiles(files) { localStorage.setItem(storageKey, JSON.stringify(files)); }
+  function getLocalFiles() { return JSON.parse(localStorage.getItem(storageKey)) || []; }
+  function saveLocalFiles(files) { localStorage.setItem(storageKey, JSON.stringify(files)); }
 
   const fileIcons = { pdf: 'fa-file-pdf text-danger', doc: 'fa-file-word text-primary', docx: 'fa-file-word text-primary', jpg: 'fa-file-image text-success', jpeg: 'fa-file-image text-success', png: 'fa-file-image text-success', xlsx: 'fa-file-excel text-success' };
 
   function formatSize(bytes) {
+    if (!bytes) return '-';
     if (bytes < 1024) return bytes + ' B';
     if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
     return (bytes / 1048576).toFixed(1) + ' MB';
   }
 
-  function handleFiles(fileList) {
+  async function loadFiles() {
+    try {
+      const res = await fetch(API_BASE + 'evidence/list.php?user_id=' + session.id).then(r => r.json());
+      const serverFiles = (res && res.files) ? res.files : [];
+      const localFiles = getLocalFiles();
+
+      // Merge server and local files
+      const merged = [...serverFiles];
+      localFiles.forEach(lf => {
+        if (!merged.some(mf => mf.id === lf.id || (mf.original_name === lf.name && mf.file_size === lf.size))) {
+          merged.push(lf);
+        }
+      });
+      fileListCache = merged;
+      saveLocalFiles(fileListCache);
+    } catch (e) {
+      fileListCache = getLocalFiles();
+    }
+    renderTable();
+  }
+
+  async function handleFiles(fileList) {
+    if (!fileList || fileList.length === 0) return;
     const category = document.getElementById('fileCategory').value;
     const desc = document.getElementById('fileDesc').value.trim();
-    const files = getFiles();
-    let added = 0;
+
+    const formData = new FormData();
+    formData.append('category', category);
+    formData.append('description', desc);
+    formData.append('user_id', session.id);
+
+    let validCount = 0;
     Array.from(fileList).forEach(file => {
-      if (file.size > 10 * 1024 * 1024) { showToast(`${file.name} exceeds 10MB limit.`, 'warning'); return; }
-      files.push({ id: Date.now() + Math.random(), name: file.name, size: file.size, category, description: desc || 'No description', ext: file.name.split('.').pop().toLowerCase(), date: new Date().toLocaleDateString('en-PH') });
-      added++;
+      if (file.size > 20 * 1024 * 1024) {
+        showToast(`${file.name} exceeds 20MB limit.`, 'warning');
+        return;
+      }
+      formData.append('files[]', file);
+      validCount++;
     });
-    saveFiles(files);
-    renderTable();
-    if (added > 0) showToast(`${added} file(s) uploaded successfully!`, 'success');
+
+    if (validCount === 0) return;
+
+    // Also read base64 for immediate offline fallback
+    Array.from(fileList).forEach(file => {
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const localEntry = {
+          id: Date.now() + Math.random(),
+          name: file.name,
+          original_name: file.name,
+          size: file.size,
+          file_size: file.size,
+          category,
+          description: desc || 'Uploaded evidence',
+          ext: file.name.split('.').pop().toLowerCase(),
+          data_url: e.target.result,
+          date: new Date().toLocaleDateString('en-PH')
+        };
+        const current = getLocalFiles();
+        current.unshift(localEntry);
+        saveLocalFiles(current);
+      };
+      reader.readAsDataURL(file);
+    });
+
+    try {
+      showToast('Uploading file(s)...', 'info');
+      const res = await fetch(API_BASE + 'evidence/upload.php', {
+        method: 'POST',
+        body: formData
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast(data.message || 'Files uploaded successfully!', 'success');
+        await loadFiles();
+      } else {
+        showToast(data.error || 'Upload failed.', 'danger');
+        renderTable();
+      }
+    } catch (err) {
+      showToast('Uploaded to local workspace.', 'info');
+      renderTable();
+    }
+
     document.getElementById('fileInput').value = '';
     document.getElementById('fileDesc').value = '';
   }
@@ -121,17 +195,35 @@ $user = requireAuth(['user']);
     handleFiles(e.dataTransfer.files);
   }
 
-  function deleteFile(id) {
-    confirmModal('Are you sure you want to delete this file?', 'Delete File', () => {
-      const files = getFiles().filter(f => f.id !== id);
-      saveFiles(files);
+  async function deleteFile(id) {
+    confirmModal('Are you sure you want to delete this file?', 'Delete File', async () => {
+      try {
+        await fetch(API_BASE + 'evidence/delete.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id })
+        });
+      } catch (e) {}
+
+      const local = getLocalFiles().filter(f => f.id !== id);
+      saveLocalFiles(local);
+      fileListCache = fileListCache.filter(f => f.id !== id);
       renderTable();
       showToast('File deleted.', 'success');
     });
   }
 
+  function getFileViewUrl(f) {
+    if (f.file_path && f.file_path !== '#') {
+      return f.file_path.startsWith('http') ? f.file_path : (API_BASE + '../' + f.file_path.replace(/^\/+/, ''));
+    }
+    if (f.data_url) return f.data_url;
+    if (f.file_url) return f.file_url;
+    return '';
+  }
+
   function renderTable() {
-    const files = getFiles();
+    const files = fileListCache.length > 0 ? fileListCache : getLocalFiles();
     const tbody = document.getElementById('filesTable');
     tbody.innerHTML = '';
     document.getElementById('fileCount').textContent = files.length + ' file(s)';
@@ -140,21 +232,30 @@ $user = requireAuth(['user']);
       return;
     }
     files.forEach((f, i) => {
-      const icon = fileIcons[f.ext] || 'fa-file text-secondary';
+      const name = f.original_name || f.name || 'Document';
+      const ext = f.ext || name.split('.').pop().toLowerCase();
+      const icon = fileIcons[ext] || 'fa-file text-secondary';
+      const viewUrl = getFileViewUrl(f);
+
       tbody.innerHTML += `<tr>
         <td>${i+1}</td>
         <td><div class="d-flex align-items-center gap-2">
           <i class="fa-solid ${icon}" style="font-size:1.2rem"></i>
-          <span style="font-size:0.83rem">${f.name}</span></div></td>
+          <span style="font-size:0.83rem"><strong>${name}</strong></span></div></td>
         <td>${getCategoryBadge(f.category)}</td>
-        <td style="font-size:0.82rem">${f.description}</td>
-        <td style="font-size:0.82rem">${formatSize(f.size)}</td>
-        <td style="font-size:0.82rem">${f.date}</td>
-        <td><button class="btn btn-outline-danger btn-sm" onclick="deleteFile(${f.id})"><i class="fa-solid fa-trash"></i></button></td></tr>`;
+        <td style="font-size:0.82rem">${f.description || '-'}</td>
+        <td style="font-size:0.82rem">${formatSize(f.file_size || f.size)}</td>
+        <td style="font-size:0.82rem">${f.date || f.uploaded_at || '-'}</td>
+        <td>
+          <div class="d-flex gap-1">
+            ${viewUrl ? `<a href="${viewUrl}" target="_blank" class="btn btn-outline-primary btn-sm" title="View / Open"><i class="fa-solid fa-eye"></i></a>` : `<button type="button" class="btn btn-outline-secondary btn-sm" title="No link" disabled><i class="fa-solid fa-eye"></i></button>`}
+            <button class="btn btn-outline-danger btn-sm" onclick="deleteFile(${f.id})" title="Delete"><i class="fa-solid fa-trash"></i></button>
+          </div>
+        </td></tr>`;
     });
   }
 
-  renderTable();
+  loadFiles();
 </script>
 </body>
 </html>

@@ -27,7 +27,8 @@ $user = requireAuth(['user']);
       <h2><i class="fa-solid fa-file-lines me-2 text-primary"></i>IPCR Form</h2>
       <p>Individual Performance Commitment and Review | CSU-Piat</p>
     </div>
-    <div class="d-flex gap-2 no-print">
+    <div class="d-flex gap-2 no-print flex-wrap">
+      <button class="btn btn-outline-info btn-sm" id="btnViewEvidence" onclick="openEvidenceModal()"><i class="fa-solid fa-paperclip me-1"></i>View Evidence <span class="badge bg-info text-dark ms-1" id="evidenceCountBadge">0</span></button>
       <button class="btn btn-outline-secondary btn-sm" onclick="window.print()"><i class="fa-solid fa-print me-1"></i>Print</button>
       <button class="btn btn-outline-primary btn-sm" id="btnSaveDraft" onclick="saveIPCR('draft')"><i class="fa-solid fa-floppy-disk me-1"></i>Save Draft</button>
       <button class="btn btn-success btn-sm" id="btnSubmit" onclick="submitIPCR()"><i class="fa-solid fa-paper-plane me-1"></i>Submit</button>
@@ -102,7 +103,7 @@ $user = requireAuth(['user']);
     <div class="ipcr-section-header"><i class="fa-solid fa-star me-2"></i>A. CORE FUNCTION</div>
     <div class="table-responsive">
       <table class="table table-bordered mb-0">
-        <thead class="table-light" style="font-size:0.8rem"><tr><th style="width:110px">MFO / KRA</th><th>Success Indicators</th><th style="width:100px">Target</th><th style="width:110px">Actual Accomplishment</th><th style="width:70px">Q</th><th style="width:70px">E</th><th style="width:70px">T</th><th style="width:80px">Average</th><th>Remarks</th></tr></thead>
+        <thead class="table-light" style="font-size:0.8rem"><tr><th style="width:110px">MFO / KRA</th><th>Success Indicators</th><th style="width:100px">Target</th><th style="width:110px">Actual Accomplishment</th><th style="width:70px">Q</th><th style="width:70px">E</th><th style="width:70px">T</th><th style="width:80px">Average</th><th>Remarks</th><th style="width:110px;text-align:center">Evidence</th></tr></thead>
         <tbody id="coreBody"></tbody>
       </table>
     </div>
@@ -113,7 +114,7 @@ $user = requireAuth(['user']);
     <div class="ipcr-section-header"><i class="fa-solid fa-chess me-2"></i>B. STRATEGIC FUNCTION</div>
     <div class="table-responsive">
       <table class="table table-bordered mb-0">
-        <thead class="table-light" style="font-size:0.8rem"><tr><th style="width:110px">MFO / KRA</th><th>Success Indicators</th><th style="width:100px">Target</th><th style="width:110px">Actual Accomplishment</th><th style="width:70px">Q</th><th style="width:70px">E</th><th style="width:70px">T</th><th style="width:80px">Average</th><th>Remarks</th></tr></thead>
+        <thead class="table-light" style="font-size:0.8rem"><tr><th style="width:110px">MFO / KRA</th><th>Success Indicators</th><th style="width:100px">Target</th><th style="width:110px">Actual Accomplishment</th><th style="width:70px">Q</th><th style="width:70px">E</th><th style="width:70px">T</th><th style="width:80px">Average</th><th>Remarks</th><th style="width:110px;text-align:center">Evidence</th></tr></thead>
         <tbody id="strategicBody"></tbody>
       </table>
     </div>
@@ -124,7 +125,7 @@ $user = requireAuth(['user']);
     <div class="ipcr-section-header"><i class="fa-solid fa-hands-helping me-2"></i>C. SUPPORT FUNCTION</div>
     <div class="table-responsive">
       <table class="table table-bordered mb-0">
-        <thead class="table-light" style="font-size:0.8rem"><tr><th style="width:110px">MFO / KRA</th><th>Success Indicators</th><th style="width:100px">Target</th><th style="width:110px">Actual Accomplishment</th><th style="width:70px">Q</th><th style="width:70px">E</th><th style="width:70px">T</th><th style="width:80px">Average</th><th>Remarks</th></tr></thead>
+        <thead class="table-light" style="font-size:0.8rem"><tr><th style="width:110px">MFO / KRA</th><th>Success Indicators</th><th style="width:100px">Target</th><th style="width:110px">Actual Accomplishment</th><th style="width:70px">Q</th><th style="width:70px">E</th><th style="width:70px">T</th><th style="width:80px">Average</th><th>Remarks</th><th style="width:110px;text-align:center">Evidence</th></tr></thead>
         <tbody id="supportBody"></tbody>
       </table>
     </div>
@@ -163,11 +164,49 @@ $user = requireAuth(['user']);
     </div>
   </div>
 
-  <div class="d-flex gap-2 justify-content-end mt-3 no-print">
+  <div class="d-flex gap-2 justify-content-end mt-3 no-print flex-wrap">
+    <button class="btn btn-outline-info" id="btnViewEvidence2" onclick="openEvidenceModal()"><i class="fa-solid fa-paperclip me-1"></i>View Evidence <span class="badge bg-info text-dark ms-1" id="evidenceCountBadge2">0</span></button>
     <button class="btn btn-outline-secondary" onclick="showPrintPreview()"><i class="fa-solid fa-print me-1"></i>Print Preview</button>
     <button class="btn btn-outline-primary" id="btnSaveDraft2" onclick="saveIPCR('draft')"><i class="fa-solid fa-floppy-disk me-1"></i>Save Draft</button>
     <button class="btn btn-success" id="btnSubmit2" onclick="submitIPCR()"><i class="fa-solid fa-paper-plane me-1"></i>Submit for Review</button>
   </div>
+</main>
+
+<!-- View Evidence Modal -->
+<div class="modal fade" id="evidenceModal" tabindex="-1">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="fa-solid fa-paperclip me-2"></i>Supporting Evidence & Documents — <span id="evidenceModalUser"></span></h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
+          <div id="evidenceFilterBadge" class="badge bg-primary bg-opacity-10 text-primary py-2 px-3">All Evidence</div>
+          <button type="button" class="btn btn-outline-secondary btn-sm" id="btnShowAllEv" onclick="renderEvidenceList(currentEvidence, 'All Evidence')"><i class="fa-solid fa-list me-1"></i>Show All</button>
+        </div>
+        <div class="table-responsive">
+          <table class="table table-bordered table-sm mb-0">
+            <thead class="table-light">
+              <tr>
+                <th style="width:40px">#</th>
+                <th>File Name</th>
+                <th>Category</th>
+                <th>Description</th>
+                <th>Size</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="evidenceModalTable"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
 </main>
 
 <div id="footer-container"></div>
@@ -184,17 +223,124 @@ $user = requireAuth(['user']);
   let activeTimeline = null;
   let existingIpcrId = null;
   let supervisor = null;
+  let currentEvidence = [];
+  let _evidenceModal = null;
 
   document.getElementById('ipcrName').value = session.name;
   document.getElementById('ipcrPosition').value = session.position || '-';
   document.getElementById('ipcrDate').value = new Date().toISOString().split('T')[0];
   document.getElementById('sigName').textContent = session.name.toUpperCase();
 
+  function getMatchingEvidence(categoryKey, mfoText) {
+    const list = currentEvidence || [];
+    const catSearch = (categoryKey || '').toLowerCase();
+    const mfoSearch = (mfoText || '').toLowerCase().trim();
+
+    return list.filter(file => {
+      const fCat = (file.category || '').toLowerCase();
+      const fDesc = (file.description || '').toLowerCase();
+      const fName = (file.original_name || file.name || '').toLowerCase();
+
+      if (fCat.includes(catSearch) || (catSearch === 'core' && fCat.includes('core')) || (catSearch === 'strategic' && fCat.includes('strategic')) || (catSearch === 'support' && fCat.includes('support'))) {
+        return true;
+      }
+      if (mfoSearch && (fDesc.includes(mfoSearch) || fName.includes(mfoSearch))) {
+        return true;
+      }
+      return false;
+    });
+  }
+
+  function openEvidenceModalFor(categoryKey, mfoText) {
+    const filtered = getMatchingEvidence(categoryKey, mfoText);
+    const label = (mfoText ? mfoText + ' (' + (categoryKey||'').toUpperCase() + ')' : (categoryKey||'').toUpperCase() + ' Evidence');
+    renderEvidenceList(filtered, label);
+    _evidenceModal = _evidenceModal || new bootstrap.Modal(document.getElementById('evidenceModal'));
+    document.getElementById('evidenceModalUser').textContent = (session.name || 'Employee');
+    _evidenceModal.show();
+  }
+
+  function openEvidenceModal() {
+    renderEvidenceList(currentEvidence, 'All Evidence');
+    _evidenceModal = _evidenceModal || new bootstrap.Modal(document.getElementById('evidenceModal'));
+    document.getElementById('evidenceModalUser').textContent = (session.name || 'Employee');
+    _evidenceModal.show();
+  }
+
+  function renderEvidenceList(files, filterLabel) {
+    document.getElementById('evidenceFilterBadge').textContent = filterLabel;
+    const tbody = document.getElementById('evidenceModalTable');
+    tbody.innerHTML = '';
+
+    if (!files || files.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="6" class="text-center py-4 text-muted"><i class="fa-solid fa-folder-open me-2"></i>No evidence documents found for ${filterLabel}.</td></tr>`;
+      return;
+    }
+
+    files.forEach((f, i) => {
+      const name = f.original_name || f.name || 'document';
+      const ext = name.split('.').pop().toLowerCase();
+      const iconMap = { pdf: 'fa-file-pdf text-danger', doc: 'fa-file-word text-primary', docx: 'fa-file-word text-primary', jpg: 'fa-file-image text-success', jpeg: 'fa-file-image text-success', png: 'fa-file-image text-success', xlsx: 'fa-file-excel text-success' };
+      const icon = iconMap[ext] || 'fa-file text-secondary';
+      const sizeStr = (f.file_size || f.size) ? formatSize(f.file_size || f.size) : '-';
+      let filePath = '';
+      if (f.file_path && f.file_path !== '#') {
+        filePath = f.file_path.startsWith('http') ? f.file_path : (API_BASE + '../' + f.file_path.replace(/^\/+/, ''));
+      } else if (f.data_url) {
+        filePath = f.data_url;
+      } else if (f.file_url) {
+        filePath = f.file_url;
+      }
+
+      const actionHtml = filePath
+        ? `<a href="${filePath}" target="_blank" class="btn btn-outline-primary btn-sm"><i class="fa-solid fa-eye me-1"></i>View / Open</a>`
+        : `<button type="button" class="btn btn-outline-secondary btn-sm" onclick="showToast('Physical file not saved on server yet. Please upload via Evidence Upload.', 'warning')"><i class="fa-solid fa-file me-1"></i>Document Details</button>`;
+
+      tbody.innerHTML += `<tr>
+        <td>${i + 1}</td>
+        <td><div class="d-flex align-items-center gap-2"><i class="fa-solid ${icon}" style="font-size:1.1rem"></i><strong>${name}</strong></div></td>
+        <td>${getCategoryBadge(f.category || 'Evidence')}</td>
+        <td style="font-size:0.82rem">${f.description || '-'}</td>
+        <td style="font-size:0.82rem">${sizeStr}</td>
+        <td>${actionHtml}</td>
+      </tr>`;
+    });
+  }
+
+  function formatSize(bytes) {
+    if (!bytes) return '-';
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / 1048576).toFixed(1) + ' MB';
+  }
+
   async function initForm() {
     // Resolve the immediate supervisor for the signature blocks
-    const supRes = await fetch(API_BASE + 'user/supervisor.php', { credentials: 'include' }).then(r => r.json()).catch(() => null);
+    const [supRes, evRes] = await Promise.all([
+      fetch(API_BASE + 'user/supervisor.php', { credentials: 'include' }).then(r => r.json()).catch(() => null),
+      fetch(API_BASE + 'evidence/list.php?user_id=' + session.id, { credentials: 'include' }).then(r => r.json()).catch(() => null),
+    ]);
     supervisor = supRes?.supervisor || null;
-    document.getElementById('sigSupervisor').textContent = supervisor ? supervisor.name.toUpperCase() : ' ';
+    document.getElementById('sigSupervisor').textContent = supervisor ? supervisor.name.toUpperCase() : ' ';
+
+    // Load user's evidence from server and localStorage
+    let userFiles = (evRes && evRes.files) ? [...evRes.files] : [];
+    const lsFiles = JSON.parse(localStorage.getItem('csu_piat_files_' + session.id)) || [];
+    lsFiles.forEach(lf => {
+      if (!userFiles.some(uf => uf.id === lf.id || uf.original_name === lf.name || uf.name === lf.name)) {
+        userFiles.push({
+          id: lf.id,
+          original_name: lf.name || lf.original_name,
+          name: lf.name || lf.original_name,
+          category: lf.category || 'Evidence',
+          description: lf.description || 'No description',
+          file_size: lf.size || lf.file_size || 0,
+          uploaded_at: lf.date || lf.uploaded_at || '',
+          file_path: lf.file_path || lf.path || '',
+          data_url: lf.data_url || lf.file_url || ''
+        });
+      }
+    });
 
     // The KPI catalogue supplies MFO / Success Indicator / Target for every row,
     // whether the form is fresh or reloaded from a saved draft.
@@ -231,21 +377,32 @@ $user = requireAuth(['user']);
         document.getElementById('ipcrOffice').value = f.department_name || session.department_id || '';
         document.getElementById('ipcrPeriod').value = f.covered_period;
         document.getElementById('ipcrStatus').value = f.status;
-        loadSection('coreBody', f.items.core, kpi.core);
-        loadSection('strategicBody', f.items.strategic, kpi.strategic);
-        loadSection('supportBody', f.items.support, kpi.support);
+
+        // Merge backend evidence files
+        (f.evidence_files || []).forEach(bf => {
+          if (!userFiles.some(uf => uf.original_name === bf.original_name || uf.name === bf.original_name)) {
+            userFiles.push(bf);
+          }
+        });
+        currentEvidence = userFiles;
+
+        loadSection('coreBody', f.items.core, kpi.core, 'core');
+        loadSection('strategicBody', f.items.strategic, kpi.strategic, 'strategic');
+        loadSection('supportBody', f.items.support, kpi.support, 'support');
       } else {
-        loadKpiSection('coreBody', kpi.core);
-        loadKpiSection('strategicBody', kpi.strategic);
-        loadKpiSection('supportBody', kpi.support);
+        currentEvidence = userFiles;
+        loadKpiSection('coreBody', kpi.core, 'core');
+        loadKpiSection('strategicBody', kpi.strategic, 'strategic');
+        loadKpiSection('supportBody', kpi.support, 'support');
         // Load dept name
         document.getElementById('ipcrOffice').value = session.department_name || session.department || '';
       }
     } else {
+      currentEvidence = userFiles;
       // No open timeline — show the KPI catalogue for reference but disable save/submit
-      loadKpiSection('coreBody', kpi.core);
-      loadKpiSection('strategicBody', kpi.strategic);
-      loadKpiSection('supportBody', kpi.support);
+      loadKpiSection('coreBody', kpi.core, 'core');
+      loadKpiSection('strategicBody', kpi.strategic, 'strategic');
+      loadKpiSection('supportBody', kpi.support, 'support');
       document.getElementById('ipcrOffice').value = session.department_name || session.department || '';
       document.getElementById('ipcrStatus').value = 'No open timeline';
       document.getElementById('noTimelineAlert').classList.remove('d-none');
@@ -254,6 +411,13 @@ $user = requireAuth(['user']);
         if (el) { el.disabled = true; el.title = 'No active submission period is open.'; }
       });
     }
+
+    const evCount = currentEvidence.length;
+    const b1 = document.getElementById('evidenceCountBadge');
+    const b2 = document.getElementById('evidenceCountBadge2');
+    if (b1) b1.textContent = evCount;
+    if (b2) b2.textContent = evCount;
+
     computeOverallRating();
   }
 
@@ -302,10 +466,20 @@ $user = requireAuth(['user']);
     }
   }
 
-  function loadKpiSection(tbodyId, items) {
+  function getEvidenceBtn(categoryKey, mfoText) {
+    const matchedFiles = getMatchingEvidence(categoryKey, mfoText || '');
+    const count = matchedFiles.length;
+    const mfoSafe = (mfoText || '').replace(/'/g, "\\'");
+    return count > 0
+      ? `<button type="button" class="btn btn-sm btn-outline-info d-inline-flex align-items-center gap-1" onclick="openEvidenceModalFor('${categoryKey}', '${mfoSafe}')"><i class="fa-solid fa-paperclip"></i><span>View (${count})</span></button>`
+      : `<button type="button" class="btn btn-sm btn-outline-secondary opacity-75 d-inline-flex align-items-center gap-1" onclick="openEvidenceModalFor('${categoryKey}', '${mfoSafe}')"><i class="fa-solid fa-paperclip"></i><span>0 Files</span></button>`;
+  }
+
+  function loadKpiSection(tbodyId, items, categoryKey = 'core') {
     const tbody = document.getElementById(tbodyId);
     tbody.innerHTML = '';
     (items || []).forEach(item => {
+      const evidenceBtn = getEvidenceBtn(categoryKey, item.mfo);
       tbody.innerHTML += `<tr>
         <td style="font-size:0.82rem;background:#fafafa;white-space:nowrap">${item.mfo}${personalTag(item)}</td>
         <td style="font-size:0.82rem;background:#fafafa">${item.success_indicator}</td>
@@ -315,19 +489,22 @@ $user = requireAuth(['user']);
         <td><input type="number" class="form-control form-control-sm rating-e" min="1" max="5" step="0.1" placeholder="1-5" data-kpi="${item.id}" oninput="computeRowRating(this)"></td>
         <td><input type="number" class="form-control form-control-sm rating-t" min="1" max="5" step="0.1" placeholder="1-5" data-kpi="${item.id}" oninput="computeRowRating(this)"></td>
         <td class="text-center fw-700 row-avg" style="font-size:0.85rem;background:#fafafa">-</td>
-        <td><input type="text" class="form-control form-control-sm row-remarks bg-light" placeholder="Auto" readonly></td></tr>`;
+        <td><input type="text" class="form-control form-control-sm row-remarks bg-light" placeholder="Auto" readonly></td>
+        <td class="text-center">${evidenceBtn}</td></tr>`;
     });
   }
 
-  function loadSection(tbodyId, items, sectionKpi) {
+  function loadSection(tbodyId, items, sectionKpi, categoryKey = 'core') {
     const tbody = document.getElementById(tbodyId);
     tbody.innerHTML = '';
     const allKpi = [...(kpi.core || []), ...(kpi.strategic || []), ...(kpi.support || [])];
     (items || []).forEach(item => {
       const kpiItem = allKpi.find(k => String(k.id) === String(item.kpi_id)) || {};
       const avg = parseFloat(item.rating) || 0;
+      const mfo = kpiItem.mfo || item.mfo || '-';
+      const evidenceBtn = getEvidenceBtn(categoryKey, mfo);
       tbody.innerHTML += `<tr>
-        <td style="font-size:0.82rem;background:#fafafa;white-space:nowrap">${kpiItem.mfo || item.mfo || '-'}</td>
+        <td style="font-size:0.82rem;background:#fafafa;white-space:nowrap">${mfo}</td>
         <td style="font-size:0.82rem;background:#fafafa">${kpiItem.success_indicator || item.success_indicator || '-'}</td>
         <td style="font-size:0.82rem;background:#fafafa;white-space:nowrap">${kpiItem.target || item.target || '-'}</td>
         <td><input type="number" class="form-control form-control-sm acc-input" min="1" max="100" step="1" placeholder="1-100" value="${item.accomplishment || ''}" oninput="validateAccInput(this)" onkeydown="enforceDigitsOnly(event)"></td>
@@ -335,12 +512,14 @@ $user = requireAuth(['user']);
         <td><input type="number" class="form-control form-control-sm rating-e" min="1" max="5" step="0.1" value="${item.e_rating || ''}" data-kpi="${item.kpi_id || ''}" oninput="computeRowRating(this)"></td>
         <td><input type="number" class="form-control form-control-sm rating-t" min="1" max="5" step="0.1" value="${item.t_rating || ''}" data-kpi="${item.kpi_id || ''}" oninput="computeRowRating(this)"></td>
         <td class="text-center fw-700 row-avg" style="font-size:0.85rem;background:#fafafa">${avg > 0 ? avg.toFixed(2) : '-'}</td>
-        <td><input type="text" class="form-control form-control-sm row-remarks bg-light" value="${item.remarks || (avg > 0 ? getAdjectivalText(avg) : '')}" readonly placeholder="Auto"></td></tr>`;
+        <td><input type="text" class="form-control form-control-sm row-remarks bg-light" value="${item.remarks || (avg > 0 ? getAdjectivalText(avg) : '')}" readonly placeholder="Auto"></td>
+        <td class="text-center">${evidenceBtn}</td></tr>`;
     });
     // Surface KPIs added after this form was first saved (no ipcr_items row yet)
     (sectionKpi || []).forEach(k => {
       const already = (items || []).some(item => String(item.kpi_id) === String(k.id));
       if (already) return;
+      const evidenceBtn = getEvidenceBtn(categoryKey, k.mfo);
       tbody.innerHTML += `<tr>
         <td style="font-size:0.82rem;background:#fafafa;white-space:nowrap">${k.mfo || '—'}${personalTag(k)}</td>
         <td style="font-size:0.82rem;background:#fafafa">${k.success_indicator || '—'}</td>
@@ -350,7 +529,8 @@ $user = requireAuth(['user']);
         <td><input type="number" class="form-control form-control-sm rating-e" min="1" max="5" step="0.1" placeholder="1-5" data-kpi="${k.id}" oninput="computeRowRating(this)"></td>
         <td><input type="number" class="form-control form-control-sm rating-t" min="1" max="5" step="0.1" placeholder="1-5" data-kpi="${k.id}" oninput="computeRowRating(this)"></td>
         <td class="text-center fw-700 row-avg" style="font-size:0.85rem;background:#fafafa">-</td>
-        <td><input type="text" class="form-control form-control-sm row-remarks bg-light" placeholder="Auto" readonly></td></tr>`;
+        <td><input type="text" class="form-control form-control-sm row-remarks bg-light" placeholder="Auto" readonly></td>
+        <td class="text-center">${evidenceBtn}</td></tr>`;
     });
   }
 

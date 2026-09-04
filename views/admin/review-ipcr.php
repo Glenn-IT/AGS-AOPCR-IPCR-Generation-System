@@ -170,20 +170,43 @@ $user = requireAuth(['admin']);
       document.getElementById('reviewBody').innerHTML = '<div class="alert alert-danger">Could not load form.</div>';
       return;
     }
-    _currentForm = res.form;
-    const f = res.form;
+    let userFiles = f.evidence_files || [];
+    if (f.user_id) {
+      const lsFiles = JSON.parse(localStorage.getItem('csu_piat_files_' + f.user_id)) || [];
+      lsFiles.forEach(lf => {
+        if (!userFiles.some(uf => uf.id === lf.id || uf.original_name === lf.name || uf.name === lf.name)) {
+          userFiles.push({
+            id: lf.id,
+            original_name: lf.name || lf.original_name,
+            name: lf.name || lf.original_name,
+            category: lf.category || 'Evidence',
+            description: lf.description || 'No description',
+            file_size: lf.size || lf.file_size || 0,
+            uploaded_at: lf.date || lf.uploaded_at || '',
+            file_path: lf.file_path || lf.path || '',
+            data_url: lf.data_url || lf.file_url || ''
+          });
+        }
+      });
+    }
+    f.evidence_files = userFiles;
+    _currentForm = f;
+
     const rating = parseFloat(f.overall_rating) || 0;
     document.getElementById('finalStatus').value = ['reviewed','approved','disapproved'].includes(f.status) ? f.status : 'reviewed';
     document.getElementById('modalRatingDisplay').textContent = rating > 0 ? rating.toFixed(2) : '-';
 
     const secLabels = { core: 'A. CORE FUNCTION', strategic: 'B. STRATEGIC FUNCTION', support: 'C. SUPPORT FUNCTION' };
-    let html = `<div class="row g-2 mb-3 p-3 bg-light rounded" style="font-size:0.85rem">
+    let html = `<div class="row g-2 mb-3 p-3 bg-light rounded align-items-center" style="font-size:0.85rem">
       <div class="col-md-4"><strong>Employee:</strong> ${f.user_name}</div>
       <div class="col-md-4"><strong>Position:</strong> ${f.position || '-'}</div>
       <div class="col-md-4"><strong>Department:</strong> ${f.department_name || '-'}</div>
       <div class="col-md-4"><strong>Covered Period:</strong> ${f.covered_period}</div>
       <div class="col-md-4"><strong>Date Submitted:</strong> ${f.date_submitted || '-'}</div>
-      <div class="col-md-4"><strong>Current Status:</strong> ${getStatusBadge(f.status)}</div>
+      <div class="col-md-4 d-flex align-items-center justify-content-between">
+        <span><strong>Current Status:</strong> ${getStatusBadge(f.status)}</span>
+        <button type="button" class="btn btn-outline-info btn-sm" onclick="openEvidenceModal()"><i class="fa-solid fa-paperclip me-1"></i>View All Evidence <span class="badge bg-info text-dark ms-1" id="modalEvBadge">${(f.evidence_files||[]).length}</span></button>
+      </div>
     </div>
     <div class="mb-3">
       <label class="form-label fw-700">Overall Remarks</label>
@@ -199,10 +222,19 @@ $user = requireAuth(['admin']);
           <thead class="table-light"><tr>
             <th>MFO/KRA</th><th>Success Indicator</th><th>Accomplishment</th>
             <th style="width:70px">Q</th><th style="width:70px">E</th><th style="width:70px">T</th><th style="width:80px">Average</th><th>Remarks</th>
+            <th style="width:110px;text-align:center">Evidence</th>
           </tr></thead>
           <tbody>
           ${items.map(item => {
             const avg = parseFloat(item.rating) || 0;
+            const mfo = item.mfo || '';
+            const matchedFiles = getMatchingEvidence(sec, mfo);
+            const count = matchedFiles.length;
+            const mfoSafe = mfo.replace(/'/g, "\\'");
+            const evidenceBtn = count > 0
+              ? `<button type="button" class="btn btn-sm btn-outline-info d-inline-flex align-items-center gap-1" onclick="openEvidenceModalFor('${sec}', '${mfoSafe}')"><i class="fa-solid fa-paperclip"></i><span>View (${count})</span></button>`
+              : `<button type="button" class="btn btn-sm btn-outline-secondary opacity-75 d-inline-flex align-items-center gap-1" onclick="openEvidenceModalFor('${sec}', '${mfoSafe}')"><i class="fa-solid fa-paperclip"></i><span>0 Files</span></button>`;
+
             return `<tr>
             <td style="font-size:0.8rem;background:#fafafa">${item.mfo || '-'}</td>
             <td style="font-size:0.8rem;background:#fafafa">${item.success_indicator || '-'}</td>
@@ -212,6 +244,7 @@ $user = requireAuth(['admin']);
             <td><input type="number" class="form-control form-control-sm rating-t" min="1" max="5" step="0.1" data-id="${item.id}" data-field="t_rating" value="${item.t_rating || ''}" placeholder="1-5" oninput="recomputeRow(this)"></td>
             <td class="text-center fw-700 row-avg" style="font-size:0.85rem;background:#fafafa">${avg > 0 ? avg.toFixed(2) : '-'}</td>
             <td><input type="text" class="form-control form-control-sm row-remarks bg-light" data-id="${item.id}" data-field="remarks" value="${item.remarks || (avg > 0 ? getAdjectivalText(avg) : '')}" readonly placeholder="Auto"></td>
+            <td class="text-center">${evidenceBtn}</td>
           </tr>`;
           }).join('')}
           </tbody>
@@ -252,6 +285,93 @@ $user = requireAuth(['admin']);
     });
     const avg = count > 0 ? (total / count).toFixed(2) : '-';
     document.getElementById('modalRatingDisplay').textContent = avg;
+  }
+
+  let _evidenceModal = null;
+
+  function getMatchingEvidence(categoryKey, mfoText) {
+    const list = _currentForm?.evidence_files || [];
+    const catSearch = (categoryKey || '').toLowerCase();
+    const mfoSearch = (mfoText || '').toLowerCase().trim();
+
+    return list.filter(file => {
+      const fCat = (file.category || '').toLowerCase();
+      const fDesc = (file.description || '').toLowerCase();
+      const fName = (file.original_name || file.name || '').toLowerCase();
+
+      if (fCat.includes(catSearch) || (catSearch === 'core' && fCat.includes('core')) || (catSearch === 'strategic' && fCat.includes('strategic')) || (catSearch === 'support' && fCat.includes('support'))) {
+        return true;
+      }
+      if (mfoSearch && (fDesc.includes(mfoSearch) || fName.includes(mfoSearch))) {
+        return true;
+      }
+      return false;
+    });
+  }
+
+  function openEvidenceModalFor(categoryKey, mfoText) {
+    if (!_currentForm) return;
+    const filtered = getMatchingEvidence(categoryKey, mfoText);
+    const label = (mfoText ? mfoText + ' (' + (categoryKey||'').toUpperCase() + ')' : (categoryKey||'').toUpperCase() + ' Evidence');
+    renderEvidenceList(filtered, label);
+    _evidenceModal = _evidenceModal || new bootstrap.Modal(document.getElementById('evidenceModal'));
+    document.getElementById('evidenceModalUser').textContent = (_currentForm.user_name || 'Employee');
+    _evidenceModal.show();
+  }
+
+  function openEvidenceModal() {
+    if (!_currentForm) return;
+    renderEvidenceList(_currentForm.evidence_files || [], 'All Evidence');
+    _evidenceModal = _evidenceModal || new bootstrap.Modal(document.getElementById('evidenceModal'));
+    document.getElementById('evidenceModalUser').textContent = (_currentForm.user_name || 'Employee');
+    _evidenceModal.show();
+  }
+
+  function renderEvidenceList(files, filterLabel) {
+    document.getElementById('evidenceFilterBadge').textContent = filterLabel;
+    const tbody = document.getElementById('evidenceModalTable');
+    tbody.innerHTML = '';
+
+    if (!files || files.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="6" class="text-center py-4 text-muted"><i class="fa-solid fa-folder-open me-2"></i>No evidence documents found for ${filterLabel}.</td></tr>`;
+      return;
+    }
+
+    files.forEach((f, i) => {
+      const name = f.original_name || f.name || 'document';
+      const ext = name.split('.').pop().toLowerCase();
+      const iconMap = { pdf: 'fa-file-pdf text-danger', doc: 'fa-file-word text-primary', docx: 'fa-file-word text-primary', jpg: 'fa-file-image text-success', jpeg: 'fa-file-image text-success', png: 'fa-file-image text-success', xlsx: 'fa-file-excel text-success' };
+      const icon = iconMap[ext] || 'fa-file text-secondary';
+      const sizeStr = (f.file_size || f.size) ? formatSize(f.file_size || f.size) : '-';
+      let filePath = '';
+      if (f.file_path && f.file_path !== '#') {
+        filePath = f.file_path.startsWith('http') ? f.file_path : (API_BASE + '../' + f.file_path.replace(/^\/+/, ''));
+      } else if (f.data_url) {
+        filePath = f.data_url;
+      } else if (f.file_url) {
+        filePath = f.file_url;
+      }
+
+      const actionHtml = filePath
+        ? `<a href="${filePath}" target="_blank" class="btn btn-outline-primary btn-sm"><i class="fa-solid fa-eye me-1"></i>View / Open</a>`
+        : `<button type="button" class="btn btn-outline-secondary btn-sm" onclick="showToast('Physical file not saved on server yet. Please upload via Evidence Upload.', 'warning')"><i class="fa-solid fa-file me-1"></i>Document Details</button>`;
+
+      tbody.innerHTML += `<tr>
+        <td>${i + 1}</td>
+        <td><div class="d-flex align-items-center gap-2"><i class="fa-solid ${icon}" style="font-size:1.1rem"></i><strong>${name}</strong></div></td>
+        <td>${getCategoryBadge(f.category || 'Evidence')}</td>
+        <td style="font-size:0.82rem">${f.description || '-'}</td>
+        <td style="font-size:0.82rem">${sizeStr}</td>
+        <td>${actionHtml}</td>
+      </tr>`;
+    });
+  }
+
+  function formatSize(bytes) {
+    if (!bytes) return '-';
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / 1048576).toFixed(1) + ' MB';
   }
 
   async function saveReview() {
@@ -303,5 +423,41 @@ $user = requireAuth(['admin']);
   loadStats();
   loadForms();
 </script>
+
+<!-- View Evidence Modal -->
+<div class="modal fade" id="evidenceModal" tabindex="-1">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="fa-solid fa-paperclip me-2"></i>Supporting Evidence & Documents — <span id="evidenceModalUser"></span></h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
+          <div id="evidenceFilterBadge" class="badge bg-primary bg-opacity-10 text-primary py-2 px-3">All Evidence</div>
+          <button type="button" class="btn btn-outline-secondary btn-sm" id="btnShowAllEv" onclick="renderEvidenceList(_currentForm?.evidence_files || [], 'All Evidence')"><i class="fa-solid fa-list me-1"></i>Show All</button>
+        </div>
+        <div class="table-responsive">
+          <table class="table table-bordered table-sm mb-0">
+            <thead class="table-light">
+              <tr>
+                <th style="width:40px">#</th>
+                <th>File Name</th>
+                <th>Category</th>
+                <th>Description</th>
+                <th>Size</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="evidenceModalTable"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
 </body>
 </html>

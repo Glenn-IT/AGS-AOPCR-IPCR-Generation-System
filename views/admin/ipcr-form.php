@@ -78,6 +78,9 @@ $user = requireAuth(['admin']);
       <p class="mb-0">Individual Performance Commitment and Review | Administrator Level | CSU-Piat</p>
     </div>
     <div class="d-flex gap-2 flex-wrap no-print">
+      <button class="btn btn-outline-info btn-sm" id="btnViewEvidence" onclick="openEvidenceModal()">
+        <i class="fa-solid fa-paperclip me-1"></i>View Evidence <span class="badge bg-info text-dark ms-1" id="evidenceCountBadge">0</span>
+      </button>
       <button class="btn btn-outline-secondary btn-sm" onclick="window.print()">
         <i class="fa-solid fa-print me-1"></i>Print
       </button>
@@ -190,6 +193,7 @@ $user = requireAuth(['admin']);
             <th style="width:65px">T</th>
             <th style="width:75px">Average</th>
             <th style="min-width:110px">Remarks</th>
+            <th style="width:110px;text-align:center">Evidence</th>
           </tr>
         </thead>
         <tbody id="coreBody"></tbody>
@@ -197,6 +201,7 @@ $user = requireAuth(['admin']);
           <tr class="avg-row">
             <td colspan="9" class="text-end fw-600" style="font-size:0.83rem">Average Rating — Core Function:</td>
             <td id="coreAvg" class="text-center fw-700">—</td>
+            <td></td>
             <td></td>
           </tr>
         </tfoot>
@@ -227,6 +232,7 @@ $user = requireAuth(['admin']);
             <th style="width:65px">T</th>
             <th style="width:75px">Average</th>
             <th style="min-width:110px">Remarks</th>
+            <th style="width:110px;text-align:center">Evidence</th>
           </tr>
         </thead>
         <tbody id="strategicBody"></tbody>
@@ -234,6 +240,7 @@ $user = requireAuth(['admin']);
           <tr class="avg-row">
             <td colspan="9" class="text-end fw-600" style="font-size:0.83rem">Average Rating — Strategic Function:</td>
             <td id="strategicAvg" class="text-center fw-700">—</td>
+            <td></td>
             <td></td>
           </tr>
         </tfoot>
@@ -264,6 +271,7 @@ $user = requireAuth(['admin']);
             <th style="width:65px">T</th>
             <th style="width:75px">Average</th>
             <th style="min-width:110px">Remarks</th>
+            <th style="width:110px;text-align:center">Evidence</th>
           </tr>
         </thead>
         <tbody id="supportBody"></tbody>
@@ -271,6 +279,7 @@ $user = requireAuth(['admin']);
           <tr class="avg-row">
             <td colspan="9" class="text-end fw-600" style="font-size:0.83rem">Average Rating — Support Function:</td>
             <td id="supportAvg" class="text-center fw-700">—</td>
+            <td></td>
             <td></td>
           </tr>
         </tfoot>
@@ -318,6 +327,7 @@ $user = requireAuth(['admin']);
   </div>
 
   <div class="d-flex gap-2 justify-content-end no-print mb-4 flex-wrap">
+    <button class="btn btn-outline-info" id="btnViewEvidence2" onclick="openEvidenceModal()"><i class="fa-solid fa-paperclip me-1"></i>View Evidence <span class="badge bg-info text-dark ms-1" id="evidenceCountBadge2">0</span></button>
     <button class="btn btn-outline-secondary" onclick="showPrintPreview()"><i class="fa-solid fa-print me-1"></i>Print Preview</button>
     <button class="btn btn-outline-primary" id="editBtn2" onclick="enableEdit()" style="display:none"><i class="fa-solid fa-pen me-1"></i>Edit</button>
     <button class="btn btn-outline-primary" id="btnSaveDraft2" onclick="saveIPCR('draft')"><i class="fa-solid fa-floppy-disk me-1"></i>Save Draft</button>
@@ -325,6 +335,42 @@ $user = requireAuth(['admin']);
   </div>
 
 </main>
+
+<!-- View Evidence Modal -->
+<div class="modal fade" id="evidenceModal" tabindex="-1">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="fa-solid fa-paperclip me-2"></i>Supporting Evidence & Documents — <span id="evidenceModalUser"></span></h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
+          <div id="evidenceFilterBadge" class="badge bg-primary bg-opacity-10 text-primary py-2 px-3">All Evidence</div>
+          <button type="button" class="btn btn-outline-secondary btn-sm" id="btnShowAllEv" onclick="renderEvidenceList(currentEvidence, 'All Evidence')"><i class="fa-solid fa-list me-1"></i>Show All</button>
+        </div>
+        <div class="table-responsive">
+          <table class="table table-bordered table-sm mb-0">
+            <thead class="table-light">
+              <tr>
+                <th style="width:40px">#</th>
+                <th>File Name</th>
+                <th>Category</th>
+                <th>Description</th>
+                <th>Size</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="evidenceModalTable"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <div id="footer-container"></div>
 
@@ -338,6 +384,8 @@ $user = requireAuth(['admin']);
   let activeTimeline = null;
   let existingIpcrId = 0;
   let isReadOnly = false;
+  let currentEvidence = [];
+  let _evidenceModal = null;
 
   // Pre-fill header
   document.getElementById('ipcrOffice').value = session.department_name || session.department || 'Administrator Office';
@@ -411,18 +459,63 @@ $user = requireAuth(['admin']);
     return (val || '').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   }
 
-  function createRow(data = {}) {
+  function getMatchingEvidence(categoryKey, mfoText) {
+    const list = currentEvidence || [];
+    const catSearch = (categoryKey || '').toLowerCase();
+    const mfoSearch = (mfoText || '').toLowerCase().trim();
+
+    return list.filter(file => {
+      const fCat = (file.category || '').toLowerCase();
+      const fDesc = (file.description || '').toLowerCase();
+      const fName = (file.original_name || file.name || '').toLowerCase();
+
+      if (fCat.includes(catSearch) || (catSearch === 'core' && fCat.includes('core')) || (catSearch === 'strategic' && fCat.includes('strategic')) || (catSearch === 'support' && fCat.includes('support'))) {
+        return true;
+      }
+      if (mfoSearch && (fDesc.includes(mfoSearch) || fName.includes(mfoSearch))) {
+        return true;
+      }
+      return false;
+    });
+  }
+
+  function updateRowEvidenceBtn(inputEl) {
+    const tr = inputEl.closest('tr');
+    if (!tr) return;
+    const cat = tr.dataset.category || 'core';
+    const mfoVal = inputEl.value.trim();
+    const matchedFiles = getMatchingEvidence(cat, mfoVal);
+    const count = matchedFiles.length;
+    const mfoSafe = esc(mfoVal);
+    const cell = tr.querySelector('.evidence-cell');
+    if (cell) {
+      cell.innerHTML = count > 0
+        ? `<button type="button" class="btn btn-sm btn-outline-info d-inline-flex align-items-center gap-1" onclick="openEvidenceModalFor('${cat}', '${mfoSafe}')"><i class="fa-solid fa-paperclip"></i><span>View (${count})</span></button>`
+        : `<button type="button" class="btn btn-sm btn-outline-secondary opacity-75 d-inline-flex align-items-center gap-1" onclick="openEvidenceModalFor('${cat}', '${mfoSafe}')"><i class="fa-solid fa-paperclip"></i><span>0 Files</span></button>`;
+    }
+  }
+
+  function createRow(data = {}, categoryKey = 'core') {
     const tr = document.createElement('tr');
     tr.dataset.kpiId = data.kpi_id || data.kpiId || '';
+    tr.dataset.category = categoryKey;
     const q = data.q_rating !== undefined ? data.q_rating : (data.q || '');
     const e = data.e_rating !== undefined ? data.e_rating : (data.e || '');
     const t = data.t_rating !== undefined ? data.t_rating : (data.t || '');
     const avg = parseFloat(data.rating) || 0;
     const actual = data.accomplishment !== undefined ? data.accomplishment : (data.actual || '');
     const remarks = data.remarks || (avg > 0 ? getAdjectivalText(avg) : '');
+    const mfoVal = data.mfo || '';
+    const mfoSafe = esc(mfoVal);
+    const matchedFiles = getMatchingEvidence(categoryKey, mfoVal);
+    const count = matchedFiles.length;
+
+    const evidenceBtn = count > 0
+      ? `<button type="button" class="btn btn-sm btn-outline-info d-inline-flex align-items-center gap-1" onclick="openEvidenceModalFor('${categoryKey}', '${mfoSafe}')"><i class="fa-solid fa-paperclip"></i><span>View (${count})</span></button>`
+      : `<button type="button" class="btn btn-sm btn-outline-secondary opacity-75 d-inline-flex align-items-center gap-1" onclick="openEvidenceModalFor('${categoryKey}', '${mfoSafe}')"><i class="fa-solid fa-paperclip"></i><span>0 Files</span></button>`;
 
     tr.innerHTML = `
-      <td><input type="text" class="form-control form-control-sm mfo-input" value="${esc(data.mfo || '')}" placeholder="e.g. Instruction"></td>
+      <td><input type="text" class="form-control form-control-sm mfo-input" value="${esc(mfoVal)}" placeholder="e.g. Instruction" oninput="updateRowEvidenceBtn(this)"></td>
       <td><input type="text" class="form-control form-control-sm si-input" value="${esc(data.success_indicator || data.successIndicator || '')}" placeholder="Success indicator..."></td>
       <td><input type="text" class="form-control form-control-sm target-input text-center" style="width:90px" value="${esc(data.target || '')}" placeholder="100%"></td>
       <td><input type="number" class="form-control form-control-sm budget-input text-end" style="width:90px" value="${data.budget || 0}" min="0" placeholder="0"></td>
@@ -432,19 +525,22 @@ $user = requireAuth(['admin']);
       <td><input type="number" class="form-control form-control-sm rating-e text-center" min="1" max="5" step="0.1" style="width:60px" value="${e}" placeholder="1-5" oninput="computeRowRating(this)"></td>
       <td><input type="number" class="form-control form-control-sm rating-t text-center" min="1" max="5" step="0.1" style="width:60px" value="${t}" placeholder="1-5" oninput="computeRowRating(this)"></td>
       <td class="text-center fw-700 row-avg" style="font-size:0.85rem;background:#fafafa">${avg > 0 ? avg.toFixed(2) : '-'}</td>
-      <td><input type="text" class="form-control form-control-sm row-remarks bg-light" value="${esc(remarks)}" placeholder="Auto" readonly></td>`;
+      <td><input type="text" class="form-control form-control-sm row-remarks bg-light" value="${esc(remarks)}" placeholder="Auto" readonly></td>
+      <td class="text-center evidence-cell">${evidenceBtn}</td>`;
     return tr;
   }
 
   function addRow(tbodyId) {
-    document.getElementById(tbodyId).appendChild(createRow());
+    const cat = tbodyId.replace('Body', '');
+    document.getElementById(tbodyId).appendChild(createRow({}, cat));
     computeAverages();
   }
 
   function loadRows(tbodyId, items) {
+    const cat = tbodyId.replace('Body', '');
     const tbody = document.getElementById(tbodyId);
     tbody.innerHTML = '';
-    (items || []).forEach(item => tbody.appendChild(createRow(item)));
+    (items || []).forEach(item => tbody.appendChild(createRow(item, cat)));
   }
 
   function getRows(tbodyId) {
@@ -540,14 +636,97 @@ $user = requireAuth(['admin']);
     }
   }
 
+  function openEvidenceModalFor(categoryKey, mfoText) {
+    const filtered = getMatchingEvidence(categoryKey, mfoText);
+    const label = (mfoText ? mfoText + ' (' + (categoryKey||'').toUpperCase() + ')' : (categoryKey||'').toUpperCase() + ' Evidence');
+    renderEvidenceList(filtered, label);
+    _evidenceModal = _evidenceModal || new bootstrap.Modal(document.getElementById('evidenceModal'));
+    document.getElementById('evidenceModalUser').textContent = (session.name || 'Administrator');
+    _evidenceModal.show();
+  }
+
+  function openEvidenceModal() {
+    renderEvidenceList(currentEvidence, 'All Evidence');
+    _evidenceModal = _evidenceModal || new bootstrap.Modal(document.getElementById('evidenceModal'));
+    document.getElementById('evidenceModalUser').textContent = (session.name || 'Administrator');
+    _evidenceModal.show();
+  }
+
+  function renderEvidenceList(files, filterLabel) {
+    document.getElementById('evidenceFilterBadge').textContent = filterLabel;
+    const tbody = document.getElementById('evidenceModalTable');
+    tbody.innerHTML = '';
+
+    if (!files || files.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="6" class="text-center py-4 text-muted"><i class="fa-solid fa-folder-open me-2"></i>No evidence documents found for ${filterLabel}.</td></tr>`;
+      return;
+    }
+
+    files.forEach((f, i) => {
+      const name = f.original_name || f.name || 'document';
+      const ext = name.split('.').pop().toLowerCase();
+      const iconMap = { pdf: 'fa-file-pdf text-danger', doc: 'fa-file-word text-primary', docx: 'fa-file-word text-primary', jpg: 'fa-file-image text-success', jpeg: 'fa-file-image text-success', png: 'fa-file-image text-success', xlsx: 'fa-file-excel text-success' };
+      const icon = iconMap[ext] || 'fa-file text-secondary';
+      const sizeStr = (f.file_size || f.size) ? formatSize(f.file_size || f.size) : '-';
+      let filePath = '';
+      if (f.file_path && f.file_path !== '#') {
+        filePath = f.file_path.startsWith('http') ? f.file_path : (API_BASE + '../' + f.file_path.replace(/^\/+/, ''));
+      } else if (f.data_url) {
+        filePath = f.data_url;
+      } else if (f.file_url) {
+        filePath = f.file_url;
+      }
+
+      const actionHtml = filePath
+        ? `<a href="${filePath}" target="_blank" class="btn btn-outline-primary btn-sm"><i class="fa-solid fa-eye me-1"></i>View / Open</a>`
+        : `<button type="button" class="btn btn-outline-secondary btn-sm" onclick="showToast('Physical file not saved on server yet. Please upload via Evidence Upload.', 'warning')"><i class="fa-solid fa-file me-1"></i>Document Details</button>`;
+
+      tbody.innerHTML += `<tr>
+        <td>${i + 1}</td>
+        <td><div class="d-flex align-items-center gap-2"><i class="fa-solid ${icon}" style="font-size:1.1rem"></i><strong>${esc(name)}</strong></div></td>
+        <td>${getCategoryBadge(f.category || 'Evidence')}</td>
+        <td style="font-size:0.82rem">${esc(f.description || '-')}</td>
+        <td style="font-size:0.82rem">${sizeStr}</td>
+        <td>${actionHtml}</td>
+      </tr>`;
+    });
+  }
+
+  function formatSize(bytes) {
+    if (!bytes) return '-';
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / 1048576).toFixed(1) + ' MB';
+  }
+
   async function initForm() {
-    const [kpiRes, tlRes] = await Promise.all([
+    const [kpiRes, tlRes, evRes] = await Promise.all([
       fetch(API_BASE + 'kpi/list.php', { credentials: 'include' }).then(r => r.json()).catch(() => null),
       fetch(API_BASE + 'timeline/list.php?status=open', { credentials: 'include' }).then(r => r.json()).catch(() => null),
+      fetch(API_BASE + 'evidence/list.php?user_id=' + session.id, { credentials: 'include' }).then(r => r.json()).catch(() => null),
     ]);
 
     const kpi = kpiRes?.grouped || {};
     activeTimeline = (tlRes?.timelines || [])[0] || null;
+
+    // Load user's evidence from server and localStorage
+    let userFiles = (evRes && evRes.files) ? [...evRes.files] : [];
+    const lsFiles = JSON.parse(localStorage.getItem('csu_piat_files_' + session.id)) || [];
+    lsFiles.forEach(lf => {
+      if (!userFiles.some(uf => uf.id === lf.id || uf.original_name === lf.name || uf.name === lf.name)) {
+        userFiles.push({
+          id: lf.id,
+          original_name: lf.name || lf.original_name,
+          name: lf.name || lf.original_name,
+          category: lf.category || 'Evidence',
+          description: lf.description || 'No description',
+          file_size: lf.size || lf.file_size || 0,
+          uploaded_at: lf.date || lf.uploaded_at || '',
+          file_path: lf.file_path || lf.path || '',
+          data_url: lf.data_url || lf.file_url || ''
+        });
+      }
+    });
 
     if (activeTimeline) {
       const deadline = new Date(activeTimeline.submission_deadline);
@@ -565,6 +744,14 @@ $user = requireAuth(['admin']);
         document.getElementById('lastSaved').textContent = f.updated_at ? new Date(f.updated_at).toLocaleString('en-PH') : 'Saved';
         setStatus(f.status || 'draft');
 
+        // Merge backend evidence files
+        (f.evidence_files || []).forEach(bf => {
+          if (!userFiles.some(uf => uf.original_name === bf.original_name || uf.name === bf.original_name)) {
+            userFiles.push(bf);
+          }
+        });
+        currentEvidence = userFiles;
+
         loadRows('coreBody', f.items?.core?.length ? f.items.core : kpi.core || []);
         loadRows('strategicBody', f.items?.strategic?.length ? f.items.strategic : kpi.strategic || []);
         loadRows('supportBody', f.items?.support?.length ? f.items.support : kpi.support || []);
@@ -573,6 +760,7 @@ $user = requireAuth(['admin']);
           setReadOnly(true);
         }
       } else {
+        currentEvidence = userFiles;
         document.getElementById('ipcrPeriod').value = activeTimeline.semester + ' ' + activeTimeline.academic_year;
         setStatus('draft');
         loadRows('coreBody', kpi.core || []);
@@ -580,6 +768,7 @@ $user = requireAuth(['admin']);
         loadRows('supportBody', kpi.support || []);
       }
     } else {
+      currentEvidence = userFiles;
       document.getElementById('noTimelineAlert').classList.remove('d-none');
       setStatus('draft');
       loadRows('coreBody', kpi.core || []);
@@ -590,6 +779,12 @@ $user = requireAuth(['admin']);
         if (el) { el.disabled = true; el.title = 'No active submission period is open.'; }
       });
     }
+
+    const evCount = currentEvidence.length;
+    const b1 = document.getElementById('evidenceCountBadge');
+    const b2 = document.getElementById('evidenceCountBadge2');
+    if (b1) b1.textContent = evCount;
+    if (b2) b2.textContent = evCount;
 
     updatePeriodSummary();
     computeAverages();

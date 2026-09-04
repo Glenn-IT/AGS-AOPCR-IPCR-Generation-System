@@ -46,4 +46,15 @@ $form['items'] = [
     'support'   => array_values(array_filter($allItems, fn($r) => $r['function_type']==='support')),
 ];
 
+// Load evidence files
+try {
+    $adminUserId = $form['admin_id'] ?? $user['id'];
+    $evStmt = $db->prepare('SELECT * FROM evidence_files WHERE user_id = ? ORDER BY uploaded_at DESC');
+    $evStmt->execute([$adminUserId]);
+    $form['evidence_files'] = $evStmt->fetchAll();
+} catch (Exception $e) {
+    $form['evidence_files'] = [];
+}
+
 echo json_encode(['success' => true, 'form' => $form]);
+
