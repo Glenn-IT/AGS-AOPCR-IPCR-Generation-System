@@ -205,7 +205,7 @@ $user = requireAuth(['admin']);
       <div class="col-md-4"><strong>Date Submitted:</strong> ${f.date_submitted || '-'}</div>
       <div class="col-md-4 d-flex align-items-center justify-content-between">
         <span><strong>Current Status:</strong> ${getStatusBadge(f.status)}</span>
-        <button type="button" class="btn btn-outline-info btn-sm" onclick="openEvidenceModal()"><i class="fa-solid fa-paperclip me-1"></i>View All Evidence <span class="badge bg-info text-dark ms-1" id="modalEvBadge">${(f.evidence_files||[]).length}</span></button>
+        <button type="button" class="btn btn-outline-primary btn-sm" onclick="openEvidenceModal()"><i class="fa-solid fa-paperclip me-1"></i>View All Evidence <span class="badge bg-primary text-white ms-1" id="modalEvBadge">${(f.evidence_files||[]).length}</span></button>
       </div>
     </div>
     <div class="mb-3">
@@ -232,7 +232,7 @@ $user = requireAuth(['admin']);
             const count = matchedFiles.length;
             const mfoSafe = mfo.replace(/'/g, "\\'");
             const evidenceBtn = count > 0
-              ? `<button type="button" class="btn btn-sm btn-outline-info d-inline-flex align-items-center gap-1" onclick="openEvidenceModalFor('${sec}', '${mfoSafe}')"><i class="fa-solid fa-paperclip"></i><span>View (${count})</span></button>`
+              ? `<button type="button" class="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1" onclick="openEvidenceModalFor('${sec}', '${mfoSafe}')"><i class="fa-solid fa-paperclip"></i><span>View (${count})</span></button>`
               : `<button type="button" class="btn btn-sm btn-outline-secondary opacity-75 d-inline-flex align-items-center gap-1" onclick="openEvidenceModalFor('${sec}', '${mfoSafe}')"><i class="fa-solid fa-paperclip"></i><span>0 Files</span></button>`;
 
             return `<tr>

@@ -137,7 +137,7 @@ $user = requireAuth(['user']);
       const rating = parseFloat(latest.overall_rating) || 0;
       const msgMap = {
         pending:     `<i class="fa-solid fa-clock text-warning me-2"></i><strong>Your IPCR is pending review.</strong> Covered Period: <strong>${latest.covered_period}</strong>`,
-        reviewed:    `<i class="fa-solid fa-search text-info me-2"></i><strong>Your IPCR is under review.</strong> Please wait for the final decision.`,
+        reviewed:    `<i class="fa-solid fa-search text-primary me-2"></i><strong>Your IPCR is under review.</strong> Please wait for the final decision.`,
         approved:    `<i class="fa-solid fa-check-circle text-success me-2"></i><strong>Your IPCR has been approved!</strong> Overall Rating: <strong>${rating.toFixed(2)}</strong>. ${getRatingLabel(rating)}`,
         disapproved: `<i class="fa-solid fa-times-circle text-danger me-2"></i><strong>Your IPCR was disapproved.</strong> Remarks: ${latest.remarks || 'No remarks.'}`,
       };
@@ -280,7 +280,7 @@ td, th { border:1px solid #000; padding:1.5px 3px; vertical-align:middle; font-s
 .legend-right tr:last-child td { border-bottom:1px solid #000; }
 .data-table { border-top:1px solid #000; }
 .data-table th { background:#d9d9d9;font-weight:700;text-align:center;font-size:7.3pt;padding:2px 3px; }
-.data-table .sec-row td { background:#bdd7ee;font-weight:700;font-size:7.8pt;text-align:left;padding:2px 5px; }
+.data-table .sec-row td { background:#fed7aa;font-weight:700;font-size:7.8pt;text-align:left;padding:2px 5px; }
 .data-table .data-row td { height:18px;font-size:7.5pt;padding:1px 3px;vertical-align:top; }
 .summary-table td { border:1px solid #000;padding:1.5px 5px;font-size:7.5pt; }
 .summary-table .lbl { font-weight:700; } .summary-table .val { text-align:center;font-weight:700; }

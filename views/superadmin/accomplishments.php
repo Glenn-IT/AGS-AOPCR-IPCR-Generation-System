@@ -28,7 +28,7 @@ $user = requireAuth(['superadmin']);
       <p>Rate the IPCR submissions of Deans and Department Heads.</p>
     </div>
     <div class="d-flex gap-2 no-print">
-      <button class="btn btn-outline-info btn-sm d-none" id="btnViewEvidence" onclick="openEvidenceModal()"><i class="fa-solid fa-paperclip me-1"></i>View Evidence <span class="badge bg-info text-dark ms-1" id="evidenceCountBadge">0</span></button>
+      <button class="btn btn-outline-primary btn-sm d-none" id="btnViewEvidence" onclick="openEvidenceModal()"><i class="fa-solid fa-paperclip me-1"></i>View Evidence <span class="badge bg-primary text-white ms-1" id="evidenceCountBadge">0</span></button>
       <button class="btn btn-primary btn-sm" onclick="saveRatings()"><i class="fa-solid fa-save me-1"></i>Save Ratings</button>
     </div>
   </div>
@@ -147,7 +147,7 @@ $user = requireAuth(['superadmin']);
     </div>
 
     <div class="d-flex gap-2 justify-content-end mt-3 no-print">
-      <button class="btn btn-outline-info" id="btnViewEvidence2" onclick="openEvidenceModal()"><i class="fa-solid fa-paperclip me-1"></i>View Evidence <span class="badge bg-info text-dark ms-1" id="evidenceCountBadge2">0</span></button>
+      <button class="btn btn-outline-primary" id="btnViewEvidence2" onclick="openEvidenceModal()"><i class="fa-solid fa-paperclip me-1"></i>View Evidence <span class="badge bg-primary text-white ms-1" id="evidenceCountBadge2">0</span></button>
       <button class="btn btn-primary" onclick="saveRatings()"><i class="fa-solid fa-save me-1"></i>Save Ratings</button>
     </div>
   </div>
@@ -372,7 +372,7 @@ $user = requireAuth(['superadmin']);
       const mfoSafe = escapeHtml(item.mfo || '');
 
       const evidenceBtn = count > 0
-        ? `<button type="button" class="btn btn-sm btn-outline-info d-inline-flex align-items-center gap-1" onclick="openEvidenceModalFor('${categoryKey}', '${mfoSafe}')"><i class="fa-solid fa-paperclip"></i><span>View (${count})</span></button>`
+        ? `<button type="button" class="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1" onclick="openEvidenceModalFor('${categoryKey}', '${mfoSafe}')"><i class="fa-solid fa-paperclip"></i><span>View (${count})</span></button>`
         : `<button type="button" class="btn btn-sm btn-outline-secondary opacity-75 d-inline-flex align-items-center gap-1" onclick="openEvidenceModalFor('${categoryKey}', '${mfoSafe}')"><i class="fa-solid fa-paperclip"></i><span>0 Files</span></button>`;
 
       tr.innerHTML = `

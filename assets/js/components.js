@@ -41,7 +41,7 @@ function getStatusBadge(status) {
   const map = {
     draft:       ['bg-secondary', 'Draft'],
     pending:     ['bg-warning text-dark', 'Pending'],
-    reviewed:    ['bg-info text-dark', 'Reviewed'],
+    reviewed:    ['bg-primary text-white', 'Reviewed'],
     approved:    ['bg-success', 'Approved'],
     disapproved: ['bg-danger', 'Disapproved'],
     active:      ['bg-success', 'Active'],
@@ -82,7 +82,7 @@ function getCategoryBadge(category) {
     return `<span class="badge" style="background:#EDE9FE;color:#5B21B6;border:1px solid #DDD6FE;font-size:0.75rem;font-weight:600;padding:4px 8px"><i class="fa-solid fa-chess me-1" style="font-size:0.7rem"></i>${category || 'Strategic Function'}</span>`;
   }
   if (cat.includes('support')) {
-    return `<span class="badge" style="background:#E0F2FE;color:#0369A1;border:1px solid #BAE6FD;font-size:0.75rem;font-weight:600;padding:4px 8px"><i class="fa-solid fa-hands-helping me-1" style="font-size:0.7rem"></i>${category || 'Support Function'}</span>`;
+    return `<span class="badge" style="background:#FEF3C7;color:#92400E;border:1px solid #FDE68A;font-size:0.75rem;font-weight:600;padding:4px 8px"><i class="fa-solid fa-hands-helping me-1" style="font-size:0.7rem"></i>${category || 'Support Function'}</span>`;
   }
   return `<span class="badge bg-secondary text-white" style="font-size:0.75rem;font-weight:500;padding:4px 8px">${category || 'Other'}</span>`;
 }

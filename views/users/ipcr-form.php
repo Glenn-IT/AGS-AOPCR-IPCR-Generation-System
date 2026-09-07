@@ -28,7 +28,7 @@ $user = requireAuth(['user']);
       <p>Individual Performance Commitment and Review | CSU-Piat</p>
     </div>
     <div class="d-flex gap-2 no-print flex-wrap">
-      <button class="btn btn-outline-info btn-sm" id="btnViewEvidence" onclick="openEvidenceModal()"><i class="fa-solid fa-paperclip me-1"></i>View Evidence <span class="badge bg-info text-dark ms-1" id="evidenceCountBadge">0</span></button>
+      <button class="btn btn-outline-primary btn-sm" id="btnViewEvidence" onclick="openEvidenceModal()"><i class="fa-solid fa-paperclip me-1"></i>View Evidence <span class="badge bg-primary text-white ms-1" id="evidenceCountBadge">0</span></button>
       <button class="btn btn-outline-primary btn-sm" id="btnUploadEvidence" onclick="openUploadModal()"><i class="fa-solid fa-cloud-arrow-up me-1"></i>Upload Evidence</button>
       <button class="btn btn-outline-secondary btn-sm" onclick="window.print()"><i class="fa-solid fa-print me-1"></i>Print</button>
       <button class="btn btn-outline-primary btn-sm" id="btnSaveDraft" onclick="saveIPCR('draft')"><i class="fa-solid fa-floppy-disk me-1"></i>Save Draft</button>
@@ -166,7 +166,7 @@ $user = requireAuth(['user']);
   </div>
 
   <div class="d-flex gap-2 justify-content-end mt-3 no-print flex-wrap">
-    <button class="btn btn-outline-info" id="btnViewEvidence2" onclick="openEvidenceModal()"><i class="fa-solid fa-paperclip me-1"></i>View Evidence <span class="badge bg-info text-dark ms-1" id="evidenceCountBadge2">0</span></button>
+    <button class="btn btn-outline-primary" id="btnViewEvidence2" onclick="openEvidenceModal()"><i class="fa-solid fa-paperclip me-1"></i>View Evidence <span class="badge bg-primary text-white ms-1" id="evidenceCountBadge2">0</span></button>
     <button class="btn btn-outline-primary" id="btnUploadEvidence2" onclick="openUploadModal()"><i class="fa-solid fa-cloud-arrow-up me-1"></i>Upload Evidence</button>
     <button class="btn btn-outline-secondary" onclick="showPrintPreview()"><i class="fa-solid fa-print me-1"></i>Print Preview</button>
     <button class="btn btn-outline-primary" id="btnSaveDraft2" onclick="saveIPCR('draft')"><i class="fa-solid fa-floppy-disk me-1"></i>Save Draft</button>
@@ -629,7 +629,7 @@ $user = requireAuth(['user']);
     const count = matchedFiles.length;
     const mfoSafe = (mfoText || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
     const viewBtn = count > 0
-      ? `<button type="button" class="btn btn-sm btn-outline-info d-inline-flex align-items-center gap-1" onclick="openEvidenceModalFor('${categoryKey}', '${mfoSafe}')"><i class="fa-solid fa-paperclip"></i><span>View (${count})</span></button>`
+      ? `<button type="button" class="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1" onclick="openEvidenceModalFor('${categoryKey}', '${mfoSafe}')"><i class="fa-solid fa-paperclip"></i><span>View (${count})</span></button>`
       : `<button type="button" class="btn btn-sm btn-outline-secondary opacity-75 d-inline-flex align-items-center gap-1" onclick="openEvidenceModalFor('${categoryKey}', '${mfoSafe}')"><i class="fa-solid fa-paperclip"></i><span>0 Files</span></button>`;
     const uploadBtn = `<button type="button" class="btn btn-sm btn-outline-primary" title="Upload Evidence for this MFO" onclick="openUploadModalFor('${categoryKey}', '${mfoSafe}')"><i class="fa-solid fa-cloud-arrow-up"></i></button>`;
     return `<div class="d-inline-flex align-items-center justify-content-center gap-1">${viewBtn}${uploadBtn}</div>`;
@@ -949,7 +949,7 @@ td, th { border:1px solid #000; padding:1.5px 3px; vertical-align:middle; font-s
 .legend-right tr:last-child td { border-bottom:1px solid #000; }
 .data-table { border-top:1px solid #000; }
 .data-table th { background:#d9d9d9;font-weight:700;text-align:center;font-size:7.3pt;padding:2px 3px; }
-.data-table .sec-row td { background:#bdd7ee;font-weight:700;font-size:7.8pt;text-align:left;padding:2px 5px; }
+.data-table .sec-row td { background:#fed7aa;font-weight:700;font-size:7.8pt;text-align:left;padding:2px 5px; }
 .data-table .data-row td { height:18px;font-size:7.5pt;padding:1px 3px;vertical-align:top; }
 .summary-table td { border:1px solid #000;padding:1.5px 5px;font-size:7.5pt; }
 .summary-table .lbl { font-weight:700;font-size:7.5pt; }

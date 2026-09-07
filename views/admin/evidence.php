@@ -34,7 +34,7 @@ $user = requireAuth(['admin']);
       <div class="border-2 border-dashed rounded-3 p-4 text-center mb-3" id="dropZone"
            style="border:2px dashed #E85C0D;background:var(--accent);cursor:pointer"
            onclick="document.getElementById('fileInput').click()"
-           ondragover="event.preventDefault();this.style.background='#d0e8ff'"
+           ondragover="event.preventDefault();this.style.background='#fed7aa'"
            ondragleave="this.style.background='var(--accent)'"
            ondrop="handleDrop(event)">
         <i class="fa-solid fa-cloud-arrow-up text-primary mb-2" style="font-size:2.5rem"></i>

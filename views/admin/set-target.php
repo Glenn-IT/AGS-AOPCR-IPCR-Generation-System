@@ -451,7 +451,7 @@ td, th { border:1px solid #000; padding:1.5px 3px; vertical-align:middle; font-s
 .rev-name { font-weight:700;font-size:7.8pt; } .rev-role { font-size:6.5pt;font-style:italic; }
 .data-table { border-top:1px solid #000; }
 .data-table th { background:#d9d9d9;font-weight:700;text-align:center;font-size:7.3pt;padding:2px 3px; }
-.data-table .sec-row td { background:#bdd7ee;font-weight:700;font-size:7.8pt;text-align:left;padding:2px 5px; }
+.data-table .sec-row td { background:#fed7aa;font-weight:700;font-size:7.8pt;text-align:left;padding:2px 5px; }
 .data-table .data-row td { height:18px;font-size:7.5pt;padding:1px 3px;vertical-align:top; }
 .summary-table td { border:1px solid #000;padding:1.5px 5px;font-size:7.5pt; }
 .summary-table .lbl { font-weight:700; } .summary-table .val { text-align:center;font-weight:700; }

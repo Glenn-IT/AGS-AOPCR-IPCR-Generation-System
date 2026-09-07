@@ -228,7 +228,7 @@ $user = requireAuth(['superadmin']);
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td>${i+1}</td>
-        <td><span class="badge ${f.type === 'IPCR' ? 'bg-info' : 'bg-warning text-dark'}">${f.type}</span></td>
+        <td><span class="badge ${f.type === 'IPCR' ? 'bg-primary text-white' : 'bg-warning text-dark'}">${f.type}</span></td>
         <td style="font-size:0.85rem"><strong>${f.name}</strong></td>
         <td style="font-size:0.8rem">${f.department_name || '-'}</td>
         <td style="font-size:0.8rem">${f.covered_period}</td>
@@ -288,7 +288,7 @@ $user = requireAuth(['superadmin']);
     const rating = parseFloat(form.overall_rating) || 0;
     document.getElementById('detailModalBody').innerHTML = `
       <div class="row g-2 mb-3 p-2 bg-light rounded" style="font-size:0.85rem">
-        <div class="col-6"><strong>Type:</strong> <span class="badge ${form.type === 'IPCR' ? 'bg-info' : 'bg-warning text-dark'}">${form.type}</span></div>
+        <div class="col-6"><strong>Type:</strong> <span class="badge ${form.type === 'IPCR' ? 'bg-primary text-white' : 'bg-warning text-dark'}">${form.type}</span></div>
         <div class="col-6"><strong>Name:</strong> ${form.name}</div>
         <div class="col-6"><strong>Department:</strong> ${form.department_name || '-'}</div>
         <div class="col-6"><strong>Position:</strong> ${form.position || '-'}</div>

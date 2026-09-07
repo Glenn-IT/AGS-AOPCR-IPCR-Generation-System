@@ -149,7 +149,7 @@ $user = requireAuth(['admin']);
 
     new Chart(document.getElementById('approvalChart'), {
       type: 'doughnut',
-      data: { labels: ['Approved', 'Pending', 'Reviewed', 'Disapproved'], datasets: [{ data: [counts.approved, counts.pending, counts.reviewed, counts.disapproved], backgroundColor: ['#198754', '#ffc107', '#0dcaf0', '#dc3545'], borderWidth: 2, borderColor: '#fff' }] },
+      data: { labels: ['Approved', 'Pending', 'Reviewed', 'Disapproved'], datasets: [{ data: [counts.approved, counts.pending, counts.reviewed, counts.disapproved], backgroundColor: ['#198754', '#ffc107', '#E85C0D', '#dc3545'], borderWidth: 2, borderColor: '#fff' }] },
       options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { font: { size: 11 } } } }, cutout: '65%' }
     });
 

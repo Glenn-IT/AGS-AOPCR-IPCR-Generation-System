@@ -271,7 +271,7 @@ runTest('6.11', 'API list.php SQL — JOIN produces assigned_to_name & created_b
     .card-pass { background: #d1fae5; }
     .card-fail { background: #fee2e2; }
     .card-total{ background: #ede9fe; }
-    .card-pct  { background: #e0f2fe; }
+    .card-pct  { background: #fef3c7; }
 
     .test-row {
       background: #fff; border-radius: 12px; padding: 14px 20px;
@@ -328,7 +328,7 @@ runTest('6.11', 'API list.php SQL — JOIN produces assigned_to_name & created_b
       <div class="lbl">Failed ✘</div>
     </div>
     <div class="sum-card card-pct">
-      <div class="num" style="color:#0369a1"><?= $pct ?>%</div>
+      <div class="num" style="color:#b45309"><?= $pct ?>%</div>
       <div class="lbl">Pass Rate</div>
     </div>
   </div>
@@ -388,7 +388,7 @@ runTest('6.11', 'API list.php SQL — JOIN produces assigned_to_name & created_b
       ['Superadmin → KPI filter bar',      'Filter by scope "User-Specific" and verify only user-scoped KPIs show. Test admin filter dropdown.', 'settings.php'],
       ['Admin → KPI Management',           'Login as admin. Create a dept-wide KPI. Verify superadmin KPIs appear with 🔒 lock icon and cannot be deleted.', 'views/admin/kpi-management.php'],
       ['Admin → Assign to Faculty',        'Create a KPI with scope=User-Specific, select a faculty from the dropdown. Save and verify assigned_to_name appears.', 'views/admin/kpi-management.php'],
-      ['Faculty → IPCR Form',              'Login as faculty. Open IPCR form. Verify the blue info banner shows the count. If a personal KPI was assigned, verify the 🏷️ amber tag appears on that row.', 'views/users/ipcr-form.php'],
+      ['Faculty → IPCR Form',              'Login as faculty. Open IPCR form. Verify the info banner shows the count. If a personal KPI was assigned, verify the 🏷️ amber tag appears on that row.', 'views/users/ipcr-form.php'],
       ['Admin sidebar',                    'Login as admin. Verify "KPI Management" link appears under the Management section in the sidebar.', 'views/admin/dashboard.php'],
     ];
   ?>
@@ -399,7 +399,7 @@ runTest('6.11', 'API list.php SQL — JOIN produces assigned_to_name & created_b
         <div class="test-name" style="color:#334155"><?= htmlspecialchars($title) ?></div>
         <div class="test-detail"><?= htmlspecialchars($desc) ?></div>
         <div style="margin-top:4px">
-          <code style="font-size:0.75rem;color:#6366f1"><?= htmlspecialchars($page) ?></code>
+          <code style="font-size:0.75rem;color:#c2410c"><?= htmlspecialchars($page) ?></code>
         </div>
       </div>
       <span class="badge bg-secondary">Manual</span>

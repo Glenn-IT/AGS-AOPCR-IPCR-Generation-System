@@ -17,9 +17,9 @@ $user = requireAuth(['admin']);
   </script>
   <style>
     /* ── Scope badges ─────────────────────────────── */
-    .scope-dept { background: #0ea5e9; color: #fff; font-size: 0.72rem; }
+    .scope-dept { background: #E85C0D; color: #fff; font-size: 0.72rem; }
     .scope-user { background: #f59e0b; color: #fff; font-size: 0.72rem; }
-    .scope-global { background: #6366f1; color: #fff; font-size: 0.72rem; }
+    .scope-global { background: #821131; color: #fff; font-size: 0.72rem; }
 
     /* ── Ownership tags ───────────────────────────── */
     .owner-mine  { background: #d1fae5; color: #065f46; font-size: 0.7rem; border-radius: 4px; padding: 1px 6px; }
@@ -36,7 +36,7 @@ $user = requireAuth(['admin']);
       padding: 4px 14px; border-radius: 20px; font-size: 0.78rem;
       font-weight: 600; margin-bottom: 6px;
     }
-    .pill-dept { background: #e0f2fe; color: #0369a1; }
+    .pill-dept { background: #fff4e6; color: #9a3412; }
     .pill-user { background: #fef3c7; color: #92400e; }
     .pill-from-sa { background: #ede9fe; color: #6d28d9; }
 

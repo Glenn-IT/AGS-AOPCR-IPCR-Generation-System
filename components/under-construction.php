@@ -15,7 +15,7 @@ $_uc_base = str_contains($_SERVER['PHP_SELF'] ?? '', '/views/') ? '../../' : '';
       display: flex;
       align-items: center;
       justify-content: center;
-      background: #f1f5f9;
+      background: #faf9f6;
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
     .card {
@@ -55,7 +55,7 @@ $_uc_base = str_contains($_SERVER['PHP_SELF'] ?? '', '/views/') ? '../../' : '';
     }
     .btn {
       display: inline-block;
-      background: #2563eb;
+      background: #E85C0D;
       color: #fff;
       font-size: 15px;
       font-weight: 600;
@@ -66,7 +66,7 @@ $_uc_base = str_contains($_SERVER['PHP_SELF'] ?? '', '/views/') ? '../../' : '';
       cursor: pointer;
       transition: background 0.2s;
     }
-    .btn:hover { background: #1d4ed8; }
+    .btn:hover { background: #C7253E; }
     .btn-logout { background: #dc2626; }
     .btn-logout:hover { background: #b91c1c; }
   </style>

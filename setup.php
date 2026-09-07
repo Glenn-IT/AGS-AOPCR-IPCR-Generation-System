@@ -199,13 +199,13 @@ $checks['file_uploads'] = [
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <style>
-  body { background: #f4f7fb; font-family: 'Segoe UI', sans-serif; }
+  body { background: #faf9f6; font-family: 'Segoe UI', sans-serif; }
   .setup-card { max-width: 860px; margin: 40px auto; }
   .header-band { background: linear-gradient(135deg,#821131,#C7253E,#E85C0D); color:#fff; border-radius:12px 12px 0 0; padding:24px 28px; }
   .check-row { display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid #eee; font-size:.88rem; }
   .check-row:last-child { border:none; }
   table.table th { background:#f8f9fa; font-size:.8rem; }
-  code { background:#f0f4ff; padding:2px 6px; border-radius:4px; }
+  code { background:#fff4e6; color:#c2410c; padding:2px 6px; border-radius:4px; }
   .warning-box { background:#fff3cd; border:1px solid #ffc107; border-radius:8px; padding:14px; font-size:.85rem; }
 </style>
 </head>

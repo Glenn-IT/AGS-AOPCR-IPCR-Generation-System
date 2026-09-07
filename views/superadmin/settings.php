@@ -16,8 +16,8 @@ $user = requireAuth(['superadmin']);
   const API_BASE = '<?= BASE_URL ?>api/';
   </script>
   <style>
-    .scope-badge-global     { background: #6366f1; color: #fff; }
-    .scope-badge-department { background: #0ea5e9; color: #fff; }
+    .scope-badge-global     { background: #821131; color: #fff; }
+    .scope-badge-department { background: #E85C0D; color: #fff; }
     .scope-badge-user       { background: #f59e0b; color: #fff; }
     .kpi-assign-group       { display: none; }
     .kpi-assign-group.show  { display: block; }
