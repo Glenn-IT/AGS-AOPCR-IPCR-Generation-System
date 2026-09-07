@@ -87,6 +87,14 @@ function getCategoryBadge(category) {
   return `<span class="badge bg-secondary text-white" style="font-size:0.75rem;font-weight:500;padding:4px 8px">${category || 'Other'}</span>`;
 }
 
+function renderUserAvatar(avatar, defaultInitial = 'U', sizeStyle = '') {
+  if (avatar && (avatar.includes('/') || /\.(jpg|jpeg|png|webp|gif)$/i.test(avatar))) {
+    const src = avatar.startsWith('http') ? avatar : (getBasePath() + avatar.replace(/^\/+/, ''));
+    return `<img src="${src}" alt="Avatar" style="${sizeStyle ? sizeStyle + ';' : ''}width:100%;height:100%;object-fit:cover;border-radius:50%;display:block">`;
+  }
+  return avatar || defaultInitial;
+}
+
 function buildSidebar(role, activePage) {
   const menus = {
     superadmin: [
@@ -151,7 +159,7 @@ function buildSidebar(role, activePage) {
       </div>
       <div style="padding:12px 16px;border-top:1px solid rgba(255,255,255,0.15);margin-top:auto">
         <div style="display:flex;align-items:center;gap:8px">
-          <div style="width:32px;height:32px;background:rgba(255,255,255,0.2);border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:0.7rem;font-weight:700;flex-shrink:0">${session.avatar || 'U'}</div>
+          <div style="width:32px;height:32px;background:rgba(255,255,255,0.2);border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:0.7rem;font-weight:700;flex-shrink:0;overflow:hidden">${renderUserAvatar(session.avatar, 'U')}</div>
           <div style="overflow:hidden;transition:all 0.3s" class="sidebar-user-info">
             <div style="color:#fff;font-size:0.75rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${session.name || 'User'}</div>
             <div style="color:rgba(255,255,255,0.6);font-size:0.65rem">${roleLabels[session.role] || 'User'}</div>
@@ -191,7 +199,7 @@ function buildNavbar(pageTitle, breadcrumbs = []) {
         </button>
         <div class="dropdown">
           <button class="user-avatar-btn dropdown-toggle" data-bs-toggle="dropdown" type="button">
-            <div class="user-avatar">${session.avatar || 'U'}</div>
+            <div class="user-avatar">${renderUserAvatar(session.avatar, 'U')}</div>
             <div class="user-info">
               <div class="user-name">${session.name || 'User'}</div>
               <div class="user-role">${roleLabels[session.role] || 'User'}</div>

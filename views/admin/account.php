@@ -41,7 +41,13 @@ $user = requireAuth(['admin']);
         <div class="col-lg-4">
           <div class="card text-center">
             <div class="card-body p-4">
-              <div class="avatar mx-auto mb-3" style="width:80px;height:80px;font-size:1.5rem" id="profileAvatar"></div>
+              <div class="avatar-upload-wrapper">
+                <div class="avatar" style="font-size:1.5rem" id="profileAvatar"></div>
+                <label for="avatarFileInput" class="avatar-upload-btn" title="Change Profile Picture">
+                  <i class="fa-solid fa-camera"></i>
+                </label>
+                <input type="file" id="avatarFileInput" accept="image/*" style="display:none" onchange="uploadProfilePicture(this)">
+              </div>
               <h5 class="fw-700" id="profileName"></h5>
               <p class="text-muted mb-1" style="font-size:0.85rem" id="profilePosition"></p>
               <span class="badge bg-warning text-dark" id="profileRole"></span>
@@ -228,10 +234,56 @@ $user = requireAuth(['admin']);
   initLayout('admin', 'account', [{ label: 'Account Management' }]);
 
   const roleLabels = { superadmin: 'Super Administrator', admin: 'Administrator', user: 'Faculty / Staff' };
-  document.getElementById('profileAvatar').textContent = session.avatar || '?';
+
+  function updateAvatarUI(avatarVal) {
+    const el = document.getElementById('profileAvatar');
+    if (!el) return;
+    if (avatarVal && (avatarVal.includes('/') || /\.(jpg|jpeg|png|webp|gif)$/i.test(avatarVal))) {
+      const src = avatarVal.startsWith('http') ? avatarVal : (API_BASE + '../' + avatarVal.replace(/^\/+/, ''));
+      el.innerHTML = `<img src="${src}" alt="Avatar">`;
+    } else {
+      el.textContent = avatarVal || '?';
+    }
+  }
+
+  updateAvatarUI(session.avatar);
   document.getElementById('profileName').textContent = session.name;
   document.getElementById('profilePosition').textContent = session.position || '-';
   document.getElementById('profileRole').textContent = roleLabels[session.role] || session.role;
+
+  async function uploadProfilePicture(input) {
+    const file = input.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      showToast('File size must be under 5MB.', 'warning');
+      input.value = '';
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('avatar', file);
+
+    try {
+      showToast('Uploading profile picture...', 'info');
+      const res = await fetch(API_BASE + 'user/upload-avatar.php', {
+        method: 'POST',
+        body: formData,
+        credentials: 'include'
+      });
+      const data = await res.json();
+      if (data.success) {
+        session.avatar = data.avatar;
+        updateAvatarUI(data.avatar);
+        showToast('Profile picture updated successfully!', 'success');
+        setTimeout(() => location.reload(), 1000);
+      } else {
+        showToast(data.error || 'Upload failed.', 'danger');
+      }
+    } catch (err) {
+      showToast('Server error during upload.', 'danger');
+    }
+  }
   document.getElementById('profileDept').textContent = session.department || '-';
   document.getElementById('profileEmail').textContent = session.email || '-';
   document.getElementById('profileLastLogin').textContent = session.lastLogin || '-';

@@ -15,7 +15,10 @@ if (!$name) {
     exit;
 }
 
-$avatar = strtoupper(implode('', array_map(fn($w) => $w[0], array_slice(explode(' ', $name), 0, 2))));
+// Keep image avatar if user has uploaded a profile picture, otherwise compute initials
+$currAvatar = $user['avatar'] ?? '';
+$isImage = (str_starts_with($currAvatar, 'uploads/') || preg_match('/\.(jpg|jpeg|png|webp|gif)$/i', $currAvatar));
+$avatar = $isImage ? $currAvatar : strtoupper(implode('', array_map(fn($w) => $w[0], array_slice(explode(' ', $name), 0, 2))));
 
 $db = getDB();
 $stmt = $db->prepare('UPDATE users SET name=?, email=?, gender=?, position=?, avatar=? WHERE id=?');

@@ -22,18 +22,9 @@ $user = requireAuth(['user']);
 <div id="navbar-container"></div>
 
 <main class="main-content" id="mainContent">
-  <div class="page-header d-flex justify-content-between align-items-start flex-wrap gap-2">
-    <div>
-      <h2><i class="fa-solid fa-file-lines me-2 text-primary"></i>IPCR Form</h2>
-      <p>Individual Performance Commitment and Review | CSU-Piat</p>
-    </div>
-    <div class="d-flex gap-2 no-print flex-wrap">
-      <button class="btn btn-outline-primary btn-sm" id="btnViewEvidence" onclick="openEvidenceModal()"><i class="fa-solid fa-paperclip me-1"></i>View Evidence <span class="badge bg-primary text-white ms-1" id="evidenceCountBadge">0</span></button>
-      <button class="btn btn-outline-primary btn-sm" id="btnUploadEvidence" onclick="openUploadModal()"><i class="fa-solid fa-cloud-arrow-up me-1"></i>Upload Evidence</button>
-      <button class="btn btn-outline-secondary btn-sm" onclick="window.print()"><i class="fa-solid fa-print me-1"></i>Print</button>
-      <button class="btn btn-outline-primary btn-sm" id="btnSaveDraft" onclick="saveIPCR('draft')"><i class="fa-solid fa-floppy-disk me-1"></i>Save Draft</button>
-      <button class="btn btn-success btn-sm" id="btnSubmit" onclick="submitIPCR()"><i class="fa-solid fa-paper-plane me-1"></i>Submit</button>
-    </div>
+  <div class="page-header">
+    <h2><i class="fa-solid fa-file-lines me-2 text-primary"></i>IPCR Form</h2>
+    <p class="mb-0">Individual Performance Commitment and Review | CSU-Piat</p>
   </div>
 
   <div id="noTimelineAlert" class="alert alert-warning d-none no-print" role="alert">
@@ -72,7 +63,7 @@ $user = requireAuth(['user']);
         </div>
         <div class="col-md-4">
           <label class="form-label">Covered Period <span class="text-danger">*</span></label>
-          <input type="text" class="form-control" id="ipcrPeriod" placeholder="e.g. January - June 2026">
+          <input type="text" class="form-control bg-light" id="ipcrPeriod" placeholder="Auto-populated from active timeline" readonly>
         </div>
         <div class="col-md-4">
           <label class="form-label">Date</label>
@@ -169,6 +160,7 @@ $user = requireAuth(['user']);
     <button class="btn btn-outline-primary" id="btnViewEvidence2" onclick="openEvidenceModal()"><i class="fa-solid fa-paperclip me-1"></i>View Evidence <span class="badge bg-primary text-white ms-1" id="evidenceCountBadge2">0</span></button>
     <button class="btn btn-outline-primary" id="btnUploadEvidence2" onclick="openUploadModal()"><i class="fa-solid fa-cloud-arrow-up me-1"></i>Upload Evidence</button>
     <button class="btn btn-outline-secondary" onclick="showPrintPreview()"><i class="fa-solid fa-print me-1"></i>Print Preview</button>
+    <button class="btn btn-outline-primary" id="editBtn2" onclick="enableEdit()" style="display:none"><i class="fa-solid fa-pen me-1"></i>Edit</button>
     <button class="btn btn-outline-primary" id="btnSaveDraft2" onclick="saveIPCR('draft')"><i class="fa-solid fa-floppy-disk me-1"></i>Save Draft</button>
     <button class="btn btn-success" id="btnSubmit2" onclick="submitIPCR()"><i class="fa-solid fa-paper-plane me-1"></i>Submit for Review</button>
   </div>
@@ -265,6 +257,7 @@ $user = requireAuth(['user']);
   let kpiRaw = [];  // flat list — used to detect personally-assigned KPIs
   let activeTimeline = null;
   let existingIpcrId = null;
+  let isReadOnly = false;
   let supervisor = null;
   let currentEvidence = [];
   let _evidenceModal = null;
@@ -547,6 +540,10 @@ $user = requireAuth(['user']);
         loadSection('coreBody', f.items.core, kpi.core, 'core');
         loadSection('strategicBody', f.items.strategic, kpi.strategic, 'strategic');
         loadSection('supportBody', f.items.support, kpi.support, 'support');
+
+        if (['pending', 'reviewed', 'approved'].includes(f.status)) {
+          setReadOnly(true);
+        }
       } else {
         currentEvidence = userFiles;
         loadKpiSection('coreBody', kpi.core, 'core');
@@ -624,6 +621,46 @@ $user = requireAuth(['user']);
     }
   }
 
+  function enforceRatingKeys(e) {
+    if (['e', 'E', '+', '-'].includes(e.key)) {
+      e.preventDefault();
+    }
+  }
+
+  function validateRatingInput(input) {
+    if (!input) return;
+    let v = input.value;
+    if (v === '') return;
+    let num = parseFloat(v);
+    if (isNaN(num)) {
+      input.value = '';
+      return;
+    }
+    if (num > 5) {
+      input.value = 5;
+    } else if (num < 1 && String(v).length >= 1 && num !== 0) {
+      input.value = 1;
+    }
+  }
+
+  function setReadOnly(on) {
+    isReadOnly = on;
+    const allInputs = document.querySelectorAll('#coreBody input, #strategicBody input, #supportBody input, #ipcrDate');
+    allInputs.forEach(i => i.disabled = on);
+    const editBtn = document.getElementById('editBtn2');
+    if (editBtn) editBtn.style.display = on ? 'inline-flex' : 'none';
+    const actionBtns = [document.getElementById('btnSubmit2'), document.getElementById('btnSaveDraft2')];
+    actionBtns.forEach(b => { if (b) b.style.display = on ? 'none' : 'inline-flex'; });
+  }
+
+  function enableEdit() {
+    confirmModal('Allow editing of this IPCR? You can make changes and re-submit for review.', 'Enable Edit', () => {
+      setReadOnly(false);
+      document.getElementById('ipcrStatus').value = 'Draft';
+      showToast('IPCR is now editable. Remember to click Submit for Review after making changes.', 'info');
+    });
+  }
+
   function getEvidenceBtn(categoryKey, mfoText) {
     const matchedFiles = getMatchingEvidence(categoryKey, mfoText || '');
     const count = matchedFiles.length;
@@ -646,9 +683,9 @@ $user = requireAuth(['user']);
         <td style="font-size:0.82rem;background:#fafafa">${item.success_indicator}</td>
         <td style="font-size:0.82rem;background:#fafafa;white-space:nowrap">${item.target || '—'}</td>
         <td><input type="number" class="form-control form-control-sm acc-input" min="1" max="100" step="1" placeholder="1-100" oninput="validateAccInput(this)" onkeydown="enforceDigitsOnly(event)"></td>
-        <td><input type="number" class="form-control form-control-sm rating-q" min="1" max="5" step="0.1" placeholder="1-5" data-kpi="${item.id}" oninput="computeRowRating(this)"></td>
-        <td><input type="number" class="form-control form-control-sm rating-e" min="1" max="5" step="0.1" placeholder="1-5" data-kpi="${item.id}" oninput="computeRowRating(this)"></td>
-        <td><input type="number" class="form-control form-control-sm rating-t" min="1" max="5" step="0.1" placeholder="1-5" data-kpi="${item.id}" oninput="computeRowRating(this)"></td>
+        <td><input type="number" class="form-control form-control-sm rating-q" min="1" max="5" step="0.1" placeholder="1-5" data-kpi="${item.id}" oninput="validateRatingInput(this);computeRowRating(this)" onkeydown="enforceRatingKeys(event)"></td>
+        <td><input type="number" class="form-control form-control-sm rating-e" min="1" max="5" step="0.1" placeholder="1-5" data-kpi="${item.id}" oninput="validateRatingInput(this);computeRowRating(this)" onkeydown="enforceRatingKeys(event)"></td>
+        <td><input type="number" class="form-control form-control-sm rating-t" min="1" max="5" step="0.1" placeholder="1-5" data-kpi="${item.id}" oninput="validateRatingInput(this);computeRowRating(this)" onkeydown="enforceRatingKeys(event)"></td>
         <td class="text-center fw-700 row-avg" style="font-size:0.85rem;background:#fafafa">-</td>
         <td><input type="text" class="form-control form-control-sm row-remarks bg-light" placeholder="Auto" readonly></td>
         <td class="text-center evidence-cell" data-cat="${categoryKey}" data-mfo="${mfoAttr}">${evidenceBtn}</td></tr>`;
@@ -670,9 +707,9 @@ $user = requireAuth(['user']);
         <td style="font-size:0.82rem;background:#fafafa">${kpiItem.success_indicator || item.success_indicator || '-'}</td>
         <td style="font-size:0.82rem;background:#fafafa;white-space:nowrap">${kpiItem.target || item.target || '-'}</td>
         <td><input type="number" class="form-control form-control-sm acc-input" min="1" max="100" step="1" placeholder="1-100" value="${item.accomplishment || ''}" oninput="validateAccInput(this)" onkeydown="enforceDigitsOnly(event)"></td>
-        <td><input type="number" class="form-control form-control-sm rating-q" min="1" max="5" step="0.1" value="${item.q_rating || ''}" data-kpi="${item.kpi_id || ''}" oninput="computeRowRating(this)"></td>
-        <td><input type="number" class="form-control form-control-sm rating-e" min="1" max="5" step="0.1" value="${item.e_rating || ''}" data-kpi="${item.kpi_id || ''}" oninput="computeRowRating(this)"></td>
-        <td><input type="number" class="form-control form-control-sm rating-t" min="1" max="5" step="0.1" value="${item.t_rating || ''}" data-kpi="${item.kpi_id || ''}" oninput="computeRowRating(this)"></td>
+        <td><input type="number" class="form-control form-control-sm rating-q" min="1" max="5" step="0.1" value="${item.q_rating || ''}" data-kpi="${item.kpi_id || ''}" oninput="validateRatingInput(this);computeRowRating(this)" onkeydown="enforceRatingKeys(event)"></td>
+        <td><input type="number" class="form-control form-control-sm rating-e" min="1" max="5" step="0.1" value="${item.e_rating || ''}" data-kpi="${item.kpi_id || ''}" oninput="validateRatingInput(this);computeRowRating(this)" onkeydown="enforceRatingKeys(event)"></td>
+        <td><input type="number" class="form-control form-control-sm rating-t" min="1" max="5" step="0.1" value="${item.t_rating || ''}" data-kpi="${item.kpi_id || ''}" oninput="validateRatingInput(this);computeRowRating(this)" onkeydown="enforceRatingKeys(event)"></td>
         <td class="text-center fw-700 row-avg" style="font-size:0.85rem;background:#fafafa">${avg > 0 ? avg.toFixed(2) : '-'}</td>
         <td><input type="text" class="form-control form-control-sm row-remarks bg-light" value="${item.remarks || (avg > 0 ? getAdjectivalText(avg) : '')}" readonly placeholder="Auto"></td>
         <td class="text-center evidence-cell" data-cat="${categoryKey}" data-mfo="${mfoAttr}">${evidenceBtn}</td></tr>`;
@@ -688,9 +725,9 @@ $user = requireAuth(['user']);
         <td style="font-size:0.82rem;background:#fafafa">${k.success_indicator || '—'}</td>
         <td style="font-size:0.82rem;background:#fafafa;white-space:nowrap">${k.target || '—'}</td>
         <td><input type="number" class="form-control form-control-sm acc-input" min="1" max="100" step="1" placeholder="1-100" oninput="validateAccInput(this)" onkeydown="enforceDigitsOnly(event)"></td>
-        <td><input type="number" class="form-control form-control-sm rating-q" min="1" max="5" step="0.1" placeholder="1-5" data-kpi="${k.id}" oninput="computeRowRating(this)"></td>
-        <td><input type="number" class="form-control form-control-sm rating-e" min="1" max="5" step="0.1" placeholder="1-5" data-kpi="${k.id}" oninput="computeRowRating(this)"></td>
-        <td><input type="number" class="form-control form-control-sm rating-t" min="1" max="5" step="0.1" placeholder="1-5" data-kpi="${k.id}" oninput="computeRowRating(this)"></td>
+        <td><input type="number" class="form-control form-control-sm rating-q" min="1" max="5" step="0.1" placeholder="1-5" data-kpi="${k.id}" oninput="validateRatingInput(this);computeRowRating(this)" onkeydown="enforceRatingKeys(event)"></td>
+        <td><input type="number" class="form-control form-control-sm rating-e" min="1" max="5" step="0.1" placeholder="1-5" data-kpi="${k.id}" oninput="validateRatingInput(this);computeRowRating(this)" onkeydown="enforceRatingKeys(event)"></td>
+        <td><input type="number" class="form-control form-control-sm rating-t" min="1" max="5" step="0.1" placeholder="1-5" data-kpi="${k.id}" oninput="validateRatingInput(this);computeRowRating(this)" onkeydown="enforceRatingKeys(event)"></td>
         <td class="text-center fw-700 row-avg" style="font-size:0.85rem;background:#fafafa">-</td>
         <td><input type="text" class="form-control form-control-sm row-remarks bg-light" placeholder="Auto" readonly></td>
         <td class="text-center evidence-cell" data-cat="${categoryKey}" data-mfo="${mfoAttr}">${evidenceBtn}</td></tr>`;
@@ -1103,10 +1140,10 @@ td, th { border:1px solid #000; padding:1.5px 3px; vertical-align:middle; font-s
 
   function submitIPCR() {
     confirmModal('Are you sure you want to submit your IPCR for review?', 'Submit IPCR', async () => {
-      // Only leave the page if the submission actually went through, so a failure
-      // message stays on screen instead of flashing past.
       if (await saveIPCR('submit')) {
-        setTimeout(() => window.location.href = 'status.php', 1000);
+        document.getElementById('ipcrStatus').value = 'Pending';
+        setReadOnly(true);
+        showToast('IPCR submitted successfully for review! You can click Edit if you need to make changes before approval.', 'success');
       }
     });
   }
