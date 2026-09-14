@@ -10,7 +10,8 @@ Cagayan State University — Piat Campus | Ytawes District, Piat, Cagayan | Foun
 
 A **PHP/MySQL performance evaluation system** for CSU-Piat faculty and staff. The system manages the full academic performance review cycle — from individual IPCR submissions by faculty, to department-level OPCR targets by office heads, to system-wide review and reporting by the campus administrator.
 
-> Full system documentation: [`docs/system-overview.md`](docs/system-overview.md)
+> Full system documentation: [`docs/system-overview.md`](docs/system-overview.md)  
+> System Synchronization & Memory Map: [`systememory.md`](systememory.md)
 
 ---
 
@@ -124,6 +125,7 @@ AGS-AOPCR-IPCR-Generation-System/
 │
 ├── uploads/evidence/           ← Stored IPCR supporting documents
 │
+├── systememory.md              ← Master synchronization registry & dependency memory
 └── docs/
     ├── system-overview.md      ← Full system documentation
     ├── audit.md
