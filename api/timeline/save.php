@@ -10,11 +10,11 @@ $year     = trim($input['academic_year'] ?? '');
 $semester = trim($input['semester'] ?? '');
 $start    = $input['start_date'] ?? null;
 $end      = $input['end_date'] ?? null;
-$deadline = $input['submission_deadline'] ?? null;
+$deadline = $input['target_accomplishment_date'] ?? ($input['submission_deadline'] ?? null);
 $status   = in_array($input['status'] ?? '', ['open', 'closed']) ? $input['status'] : 'open';
 
 if (!$year || !$semester) {
-    echo json_encode(['success' => false, 'error' => 'Academic year and covered period are required.']);
+    echo json_encode(['success' => false, 'error' => 'Academic year and rating period are required.']);
     exit;
 }
 

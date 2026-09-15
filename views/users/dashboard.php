@@ -74,7 +74,7 @@ $user = requireAuth(['user']);
     </div>
     <div class="table-responsive">
       <table class="table">
-        <thead><tr><th>#</th><th>Covered Period</th><th>Date Submitted</th><th>Rating</th><th>Status</th><th>Action</th></tr></thead>
+        <thead><tr><th>#</th><th>Rating Period</th><th>Date Submitted</th><th>Rating</th><th>Status</th><th>Action</th></tr></thead>
         <tbody id="myFormsTable"></tbody>
       </table>
     </div>
@@ -143,7 +143,7 @@ $user = requireAuth(['user']);
     if (res.active_timeline) {
       const tl = res.active_timeline;
       document.getElementById('timelineAlert').style.removeProperty('display');
-      document.getElementById('timelineAlertMsg').innerHTML = `<strong>Active Timeline:</strong> ${tl.academic_year} — ${tl.semester} | Submission Deadline: <strong>${formatDate(tl.submission_deadline)}</strong>`;
+      document.getElementById('timelineAlertMsg').innerHTML = `<strong>Active Timeline:</strong> ${tl.academic_year} — ${tl.semester} | Target Accomplishment Date: <strong>${formatDate(tl.submission_deadline)}</strong>`;
     }
   }
 

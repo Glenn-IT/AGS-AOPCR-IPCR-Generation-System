@@ -35,7 +35,7 @@ if ($action === 'submit') {
         exit;
     }
     if (!$covered_period) {
-        echo json_encode(['success' => false, 'error' => 'Covered period is required.']);
+        echo json_encode(['success' => false, 'error' => 'Rating period is required.']);
         exit;
     }
 }

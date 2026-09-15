@@ -42,12 +42,12 @@ if ($action === 'submit') {
         exit;
     }
     if ($covered_period === '') {
-        echo json_encode(['success' => false, 'error' => 'Covered period is required.']);
+        echo json_encode(['success' => false, 'error' => 'Rating period is required.']);
         exit;
     }
     // Enforce deadline
     if (!empty($timeline['submission_deadline']) && date('Y-m-d') > $timeline['submission_deadline']) {
-        echo json_encode(['success' => false, 'error' => 'Submission deadline has passed (' . $timeline['submission_deadline'] . ').']);
+        echo json_encode(['success' => false, 'error' => 'Target accomplishment date has passed (' . $timeline['submission_deadline'] . ').']);
         exit;
     }
 }

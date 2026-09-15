@@ -89,7 +89,7 @@ $user = requireAuth(['admin']);
     </div>
     <div class="table-responsive">
       <table class="table">
-        <thead><tr><th>Employee</th><th>Position</th><th>Covered Period</th><th>Status</th><th>Rating</th><th>Date</th><th>Action</th></tr></thead>
+        <thead><tr><th>Employee</th><th>Position</th><th>Rating Period</th><th>Status</th><th>Rating</th><th>Date</th><th>Action</th></tr></thead>
         <tbody id="submissionsTable"></tbody>
       </table>
     </div>

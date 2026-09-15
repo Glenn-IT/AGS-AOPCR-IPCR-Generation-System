@@ -112,7 +112,7 @@ $user = requireAuth(['superadmin']);
         <div class="table-responsive">
           <table class="table">
             <thead><tr>
-              <th>Employee</th><th>Department</th><th>Covered Period</th><th>Status</th><th>Rating</th>
+              <th>Employee</th><th>Department</th><th>Rating Period</th><th>Status</th><th>Rating</th>
             </tr></thead>
             <tbody id="recentIPCR"></tbody>
           </table>
@@ -143,7 +143,7 @@ $user = requireAuth(['superadmin']);
               <span class="badge bg-success" id="activeTimeline">Loading...</span>
             </li>
             <li class="list-group-item d-flex justify-content-between align-items-center py-3">
-              <span><i class="fa-solid fa-calendar-check me-2 text-primary"></i>Submission Deadline</span>
+              <span><i class="fa-solid fa-calendar-check me-2 text-primary"></i>Target Accomplishment Date</span>
               <span class="text-danger fw-600" id="submissionDeadline">-</span>
             </li>
             <li class="list-group-item d-flex justify-content-between align-items-center py-3">

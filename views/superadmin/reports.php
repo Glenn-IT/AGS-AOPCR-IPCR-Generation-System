@@ -144,7 +144,7 @@ $user = requireAuth(['superadmin']);
     <div class="table-responsive">
       <table class="table">
         <thead><tr>
-          <th>#</th><th>Type</th><th>Name</th><th>Department</th><th>Covered Period</th><th>Rating</th><th>Adjectival Rating</th><th>Status</th><th>Date</th><th class="no-print">Action</th>
+          <th>#</th><th>Type</th><th>Name</th><th>Department</th><th>Rating Period</th><th>Rating</th><th>Adjectival Rating</th><th>Status</th><th>Date</th><th class="no-print">Action</th>
         </tr></thead>
         <tbody id="reportsTable"></tbody>
       </table>
@@ -292,7 +292,7 @@ $user = requireAuth(['superadmin']);
         <div class="col-6"><strong>Name:</strong> ${form.name}</div>
         <div class="col-6"><strong>Department:</strong> ${form.department_name || '-'}</div>
         <div class="col-6"><strong>Position:</strong> ${form.position || '-'}</div>
-        <div class="col-6"><strong>Covered Period:</strong> ${form.covered_period}</div>
+        <div class="col-6"><strong>Rating Period:</strong> ${form.covered_period}</div>
         <div class="col-6"><strong>Submitted:</strong> ${formatDate(form.date_submitted)}</div>
         <div class="col-6"><strong>Academic Year:</strong> ${form.academic_year || '-'} ${form.semester || ''}</div>
         <div class="col-6"><strong>Status:</strong> ${getStatusBadge(form.status)}</div>
@@ -303,7 +303,7 @@ $user = requireAuth(['superadmin']);
   }
 
   function exportReport() {
-    const rows = [['Type', 'Name', 'Department', 'Covered Period', 'Rating', 'Adjectival Rating', 'Status', 'Date']];
+    const rows = [['Type', 'Name', 'Department', 'Rating Period', 'Rating', 'Adjectival Rating', 'Status', 'Date']];
     allForms.forEach(f => {
       const r = parseFloat(f.overall_rating) || 0;
       const adj = r > 0 ? getAdjectivalText(r) : '-';
@@ -434,7 +434,7 @@ th { background:#f0f0f0; font-weight:bold; text-transform:uppercase; font-size:8
       <th>Type</th>
       <th>Name</th>
       <th>Department</th>
-      <th>Covered Period</th>
+      <th>Rating Period</th>
       <th>Submitted</th>
       <th>Rating</th>
       <th>Adjectival Rating</th>

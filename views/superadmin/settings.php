@@ -53,7 +53,7 @@ $user = requireAuth(['superadmin']);
         <div class="table-responsive">
           <table class="table">
             <thead><tr>
-              <th>#</th><th>Academic Year</th><th>Covered Period</th><th>Start Date</th><th>End Date</th><th>Submission Deadline</th><th>Status</th><th>Actions</th>
+              <th>#</th><th>Academic Year</th><th>Rating Period</th><th>Start Date</th><th>End Date</th><th>Target Accomplishment Date</th><th>Status</th><th>Actions</th>
             </tr></thead>
             <tbody id="timelineTable"></tbody>
           </table>
@@ -120,11 +120,11 @@ $user = requireAuth(['superadmin']);
         <input type="hidden" id="tlId">
         <div class="mb-3">
           <label class="form-label">Academic Year <span class="text-danger">*</span></label>
-          <input type="text" class="form-control" id="tlYear" placeholder="e.g. 2026 or 2026-2027">
+          <input type="text" class="form-control" id="tlYear" placeholder="e.g. 2026 or 2026-2027" oninput="autoPickDateRange()">
         </div>
         <div class="mb-3">
-          <label class="form-label">Covered Period <span class="text-danger">*</span></label>
-          <select class="form-select" id="tlSem">
+          <label class="form-label">Rating Period <span class="text-danger">*</span></label>
+          <select class="form-select" id="tlSem" onchange="autoPickDateRange()">
             <option value="January to June">January to June</option>
             <option value="July to December">July to December</option>
           </select>
@@ -140,7 +140,7 @@ $user = requireAuth(['superadmin']);
           </div>
         </div>
         <div class="mb-3 mt-2">
-          <label class="form-label">Submission Deadline</label>
+          <label class="form-label">Target Accomplishment Date</label>
           <input type="date" class="form-control" id="tlDeadline">
         </div>
         <div class="mb-3">
@@ -315,15 +315,46 @@ $user = requireAuth(['superadmin']);
     });
   }
 
+  function autoPickDateRange() {
+    const sem = document.getElementById('tlSem').value;
+    const rawYear = document.getElementById('tlYear').value.trim();
+    const currentYear = new Date().getFullYear();
+    
+    // Extract 4-digit numbers: e.g. "2026" or "2026-2027"
+    const years = rawYear.match(/\d{4}/g) || [];
+    let startYear = years[0] ? parseInt(years[0], 10) : currentYear;
+    let endYear = startYear;
+
+    const lowerSem = sem.toLowerCase();
+    if (lowerSem.includes('january') || lowerSem.includes('jun')) {
+      if (years.length >= 2) {
+        startYear = parseInt(years[1], 10);
+        endYear = parseInt(years[1], 10);
+      }
+      document.getElementById('tlStart').value = `${startYear}-01-01`;
+      document.getElementById('tlEnd').value = `${endYear}-06-30`;
+    } else if (lowerSem.includes('july') || lowerSem.includes('dec')) {
+      document.getElementById('tlStart').value = `${startYear}-07-01`;
+      document.getElementById('tlEnd').value = `${endYear}-12-31`;
+    }
+  }
+
   function openTimelineModal(data = null) {
     document.getElementById('tlId').value = data?.id || '';
-    document.getElementById('tlYear').value = data?.academic_year || '';
+    const currentYear = new Date().getFullYear();
+    document.getElementById('tlYear').value = data?.academic_year || currentYear;
     document.getElementById('tlSem').value = data?.semester || 'January to June';
     document.getElementById('tlStart').value = data?.start_date || '';
     document.getElementById('tlEnd').value = data?.end_date || '';
     document.getElementById('tlDeadline').value = data?.submission_deadline || '';
     document.getElementById('tlStatus').value = data?.status || 'open';
     document.getElementById('timelineModalTitle').innerHTML = `<i class="fa-solid fa-calendar me-2"></i>${data ? 'Edit' : 'Add'} Timeline`;
+    
+    // Auto-pick start and end dates when adding new timeline
+    if (!data) {
+      autoPickDateRange();
+    }
+    
     new bootstrap.Modal(document.getElementById('timelineModal')).show();
   }
 
@@ -333,10 +364,20 @@ $user = requireAuth(['superadmin']);
     const id   = document.getElementById('tlId').value;
     const year = document.getElementById('tlYear').value.trim();
     if (!year) { showToast('Academic Year is required.', 'warning'); return; }
+    const deadlineVal = document.getElementById('tlDeadline').value;
     const res = await fetch(API_BASE + 'timeline/save.php', {
       method: 'POST', credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: id || undefined, academic_year: year, semester: document.getElementById('tlSem').value, start_date: document.getElementById('tlStart').value, end_date: document.getElementById('tlEnd').value, submission_deadline: document.getElementById('tlDeadline').value, status: document.getElementById('tlStatus').value })
+      body: JSON.stringify({
+        id: id || undefined,
+        academic_year: year,
+        semester: document.getElementById('tlSem').value,
+        start_date: document.getElementById('tlStart').value,
+        end_date: document.getElementById('tlEnd').value,
+        submission_deadline: deadlineVal,
+        target_accomplishment_date: deadlineVal,
+        status: document.getElementById('tlStatus').value
+      })
     }).then(r => r.json()).catch(() => null);
     if (res?.success) {
       bootstrap.Modal.getInstance(document.getElementById('timelineModal')).hide();

@@ -46,7 +46,7 @@ $user = requireAuth(['user']);
     </div>
     <div class="table-responsive">
       <table class="table">
-        <thead><tr><th>#</th><th>Covered Period</th><th>Date Submitted</th><th>Overall Rating</th><th>Rating Label</th><th>Status</th><th>Action</th></tr></thead>
+        <thead><tr><th>#</th><th>Rating Period</th><th>Date Submitted</th><th>Overall Rating</th><th>Rating Label</th><th>Status</th><th>Action</th></tr></thead>
         <tbody id="statusTable"></tbody>
       </table>
     </div>
@@ -136,7 +136,7 @@ $user = requireAuth(['user']);
 
       const rating = parseFloat(latest.overall_rating) || 0;
       const msgMap = {
-        pending:     `<i class="fa-solid fa-clock text-warning me-2"></i><strong>Your IPCR is pending review.</strong> Covered Period: <strong>${latest.covered_period}</strong>`,
+        pending:     `<i class="fa-solid fa-clock text-warning me-2"></i><strong>Your IPCR is pending review.</strong> Rating Period: <strong>${latest.covered_period}</strong>`,
         reviewed:    `<i class="fa-solid fa-search text-primary me-2"></i><strong>Your IPCR is under review.</strong> Please wait for the final decision.`,
         approved:    `<i class="fa-solid fa-check-circle text-success me-2"></i><strong>Your IPCR has been approved!</strong> Overall Rating: <strong>${rating.toFixed(2)}</strong>. ${getRatingLabel(rating)}`,
         disapproved: `<i class="fa-solid fa-times-circle text-danger me-2"></i><strong>Your IPCR was disapproved.</strong> Remarks: ${latest.remarks || 'No remarks.'}`,
@@ -176,7 +176,7 @@ $user = requireAuth(['user']);
       <div class="col-6"><strong>Name:</strong> ${f.user_name}</div>
       <div class="col-6"><strong>Department:</strong> ${f.department_name || '-'}</div>
       <div class="col-6"><strong>Position:</strong> ${f.position || '-'}</div>
-      <div class="col-6"><strong>Period:</strong> ${f.covered_period}</div>
+      <div class="col-6"><strong>Rating Period:</strong> ${f.covered_period}</div>
       <div class="col-6"><strong>Status:</strong> ${getStatusBadge(f.status)}</div>
       <div class="col-6"><strong>Rating:</strong> ${rating > 0 ? rating.toFixed(2) : '-'} ${rating > 0 ? '— ' + getRatingLabel(rating) : ''}</div>
     </div>`;

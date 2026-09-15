@@ -70,7 +70,7 @@ $user = requireAuth(['superadmin']);
           <input type="text" class="form-control bg-light" id="accPosition" readonly>
         </div>
         <div class="col-md-4">
-          <label class="form-label">Covered Period</label>
+          <label class="form-label">Rating Period</label>
           <input type="text" class="form-control bg-light" id="accPeriod" readonly>
         </div>
         <div class="col-md-4">

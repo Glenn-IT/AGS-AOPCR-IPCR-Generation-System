@@ -108,7 +108,7 @@ $user = requireAuth(['admin']);
           <input type="text" class="form-control bg-light" id="ipcrPosition" readonly>
         </div>
         <div class="col-md-4">
-          <label class="form-label fw-500">Covered Period <span class="text-danger">*</span></label>
+          <label class="form-label fw-500">Rating Period <span class="text-danger">*</span></label>
           <input type="text" class="form-control" id="ipcrPeriod" placeholder="e.g. January – June 2026">
         </div>
         <div class="col-md-4">
@@ -877,7 +877,7 @@ $user = requireAuth(['admin']);
     if (activeTimeline) {
       const deadline = new Date(activeTimeline.submission_deadline);
       const daysLeft = Math.ceil((deadline - new Date()) / 86400000);
-      showToast(daysLeft > 0 ? `Deadline: ${formatDate(activeTimeline.submission_deadline)} (${daysLeft} day(s) left)` : 'Submission deadline has passed.', daysLeft > 0 ? 'info' : 'warning');
+      showToast(daysLeft > 0 ? `Target Accomplishment Date: ${formatDate(activeTimeline.submission_deadline)} (${daysLeft} day(s) left)` : 'Target accomplishment date has passed.', daysLeft > 0 ? 'info' : 'warning');
 
       // Try to load existing form for this timeline
       const existRes = await fetch(API_BASE + 'ipcr/get.php?timeline_id=' + activeTimeline.id, { credentials: 'include' }).then(r => r.json()).catch(() => null);
@@ -940,7 +940,7 @@ $user = requireAuth(['admin']);
 
   async function saveIPCR(action = 'draft') {
     const period = document.getElementById('ipcrPeriod').value.trim();
-    if (!period) { showToast('Please enter the covered period.', 'warning'); return false; }
+    if (!period) { showToast('Please enter the rating period.', 'warning'); return false; }
     if (!activeTimeline) { showToast('No open submission period found.', 'warning'); return false; }
 
     const coreRows = getRows('coreBody');
@@ -987,7 +987,7 @@ $user = requireAuth(['admin']);
       const deadline = new Date(activeTimeline.submission_deadline);
       deadline.setHours(23, 59, 59);
       if (new Date() > deadline) {
-        showToast('The submission deadline has passed. Contact the Super Administrator.', 'warning');
+        showToast('The target accomplishment date has passed. Contact the Super Administrator.', 'warning');
         return;
       }
     }
@@ -1011,7 +1011,7 @@ $user = requireAuth(['admin']);
     const period = document.getElementById('ipcrPeriod').value.trim();
     const date   = document.getElementById('ipcrDate').value;
 
-    if (!period) { showToast('Please enter the covered period before previewing.', 'warning'); return; }
+    if (!period) { showToast('Please enter the rating period before previewing.', 'warning'); return; }
 
     function ep(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 

@@ -130,7 +130,7 @@ $user = requireAuth(['superadmin']);
           <input type="text" class="form-control bg-light" id="opcrPosition" readonly>
         </div>
         <div class="col-md-4">
-          <label class="form-label fw-500">Covered Period <span class="text-danger">*</span></label>
+          <label class="form-label fw-500">Rating Period <span class="text-danger">*</span></label>
           <input type="text" class="form-control" id="opcrPeriod" placeholder="e.g. January – June 2026">
         </div>
         <div class="col-md-4">
@@ -923,7 +923,7 @@ $user = requireAuth(['superadmin']);
     if (activeTimeline) {
       const deadline = new Date(activeTimeline.submission_deadline);
       const daysLeft = Math.ceil((deadline - new Date()) / 86400000);
-      showToast(daysLeft > 0 ? `Active Period: ${activeTimeline.academic_year} (${activeTimeline.semester})` : 'Submission deadline has passed.', 'info');
+      showToast(daysLeft > 0 ? `Active Period: ${activeTimeline.academic_year} (${activeTimeline.semester})` : 'Target accomplishment date has passed.', 'info');
 
       // Try loading backend OPCR form
       const existRes = await fetch(API_BASE + 'opcr/get.php?timeline_id=' + activeTimeline.id, { credentials: 'include' }).then(r => r.json()).catch(() => null);
@@ -1002,7 +1002,7 @@ $user = requireAuth(['superadmin']);
 
   async function saveOPCR(action = 'draft') {
     const period = document.getElementById('opcrPeriod').value.trim();
-    if (!period) { showToast('Please enter the covered period.', 'warning'); return false; }
+    if (!period) { showToast('Please enter the rating period.', 'warning'); return false; }
 
     const coreRows = getRows('coreBody');
     if (coreRows.length === 0) { showToast('At least one Core Function row is required.', 'warning'); return false; }
@@ -1102,7 +1102,7 @@ $user = requireAuth(['superadmin']);
     const date   = document.getElementById('opcrDate').value;
     const sem    = document.getElementById('opcrSemester').value;
 
-    if (!period) { showToast('Please enter the covered period before previewing.', 'warning'); return; }
+    if (!period) { showToast('Please enter the rating period before previewing.', 'warning'); return; }
 
     function ep(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 

@@ -147,7 +147,7 @@ $user = requireAuth(['admin']);
     <div class="table-responsive">
       <table class="table">
         <thead><tr>
-          <th>#</th><th>Employee</th><th>Department</th><th>Covered Period</th><th>Submission Date</th><th>Rating</th><th>Adjectival Rating</th><th>Status</th><th class="no-print">Action</th>
+          <th>#</th><th>Employee</th><th>Department</th><th>Rating Period</th><th>Submission Date</th><th>Rating</th><th>Adjectival Rating</th><th>Status</th><th class="no-print">Action</th>
         </tr></thead>
         <tbody id="reportsTable"></tbody>
       </table>
@@ -295,7 +295,7 @@ $user = requireAuth(['admin']);
   }
 
   function exportCSV() {
-    const rows = [['Name', 'Department', 'Position', 'Covered Period', 'Date Submitted', 'Rating', 'Adjectival Rating', 'Status']];
+    const rows = [['Name', 'Department', 'Position', 'Rating Period', 'Date Submitted', 'Rating', 'Adjectival Rating', 'Status']];
     allForms.forEach(f => {
       const r = parseFloat(f.overall_rating) || 0;
       const adj = r > 0 ? getAdjectivalText(r) : '-';
@@ -425,7 +425,7 @@ th { background:#f0f0f0; font-weight:bold; text-transform:uppercase; font-size:8
       <th style="width:30px">#</th>
       <th>Employee Name</th>
       <th>Position</th>
-      <th>Covered Period</th>
+      <th>Rating Period</th>
       <th>Submitted</th>
       <th>Rating</th>
       <th>Adjectival Rating</th>

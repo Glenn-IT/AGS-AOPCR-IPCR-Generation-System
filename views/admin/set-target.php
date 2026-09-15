@@ -52,7 +52,7 @@ $user = requireAuth(['admin']);
           <input type="text" class="form-control" id="opcrPosition" readonly>
         </div>
         <div class="col-md-4">
-          <label class="form-label">Covered Period</label>
+          <label class="form-label">Rating Period</label>
           <input type="text" class="form-control" id="opcrPeriod" placeholder="e.g. January - June 2026">
         </div>
         <div class="col-md-4">
@@ -320,7 +320,7 @@ $user = requireAuth(['admin']);
 
   async function saveOPCR(action = 'draft') {
     const period = document.getElementById('opcrPeriod').value.trim();
-    if (!period) { showToast('Please enter the covered period.', 'warning'); return; }
+    if (!period) { showToast('Please enter the rating period.', 'warning'); return; }
     if (!activeTimeline) { showToast('No open submission period found.', 'warning'); return; }
 
     const payload = {
@@ -351,7 +351,7 @@ $user = requireAuth(['admin']);
 
   function confirmOPCR() {
     const period = document.getElementById('opcrPeriod').value.trim();
-    if (!period) { showToast('Please enter the covered period.', 'warning'); return; }
+    if (!period) { showToast('Please enter the rating period.', 'warning'); return; }
     confirmModal('Are you sure you want to submit this OPCR for Super Admin review?', 'Submit OPCR', () => saveOPCR('submit'));
   }
 
@@ -371,7 +371,7 @@ $user = requireAuth(['admin']);
     const period = document.getElementById('opcrPeriod').value.trim();
     const date   = document.getElementById('opcrDate').value;
 
-    if (!period) { showToast('Please enter the covered period before previewing.', 'warning'); return; }
+    if (!period) { showToast('Please enter the rating period before previewing.', 'warning'); return; }
 
     function ep(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 

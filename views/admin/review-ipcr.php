@@ -54,7 +54,7 @@ $user = requireAuth(['admin']);
             <th>#</th>
             <th>Employee</th>
             <th>Position</th>
-            <th>Covered Period</th>
+            <th>Rating Period</th>
             <th>Date Submitted</th>
             <th>Overall Rating</th>
             <th>Status</th>
@@ -201,7 +201,7 @@ $user = requireAuth(['admin']);
       <div class="col-md-4"><strong>Employee:</strong> ${f.user_name}</div>
       <div class="col-md-4"><strong>Position:</strong> ${f.position || '-'}</div>
       <div class="col-md-4"><strong>Department:</strong> ${f.department_name || '-'}</div>
-      <div class="col-md-4"><strong>Covered Period:</strong> ${f.covered_period}</div>
+      <div class="col-md-4"><strong>Rating Period:</strong> ${f.covered_period}</div>
       <div class="col-md-4"><strong>Date Submitted:</strong> ${f.date_submitted || '-'}</div>
       <div class="col-md-4 d-flex align-items-center justify-content-between">
         <span><strong>Current Status:</strong> ${getStatusBadge(f.status)}</span>
