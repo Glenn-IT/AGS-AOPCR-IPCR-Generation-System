@@ -189,15 +189,9 @@ $user = requireAuth(['admin']);
             placeholder="Describe the measurable success indicator for this KPI..."></textarea>
         </div>
 
-        <div class="row g-2">
-          <div class="col-md-6">
-            <label class="form-label">Target</label>
-            <input type="text" class="form-control" id="kpiTarget" placeholder="e.g. 100%, 5 outputs">
-          </div>
-          <div class="col-md-6">
-            <label class="form-label">Measure</label>
-            <input type="text" class="form-control" id="kpiMeasure" placeholder="e.g. Quality / Timeliness">
-          </div>
+        <div class="mb-3">
+          <label class="form-label">Target</label>
+          <input type="text" class="form-control" id="kpiTarget" placeholder="e.g. 100%, 5 outputs">
         </div>
       </div>
       <div class="modal-footer">
@@ -330,7 +324,6 @@ $user = requireAuth(['admin']);
               <th>MFO / PAP</th>
               <th>Success Indicator</th>
               <th>Target</th>
-              <th>Measure</th>
               <th>Source</th>
               <th style="width:80px">Actions</th>
             </tr>
@@ -351,7 +344,6 @@ $user = requireAuth(['admin']);
                 <td class="fw-semibold">${item.mfo || '—'}</td>
                 <td style="max-width:200px;white-space:normal">${item.success_indicator || '—'}</td>
                 <td>${item.target || '—'}</td>
-                <td>${item.measure || '—'}</td>
                 <td>${getOwnerTag(item)}</td>
                 <td class="action-col">
                   <div class="d-flex gap-1">
@@ -381,7 +373,6 @@ $user = requireAuth(['admin']);
     document.getElementById('kpiMfo').value        = data?.mfo || '';
     document.getElementById('kpiIndicator').value  = data?.success_indicator || '';
     document.getElementById('kpiTarget').value     = data?.target || '';
-    document.getElementById('kpiMeasure').value    = data?.measure || '';
     document.getElementById('kpiModalTitle').innerHTML =
       `<i class="fa-solid fa-bullseye me-2"></i>${data ? 'Edit' : 'Add'} KPI`;
     onScopeChange();
@@ -434,7 +425,7 @@ $user = requireAuth(['admin']);
       mfo,
       success_indicator: indicator,
       target:            document.getElementById('kpiTarget').value,
-      measure:           document.getElementById('kpiMeasure').value,
+      measure:           '',
       assigned_to:       scope === 'user' ? assignedTo : null,
     };
 

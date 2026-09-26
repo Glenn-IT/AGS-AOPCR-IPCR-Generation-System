@@ -179,6 +179,19 @@ $user = requireAuth(['user']);
       <div class="col-6"><strong>Rating Period:</strong> ${f.covered_period}</div>
       <div class="col-6"><strong>Status:</strong> ${getStatusBadge(f.status)}</div>
       <div class="col-6"><strong>Rating:</strong> ${rating > 0 ? rating.toFixed(2) : '-'} ${rating > 0 ? '— ' + getRatingLabel(rating) : ''}</div>
+    </div>
+    <div class="card mb-3 border-primary shadow-sm">
+      <div class="card-header py-2 d-flex align-items-center justify-content-between flex-wrap gap-2" style="background:#FFF4E6">
+        <div class="d-flex align-items-center gap-2">
+          <i class="fa-solid fa-scale-balanced text-primary"></i>
+          <strong style="font-size:0.85rem">WEIGHT According to ETL: <span class="badge bg-primary ms-1">${f.etl_type || "6 ETL"}</span></strong>
+        </div>
+        <div class="d-flex align-items-center gap-2 flex-wrap" style="font-size:0.8rem">
+          <span class="badge bg-white text-dark border px-2 py-1">Core: <strong>${f.weight_core || 50}%</strong> (× ${((f.weight_core || 50)/100).toFixed(2)})</span>
+          <span class="badge bg-white text-dark border px-2 py-1">Strategic: <strong>${f.weight_strategic || 25}%</strong> (× ${((f.weight_strategic || 25)/100).toFixed(2)})</span>
+          <span class="badge bg-white text-dark border px-2 py-1">Support: <strong>${f.weight_support || 25}%</strong> (× ${((f.weight_support || 25)/100).toFixed(2)})</span>
+        </div>
+      </div>
     </div>`;
     ['core', 'strategic', 'support'].forEach(sec => {
       const items = f.items[sec];
@@ -231,6 +244,27 @@ $user = requireAuth(['user']);
     // Reviewer if the form has been reviewed, else the department head; blank if neither.
     const supName  = ep(f.supervisor_name);
     const finalAvg = parseFloat(f.overall_rating) || 0;
+    const etlName  = f.etl_type || '6 ETL';
+    const wCore    = (f.weight_core ? parseFloat(f.weight_core) : 50) / 100;
+    const wStrat   = (f.weight_strategic ? parseFloat(f.weight_strategic) : 25) / 100;
+    const wSupp    = (f.weight_support ? parseFloat(f.weight_support) : 25) / 100;
+
+    const coreItems = f.items?.core || [];
+    const stratItems = f.items?.strategic || [];
+    const suppItems = f.items?.support || [];
+
+    const cAvgs = coreItems.map(r => parseFloat(r.rating)).filter(v => v > 0);
+    const coreAvg = cAvgs.length ? (cAvgs.reduce((a,b) => a+b, 0) / cAvgs.length) : null;
+
+    const sAvgs = stratItems.map(r => parseFloat(r.rating)).filter(v => v > 0);
+    const stratAvg = sAvgs.length ? (sAvgs.reduce((a,b) => a+b, 0) / sAvgs.length) : null;
+
+    const supAvgs = suppItems.map(r => parseFloat(r.rating)).filter(v => v > 0);
+    const suppAvg = supAvgs.length ? (supAvgs.reduce((a,b) => a+b, 0) / supAvgs.length) : null;
+
+    const coreWeighted = coreAvg !== null ? (coreAvg * wCore) : null;
+    const stratWeighted = stratAvg !== null ? (stratAvg * wStrat) : null;
+    const suppWeighted = suppAvg !== null ? (suppAvg * wSupp) : null;
     const logoTag = _printLogo
       ? `<img src="${_printLogo}" class="logo" alt="CSU Logo">`
       : `<div class="logo-ph"></div>`;
@@ -324,6 +358,52 @@ td, th { border:1px solid #000; padding:1.5px 3px; vertical-align:middle; font-s
       <div class="date-line">Date:&nbsp;<span style="border-bottom:1px solid #000;padding:0 4px">${ep(f.date_submitted)}</span></div>
     </div>
   </div>
+  <table style="width:100%;border-collapse:collapse;margin:0;font-size:7pt;text-align:center;border-bottom:1px solid #000;">
+    <thead>
+      <tr style="background:#e5e7eb">
+        <th style="text-align:left;padding:2px 4px;font-size:7pt;">WEIGHT According to ETL</th>
+        <th style="padding:2px;font-size:7pt;${etlName==='18 ETL'?'background:#dbeafe;font-weight:700;border:1.5px solid #1d4ed8;':''}">18 ETL</th>
+        <th style="padding:2px;font-size:7pt;${etlName==='15 ETL'?'background:#dbeafe;font-weight:700;border:1.5px solid #1d4ed8;':''}">15 ETL</th>
+        <th style="padding:2px;font-size:7pt;${etlName==='12 ETL'?'background:#dbeafe;font-weight:700;border:1.5px solid #1d4ed8;':''}">12 ETL</th>
+        <th style="padding:2px;font-size:7pt;${etlName==='9 ETL'?'background:#dbeafe;font-weight:700;border:1.5px solid #1d4ed8;':''}">9 ETL</th>
+        <th style="padding:2px;font-size:7pt;${etlName==='6 ETL'?'background:#dbeafe;font-weight:700;border:1.5px solid #1d4ed8;':''}">6 ETL</th>
+        <th style="padding:2px;font-size:7pt;${etlName==='3 ETL'?'background:#dbeafe;font-weight:700;border:1.5px solid #1d4ed8;':''}">3 ETL</th>
+        <th style="padding:2px;font-size:7pt;${etlName==='0 ETL'?'background:#dbeafe;font-weight:700;border:1.5px solid #1d4ed8;':''}">0 ETL</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td style="text-align:left;padding:2px 4px;font-weight:600;">Core Functions</td>
+        <td style="${etlName==='18 ETL'?'font-weight:700;background:#eff6ff;':''}">10</td>
+        <td style="${etlName==='15 ETL'?'font-weight:700;background:#eff6ff;':''}">20</td>
+        <td style="${etlName==='12 ETL'?'font-weight:700;background:#eff6ff;':''}">30</td>
+        <td style="${etlName==='9 ETL'?'font-weight:700;background:#eff6ff;':''}">40</td>
+        <td style="${etlName==='6 ETL'?'font-weight:700;background:#eff6ff;':''}">50</td>
+        <td style="${etlName==='3 ETL'?'font-weight:700;background:#eff6ff;':''}">60</td>
+        <td style="${etlName==='0 ETL'?'font-weight:700;background:#eff6ff;':''}">70</td>
+      </tr>
+      <tr>
+        <td style="text-align:left;padding:2px 4px;font-weight:600;">Strategic Priorities</td>
+        <td style="${etlName==='18 ETL'?'font-weight:700;background:#eff6ff;':''}">50–65</td>
+        <td style="${etlName==='15 ETL'?'font-weight:700;background:#eff6ff;':''}">40–55</td>
+        <td style="${etlName==='12 ETL'?'font-weight:700;background:#eff6ff;':''}">35–50</td>
+        <td style="${etlName==='9 ETL'?'font-weight:700;background:#eff6ff;':''}">30–40</td>
+        <td style="${etlName==='6 ETL'?'font-weight:700;background:#eff6ff;':''}">25</td>
+        <td style="${etlName==='3 ETL'?'font-weight:700;background:#eff6ff;':''}">20</td>
+        <td style="${etlName==='0 ETL'?'font-weight:700;background:#eff6ff;':''}">15</td>
+      </tr>
+      <tr>
+        <td style="text-align:left;padding:2px 4px;font-weight:600;">Support Functions</td>
+        <td style="${etlName==='18 ETL'?'font-weight:700;background:#eff6ff;':''}">25–40</td>
+        <td style="${etlName==='15 ETL'?'font-weight:700;background:#eff6ff;':''}">25–40</td>
+        <td style="${etlName==='12 ETL'?'font-weight:700;background:#eff6ff;':''}">20–35</td>
+        <td style="${etlName==='9 ETL'?'font-weight:700;background:#eff6ff;':''}">20–30</td>
+        <td style="${etlName==='6 ETL'?'font-weight:700;background:#eff6ff;':''}">25</td>
+        <td style="${etlName==='3 ETL'?'font-weight:700;background:#eff6ff;':''}">20</td>
+        <td style="${etlName==='0 ETL'?'font-weight:700;background:#eff6ff;':''}">15</td>
+      </tr>
+    </tbody>
+  </table>
   <table class="rev-table">
     <tr>
       <th style="width:35%">REVIEWED BY</th>
@@ -385,9 +465,32 @@ td, th { border:1px solid #000; padding:1.5px 3px; vertical-align:middle; font-s
     </tbody>
   </table>
   <table class="summary-table">
-    <tr><td class="lbl" style="width:20%">AVERAGE RATING:</td><td class="val">${finalAvg > 0 ? finalAvg.toFixed(2) : ''}</td></tr>
-    <tr><td class="lbl">FINAL AVERAGE RATING:</td><td class="val">${finalAvg > 0 ? finalAvg.toFixed(2) : ''}</td></tr>
-    <tr><td class="lbl">ADJECTIVAL RATING:</td><td class="val">${finalAvg > 0 ? adj(finalAvg) : ''}</td></tr>
+    <tr>
+      <td class="lbl" style="width:30%">CORE FUNCTION (Weight: ${(wCore*100).toFixed(0)}%):</td>
+      <td class="val" style="width:20%">${coreAvg !== null ? coreAvg.toFixed(2) : '—'}</td>
+      <td class="lbl" style="width:30%">WEIGHTED CORE (${coreAvg !== null ? coreAvg.toFixed(2) : '0'} × ${wCore.toFixed(2)}):</td>
+      <td class="val" style="width:20%">${coreWeighted !== null ? coreWeighted.toFixed(2) : '—'}</td>
+    </tr>
+    <tr>
+      <td class="lbl">STRATEGIC PRIORITIES (Weight: ${(wStrat*100).toFixed(0)}%):</td>
+      <td class="val">${stratAvg !== null ? stratAvg.toFixed(2) : '—'}</td>
+      <td class="lbl">WEIGHTED STRATEGIC (${stratAvg !== null ? stratAvg.toFixed(2) : '0'} × ${wStrat.toFixed(2)}):</td>
+      <td class="val">${stratWeighted !== null ? stratWeighted.toFixed(2) : '—'}</td>
+    </tr>
+    <tr>
+      <td class="lbl">SUPPORT FUNCTION (Weight: ${(wSupp*100).toFixed(0)}%):</td>
+      <td class="val">${suppAvg !== null ? suppAvg.toFixed(2) : '—'}</td>
+      <td class="lbl">WEIGHTED SUPPORT (${suppAvg !== null ? suppAvg.toFixed(2) : '0'} × ${wSupp.toFixed(2)}):</td>
+      <td class="val">${suppWeighted !== null ? suppWeighted.toFixed(2) : '—'}</td>
+    </tr>
+    <tr style="background:#f4f4f4">
+      <td class="lbl" colspan="3">FINAL WEIGHTED AVERAGE RATING (${ep(etlName)}):</td>
+      <td class="val" style="font-size:8.5pt">${finalAvg > 0 ? finalAvg.toFixed(2) : ''}</td>
+    </tr>
+    <tr style="background:#f4f4f4">
+      <td class="lbl" colspan="3">ADJECTIVAL RATING:</td>
+      <td class="val" style="font-size:8.5pt">${finalAvg > 0 ? adj(finalAvg) : ''}</td>
+    </tr>
   </table>
   <table class="sig-tbl">
     <tr>

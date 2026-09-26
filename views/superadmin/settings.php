@@ -215,15 +215,9 @@ $user = requireAuth(['superadmin']);
           <label class="form-label">Success Indicator <span class="text-danger">*</span></label>
           <textarea class="form-control" id="kpiIndicator" rows="2" placeholder="Describe the measurable success indicator..."></textarea>
         </div>
-        <div class="row g-2">
-          <div class="col-6">
-            <label class="form-label">Target</label>
-            <input type="text" class="form-control" id="kpiTarget" placeholder="e.g. 100%">
-          </div>
-          <div class="col-6">
-            <label class="form-label">Measure</label>
-            <input type="text" class="form-control" id="kpiMeasure" placeholder="e.g. Quality / Timeliness">
-          </div>
+        <div class="mb-3">
+          <label class="form-label">Target</label>
+          <input type="text" class="form-control" id="kpiTarget" placeholder="e.g. 100%">
         </div>
       </div>
       <div class="modal-footer">
@@ -444,7 +438,6 @@ $user = requireAuth(['superadmin']);
               <th>MFO / PAP</th>
               <th>Success Indicator</th>
               <th>Target</th>
-              <th>Measure</th>
               <th>Created By</th>
               <th style="width:80px">Actions</th>
             </tr>
@@ -460,7 +453,6 @@ $user = requireAuth(['superadmin']);
                 <td class="fw-semibold">${item.mfo || '—'}</td>
                 <td style="max-width:220px;white-space:normal">${item.success_indicator}</td>
                 <td>${item.target || '—'}</td>
-                <td>${item.measure || '—'}</td>
                 <td class="text-muted">${item.created_by_name || '—'}</td>
                 <td>
                   <div class="d-flex gap-1">
@@ -484,7 +476,6 @@ $user = requireAuth(['superadmin']);
     document.getElementById('kpiMfo').value         = data?.mfo || '';
     document.getElementById('kpiIndicator').value   = data?.success_indicator || '';
     document.getElementById('kpiTarget').value      = data?.target || '';
-    document.getElementById('kpiMeasure').value     = data?.measure || '';
     document.getElementById('kpiModalTitle').innerHTML = `<i class="fa-solid fa-bullseye me-2"></i>${data ? 'Edit' : 'Add'} KPI`;
     onScopeChange();
     new bootstrap.Modal(document.getElementById('kpiModal')).show();
@@ -528,7 +519,7 @@ $user = requireAuth(['superadmin']);
       mfo,
       success_indicator: indicator,
       target:           document.getElementById('kpiTarget').value,
-      measure:          document.getElementById('kpiMeasure').value,
+      measure:          '',
       assigned_to:      scope === 'user'       ? assignedTo : null,
       department_id:    scope === 'department' ? deptId     : null,
     };

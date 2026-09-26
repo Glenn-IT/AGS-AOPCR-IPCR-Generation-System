@@ -68,6 +68,15 @@ function ensureIpcrColumns(PDO $db): void {
                 ADD COLUMN budget DECIMAL(12,2) NOT NULL DEFAULT 0.00,
                 ADD COLUMN measure VARCHAR(200) DEFAULT NULL");
         }
+        $etlCols = $db->query("SHOW COLUMNS FROM ipcr_forms LIKE 'etl_type'")->fetchAll();
+        if (empty($etlCols)) {
+            $db->exec("ALTER TABLE ipcr_forms 
+                ADD COLUMN etl_type VARCHAR(20) DEFAULT '6 ETL',
+                ADD COLUMN weight_core DECIMAL(5,2) DEFAULT 50.00,
+                ADD COLUMN weight_strategic DECIMAL(5,2) DEFAULT 25.00,
+                ADD COLUMN weight_support DECIMAL(5,2) DEFAULT 25.00");
+        }
+        $db->exec("ALTER TABLE ipcr_items MODIFY COLUMN rating DECIMAL(3,2) DEFAULT NULL");
     } catch (Exception $e) {
         // Silently fail if table not present
     }

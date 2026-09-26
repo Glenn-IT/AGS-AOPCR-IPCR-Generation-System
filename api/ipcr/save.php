@@ -20,6 +20,10 @@ $action        = $body['action'] ?? 'draft';   // 'draft' or 'submit'
 $ipcr_id       = intval($body['ipcr_id'] ?? 0);
 $timeline_id   = intval($body['timeline_id'] ?? 0);
 $covered_period = trim($body['covered_period'] ?? '');
+$etl_type      = trim($body['etl_type'] ?? '6 ETL');
+$weight_core   = isset($body['weight_core']) ? floatval($body['weight_core']) : 50.0;
+$weight_strategic = isset($body['weight_strategic']) ? floatval($body['weight_strategic']) : 25.0;
+$weight_support = isset($body['weight_support']) ? floatval($body['weight_support']) : 25.0;
 $core          = $body['core'] ?? [];
 $strategic     = $body['strategic'] ?? [];
 $support       = $body['support'] ?? [];
@@ -74,8 +78,8 @@ try {
             exit;
         }
 
-        $db->prepare('UPDATE ipcr_forms SET timeline_id=?, covered_period=?, status=?, date_submitted=?, updated_at=NOW() WHERE id=?')
-           ->execute([$timeline_id, $covered_period, $status, $action === 'submit' ? date('Y-m-d') : ($existing['date_submitted'] ?? null), $ipcr_id]);
+        $db->prepare('UPDATE ipcr_forms SET timeline_id=?, covered_period=?, status=?, date_submitted=?, etl_type=?, weight_core=?, weight_strategic=?, weight_support=?, updated_at=NOW() WHERE id=?')
+           ->execute([$timeline_id, $covered_period, $status, $action === 'submit' ? date('Y-m-d') : ($existing['date_submitted'] ?? null), $etl_type, $weight_core, $weight_strategic, $weight_support, $ipcr_id]);
 
         $db->prepare('DELETE FROM ipcr_items WHERE ipcr_form_id = ?')->execute([$ipcr_id]);
     } else {
@@ -88,8 +92,8 @@ try {
             exit;
         }
 
-        $db->prepare('INSERT INTO ipcr_forms (user_id, timeline_id, covered_period, status, date_submitted, updated_at) VALUES (?,?,?,?,?,NOW())')
-           ->execute([$user['id'], $timeline_id, $covered_period, $status, $action === 'submit' ? date('Y-m-d') : null]);
+        $db->prepare('INSERT INTO ipcr_forms (user_id, timeline_id, covered_period, status, date_submitted, etl_type, weight_core, weight_strategic, weight_support, updated_at) VALUES (?,?,?,?,?,?,?,?,?,NOW())')
+           ->execute([$user['id'], $timeline_id, $covered_period, $status, $action === 'submit' ? date('Y-m-d') : null, $etl_type, $weight_core, $weight_strategic, $weight_support]);
 
         $ipcr_id = $db->lastInsertId();
     }
@@ -153,10 +157,43 @@ try {
         }
     }
 
-    // Keep the form's overall rating in step with its items
-    $avgStmt = $db->prepare('SELECT AVG(rating) FROM ipcr_items WHERE ipcr_form_id = ? AND rating IS NOT NULL');
-    $avgStmt->execute([$ipcr_id]);
-    $avg = round(floatval($avgStmt->fetchColumn()), 2);
+    // Keep the form's overall rating in step with its items using ETL weights
+    $secAvgs = [];
+    foreach (['core', 'strategic', 'support'] as $stype) {
+        $stmtSec = $db->prepare('SELECT AVG(rating) FROM ipcr_items WHERE ipcr_form_id = ? AND function_type = ? AND rating IS NOT NULL');
+        $stmtSec->execute([$ipcr_id, $stype]);
+        $val = $stmtSec->fetchColumn();
+        $secAvgs[$stype] = ($val !== null && $val !== false && is_numeric($val)) ? floatval($val) : null;
+    }
+
+    $wCore = $weight_core / 100.0;
+    $wStrat = $weight_strategic / 100.0;
+    $wSupp = $weight_support / 100.0;
+
+    $weightedSum = 0;
+    $activeWeights = 0;
+
+    if ($secAvgs['core'] !== null) {
+        $weightedSum += $secAvgs['core'] * $wCore;
+        $activeWeights += $wCore;
+    }
+    if ($secAvgs['strategic'] !== null) {
+        $weightedSum += $secAvgs['strategic'] * $wStrat;
+        $activeWeights += $wStrat;
+    }
+    if ($secAvgs['support'] !== null) {
+        $weightedSum += $secAvgs['support'] * $wSupp;
+        $activeWeights += $wSupp;
+    }
+
+    if ($activeWeights > 0) {
+        $avg = round($weightedSum / $activeWeights, 2);
+    } else {
+        $avgStmt = $db->prepare('SELECT AVG(rating) FROM ipcr_items WHERE ipcr_form_id = ? AND rating IS NOT NULL');
+        $avgStmt->execute([$ipcr_id]);
+        $valFallback = $avgStmt->fetchColumn();
+        $avg = ($valFallback !== null && $valFallback !== false && is_numeric($valFallback)) ? round(floatval($valFallback), 2) : 0.00;
+    }
     $db->prepare('UPDATE ipcr_forms SET overall_rating = ? WHERE id = ?')->execute([$avg, $ipcr_id]);
 
     // Notify on submit
@@ -185,6 +222,10 @@ try {
     $db->commit();
     echo json_encode(['success' => true, 'ipcr_id' => $ipcr_id, 'status' => $status,
         'overall_rating' => $avg,
+        'etl_type' => $etl_type,
+        'weight_core' => $weight_core,
+        'weight_strategic' => $weight_strategic,
+        'weight_support' => $weight_support,
         'message' => $action === 'submit' ? 'IPCR submitted successfully!' : 'Draft saved.']);
 } catch (Exception $e) {
     $db->rollBack();

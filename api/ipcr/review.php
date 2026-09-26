@@ -94,10 +94,37 @@ try {
         }
     }
 
-    // Compute overall rating from all items
-    $avgStmt = $db->prepare('SELECT AVG(rating) AS avg_rating FROM ipcr_items WHERE ipcr_form_id = ? AND rating IS NOT NULL');
-    $avgStmt->execute([$ipcr_id]);
-    $avg = round(floatval($avgStmt->fetchColumn()), 2);
+    // Compute overall rating using the form's ETL weights
+    $formWeightStmt = $db->prepare('SELECT etl_type, weight_core, weight_strategic, weight_support FROM ipcr_forms WHERE id = ?');
+    $formWeightStmt->execute([$ipcr_id]);
+    $fw = $formWeightStmt->fetch() ?: [];
+
+    $wCore = (isset($fw['weight_core']) && $fw['weight_core'] > 0) ? floatval($fw['weight_core']) / 100.0 : 0.50;
+    $wStrat = (isset($fw['weight_strategic']) && $fw['weight_strategic'] > 0) ? floatval($fw['weight_strategic']) / 100.0 : 0.25;
+    $wSupp = (isset($fw['weight_support']) && $fw['weight_support'] > 0) ? floatval($fw['weight_support']) / 100.0 : 0.25;
+
+    $secAvgs = [];
+    foreach (['core', 'strategic', 'support'] as $stype) {
+        $stmtSec = $db->prepare('SELECT AVG(rating) FROM ipcr_items WHERE ipcr_form_id = ? AND function_type = ? AND rating IS NOT NULL');
+        $stmtSec->execute([$ipcr_id, $stype]);
+        $val = $stmtSec->fetchColumn();
+        $secAvgs[$stype] = ($val !== null && $val !== false && is_numeric($val)) ? floatval($val) : null;
+    }
+
+    $weightedSum = 0;
+    $activeWeights = 0;
+    if ($secAvgs['core'] !== null) { $weightedSum += $secAvgs['core'] * $wCore; $activeWeights += $wCore; }
+    if ($secAvgs['strategic'] !== null) { $weightedSum += $secAvgs['strategic'] * $wStrat; $activeWeights += $wStrat; }
+    if ($secAvgs['support'] !== null) { $weightedSum += $secAvgs['support'] * $wSupp; $activeWeights += $wSupp; }
+
+    if ($activeWeights > 0) {
+        $avg = round($weightedSum / $activeWeights, 2);
+    } else {
+        $avgStmt = $db->prepare('SELECT AVG(rating) AS avg_rating FROM ipcr_items WHERE ipcr_form_id = ? AND rating IS NOT NULL');
+        $avgStmt->execute([$ipcr_id]);
+        $avgVal = $avgStmt->fetchColumn();
+        $avg = ($avgVal !== null && $avgVal !== false && is_numeric($avgVal)) ? round(floatval($avgVal), 2) : 0.00;
+    }
 
     // Update form status
     $db->prepare('UPDATE ipcr_forms SET status=?, overall_rating=?, remarks=?, reviewed_by=?, reviewed_at=NOW() WHERE id=?')

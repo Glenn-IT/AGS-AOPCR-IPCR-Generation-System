@@ -75,6 +75,21 @@ $user = requireAuth(['admin']);
     </div>
   </div>
 
+  <!-- Employee ETL Preset & Category Weights -->
+  <div class="card mb-3 border-primary shadow-sm d-none" id="accEtlCard">
+    <div class="card-header py-2 d-flex align-items-center justify-content-between flex-wrap gap-2" style="background:#FFF4E6">
+      <div class="d-flex align-items-center gap-2">
+        <i class="fa-solid fa-scale-balanced text-primary"></i>
+        <strong style="font-size:0.85rem">WEIGHT According to ETL: <span class="badge bg-primary ms-1" id="accEtlBadge">6 ETL</span></strong>
+      </div>
+      <div class="d-flex align-items-center gap-2 flex-wrap" style="font-size:0.8rem">
+        <span class="badge bg-white text-dark border px-2 py-1">Core Functions: <strong id="accWeightCore">50%</strong></span>
+        <span class="badge bg-white text-dark border px-2 py-1">Strategic Priorities: <strong id="accWeightStrategic">25%</strong></span>
+        <span class="badge bg-white text-dark border px-2 py-1">Support Functions: <strong id="accWeightSupport">25%</strong></span>
+      </div>
+    </div>
+  </div>
+
   <!-- Form Sections -->
   <div id="formSections" class="d-none">
     <!-- Core Function -->
@@ -86,6 +101,17 @@ $user = requireAuth(['admin']);
             <tr><th style="width:110px">MFO/KRA</th><th>Success Indicator</th><th style="width:100px">Target</th><th>Accomplishment</th><th style="width:70px">Q</th><th style="width:70px">E</th><th style="width:70px">T</th><th style="width:80px">Average</th><th>Remarks</th><th style="width:110px;text-align:center">Evidence</th></tr>
           </thead>
           <tbody id="coreRatingBody"></tbody>
+          <tfoot>
+            <tr class="bg-light">
+              <td colspan="7" class="text-end fw-600" style="font-size:0.82rem">
+                Average — Core Function: <span id="acc_core_avg" class="fw-700 text-dark ms-1">—</span>
+                <span class="mx-2 text-muted">|</span>
+                Weighted Average:
+              </td>
+              <td id="acc_core_weighted" class="text-center fw-700 text-primary" style="font-size:0.88rem">—</td>
+              <td colspan="2"></td>
+            </tr>
+          </tfoot>
         </table>
       </div>
     </div>
@@ -99,6 +125,17 @@ $user = requireAuth(['admin']);
             <tr><th style="width:110px">MFO/KRA</th><th>Success Indicator</th><th style="width:100px">Target</th><th>Accomplishment</th><th style="width:70px">Q</th><th style="width:70px">E</th><th style="width:70px">T</th><th style="width:80px">Average</th><th>Remarks</th><th style="width:110px;text-align:center">Evidence</th></tr>
           </thead>
           <tbody id="strategicRatingBody"></tbody>
+          <tfoot>
+            <tr class="bg-light">
+              <td colspan="7" class="text-end fw-600" style="font-size:0.82rem">
+                Average — Strategic Function: <span id="acc_strategic_avg" class="fw-700 text-dark ms-1">—</span>
+                <span class="mx-2 text-muted">|</span>
+                Weighted Average:
+              </td>
+              <td id="acc_strategic_weighted" class="text-center fw-700 text-primary" style="font-size:0.88rem">—</td>
+              <td colspan="2"></td>
+            </tr>
+          </tfoot>
         </table>
       </div>
     </div>
@@ -112,6 +149,17 @@ $user = requireAuth(['admin']);
             <tr><th style="width:110px">MFO/KRA</th><th>Success Indicator</th><th style="width:100px">Target</th><th>Accomplishment</th><th style="width:70px">Q</th><th style="width:70px">E</th><th style="width:70px">T</th><th style="width:80px">Average</th><th>Remarks</th><th style="width:110px;text-align:center">Evidence</th></tr>
           </thead>
           <tbody id="supportRatingBody"></tbody>
+          <tfoot>
+            <tr class="bg-light">
+              <td colspan="7" class="text-end fw-600" style="font-size:0.82rem">
+                Average — Support Function: <span id="acc_support_avg" class="fw-700 text-dark ms-1">—</span>
+                <span class="mx-2 text-muted">|</span>
+                Weighted Average:
+              </td>
+              <td id="acc_support_weighted" class="text-center fw-700 text-primary" style="font-size:0.88rem">—</td>
+              <td colspan="2"></td>
+            </tr>
+          </tfoot>
         </table>
       </div>
     </div>
@@ -273,6 +321,12 @@ $user = requireAuth(['admin']);
     loadRatingRows('strategicRatingBody', f.items.strategic || [], 'strategic');
     loadRatingRows('supportRatingBody',   f.items.support   || [], 'support');
 
+    document.getElementById('accEtlBadge').textContent = f.etl_type || '6 ETL';
+    document.getElementById('accWeightCore').textContent = (f.weight_core || 50) + '%';
+    document.getElementById('accWeightStrategic').textContent = (f.weight_strategic || 25) + '%';
+    document.getElementById('accWeightSupport').textContent = (f.weight_support || 25) + '%';
+    document.getElementById('accEtlCard').classList.remove('d-none');
+
     document.getElementById('formSections').classList.remove('d-none');
     document.getElementById('emptyState').style.display = 'none';
     computeOverall();
@@ -347,13 +401,46 @@ $user = requireAuth(['admin']);
   }
 
   function computeOverall() {
-    const avgCells = document.querySelectorAll('.row-avg');
-    let total = 0, count = 0;
-    avgCells.forEach(cell => {
-      const v = parseFloat(cell.textContent);
-      if (!isNaN(v) && v > 0) { total += v; count++; }
-    });
-    const avg = count > 0 ? (total / count) : 0;
+    const f = currentForm;
+    const wCore = (f && f.weight_core ? parseFloat(f.weight_core) : 50) / 100;
+    const wStrat = (f && f.weight_strategic ? parseFloat(f.weight_strategic) : 25) / 100;
+    const wSupp = (f && f.weight_support ? parseFloat(f.weight_support) : 25) / 100;
+
+    function getSecAvg(tbodyId) {
+      const cells = document.querySelectorAll(`#${tbodyId} .row-avg`);
+      const vals = Array.from(cells).map(c => parseFloat(c.textContent)).filter(v => !isNaN(v) && v > 0);
+      return vals.length ? (vals.reduce((a,b) => a+b, 0) / vals.length) : null;
+    }
+
+    const cAvg = getSecAvg('coreRatingBody');
+    const sAvg = getSecAvg('strategicRatingBody');
+    const supAvg = getSecAvg('supportRatingBody');
+
+    const cW = cAvg !== null ? (cAvg * wCore) : null;
+    const sW = sAvg !== null ? (sAvg * wStrat) : null;
+    const supW = supAvg !== null ? (supAvg * wSupp) : null;
+
+    const elCAvg = document.getElementById('acc_core_avg');
+    const elCW = document.getElementById('acc_core_weighted');
+    if (elCAvg) elCAvg.textContent = cAvg !== null ? cAvg.toFixed(2) : '—';
+    if (elCW) elCW.textContent = cW !== null ? cW.toFixed(2) : '—';
+
+    const elSAvg = document.getElementById('acc_strategic_avg');
+    const elSW = document.getElementById('acc_strategic_weighted');
+    if (elSAvg) elSAvg.textContent = sAvg !== null ? sAvg.toFixed(2) : '—';
+    if (elSW) elSW.textContent = sW !== null ? sW.toFixed(2) : '—';
+
+    const elSupAvg = document.getElementById('acc_support_avg');
+    const elSupW = document.getElementById('acc_support_weighted');
+    if (elSupAvg) elSupAvg.textContent = supAvg !== null ? supAvg.toFixed(2) : '—';
+    if (elSupW) elSupW.textContent = supW !== null ? supW.toFixed(2) : '—';
+
+    let sum = 0, weightSum = 0;
+    if (cW !== null) { sum += cW; weightSum += wCore; }
+    if (sW !== null) { sum += sW; weightSum += wStrat; }
+    if (supW !== null) { sum += supW; weightSum += wSupp; }
+
+    const avg = weightSum > 0 ? (sum / weightSum) : 0;
     document.getElementById('overallRatingDisplay').textContent = avg > 0 ? avg.toFixed(2) : '-';
     document.getElementById('ratingLabelDisplay').innerHTML = avg > 0 ? getRatingLabel(avg) : '';
   }
