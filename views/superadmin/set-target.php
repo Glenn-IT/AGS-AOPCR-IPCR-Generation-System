@@ -164,7 +164,6 @@ $user = requireAuth(['superadmin']);
             <li><strong>Success Indicator</strong> — A specific, measurable commitment (Target + Measure).</li>
             <li><strong>Target</strong> — The numeric goal or percentage you commit to achieve.</li>
             <li><strong>Budget Required</strong> — Estimated budget in Philippine Peso (0 if none needed).</li>
-            <li><strong>Measure</strong> — How it will be measured: <em>Q</em>=Quality, <em>Qn</em>=Quantity, <em>T</em>=Timeliness, <em>E</em>=Efficiency.</li>
             <li><strong>Actual Accomplishment</strong> — Actual accomplishment percentage (1-100%) or numeric output.</li>
             <li><strong>Rating Scale</strong> — 5: Outstanding (4.50–5.00), 4: Very Satisfactory (3.50–4.49), 3: Satisfactory (2.50–3.49), 2: Unsatisfactory (1.50–2.49), 1: Poor (1.00–1.49).</li>
           </ul>
@@ -189,7 +188,6 @@ $user = requireAuth(['superadmin']);
             <th style="min-width:200px">Success Indicator</th>
             <th style="min-width:90px">Target</th>
             <th style="min-width:90px">Budget (₱)</th>
-            <th style="min-width:80px">Measure</th>
             <th style="min-width:100px">Actual Acc.</th>
             <th style="width:65px">Q</th>
             <th style="width:65px">E</th>
@@ -202,7 +200,7 @@ $user = requireAuth(['superadmin']);
         <tbody id="coreBody"></tbody>
         <tfoot>
           <tr class="avg-row">
-            <td colspan="9" class="text-end fw-600" style="font-size:0.83rem">Average Rating — Core Function:</td>
+            <td colspan="8" class="text-end fw-600" style="font-size:0.83rem">Average Rating — Core Function:</td>
             <td id="coreAvg" class="text-center fw-700">—</td>
             <td></td>
             <td></td>
@@ -228,7 +226,6 @@ $user = requireAuth(['superadmin']);
             <th style="min-width:200px">Success Indicator</th>
             <th style="min-width:90px">Target</th>
             <th style="min-width:90px">Budget (₱)</th>
-            <th style="min-width:80px">Measure</th>
             <th style="min-width:100px">Actual Acc.</th>
             <th style="width:65px">Q</th>
             <th style="width:65px">E</th>
@@ -241,7 +238,7 @@ $user = requireAuth(['superadmin']);
         <tbody id="strategicBody"></tbody>
         <tfoot>
           <tr class="avg-row">
-            <td colspan="9" class="text-end fw-600" style="font-size:0.83rem">Average Rating — Strategic Function:</td>
+            <td colspan="8" class="text-end fw-600" style="font-size:0.83rem">Average Rating — Strategic Function:</td>
             <td id="strategicAvg" class="text-center fw-700">—</td>
             <td></td>
             <td></td>
@@ -267,7 +264,6 @@ $user = requireAuth(['superadmin']);
             <th style="min-width:200px">Success Indicator</th>
             <th style="min-width:90px">Target</th>
             <th style="min-width:90px">Budget (₱)</th>
-            <th style="min-width:80px">Measure</th>
             <th style="min-width:100px">Actual Acc.</th>
             <th style="width:65px">Q</th>
             <th style="width:65px">E</th>
@@ -280,7 +276,7 @@ $user = requireAuth(['superadmin']);
         <tbody id="supportBody"></tbody>
         <tfoot>
           <tr class="avg-row">
-            <td colspan="9" class="text-end fw-600" style="font-size:0.83rem">Average Rating — Support Function:</td>
+            <td colspan="8" class="text-end fw-600" style="font-size:0.83rem">Average Rating — Support Function:</td>
             <td id="supportAvg" class="text-center fw-700">—</td>
             <td></td>
             <td></td>
@@ -509,25 +505,6 @@ $user = requireAuth(['superadmin']);
     });
   }
 
-  function validateAccInput(input) {
-    if (!input) return;
-    let v = input.value;
-    if (v === '') return;
-    let num = parseInt(v, 10);
-    if (isNaN(num)) {
-      input.value = '';
-      return;
-    }
-    if (num > 100) input.value = 100;
-    else if (num < 1) input.value = 1;
-    else input.value = num;
-  }
-
-  function enforceDigitsOnly(e) {
-    if (['e', 'E', '+', '-', '.'].includes(e.key)) {
-      e.preventDefault();
-    }
-  }
 
   function esc(val) {
     return (val || '').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -592,18 +569,28 @@ $user = requireAuth(['superadmin']);
     const uploadBtn = `<button type="button" class="btn btn-sm btn-outline-primary" title="Upload Evidence for this MFO" onclick="openUploadModalFor('${categoryKey}', '${mfoSafe}')"><i class="fa-solid fa-cloud-arrow-up"></i></button>`;
     const evidenceBtn = `<div class="d-inline-flex align-items-center justify-content-center gap-1">${viewBtn}${uploadBtn}</div>`;
 
+    const targetVal = (data.target || '').trim();
+    const isNA = /^(n\/?a|not applicable|none|n\s*a)$/i.test(targetVal);
+    const pctMatch = targetVal.match(/(\d+)\s*%/);
+    const isNum = /^\d+$/.test(targetVal);
+    const accType = (isNA || (!pctMatch && !isNum)) ? 'text' : 'number';
+    const accMode = (isNA || (!pctMatch && !isNum)) ? 'text' : (pctMatch ? 'percentage' : 'numeric');
+    const accMax = pctMatch ? parseInt(pctMatch[1], 10) : (isNum ? parseInt(targetVal, 10) : '');
+    const accPh = (isNA || (!pctMatch && !isNum)) ? (isNA ? 'Enter text / N/A' : 'Accomplishment...') : (pctMatch ? `1-${accMax}%` : `1-${accMax}`);
+    const maxAttr = accMax ? `min="1" max="${accMax}" step="1"` : '';
+    const pctAttr = pctMatch ? `data-max-pct="${accMax}"` : (isNum ? `data-max-num="${accMax}"` : '');
+
     tr.innerHTML = `
       <td><input type="text" class="form-control form-control-sm mfo-input" value="${esc(mfoVal)}" placeholder="e.g. Instruction" oninput="updateRowEvidenceBtn(this)"></td>
       <td><input type="text" class="form-control form-control-sm si-input" value="${esc(data.success_indicator || data.successIndicator || '')}" placeholder="Success indicator..."></td>
-      <td><input type="text" class="form-control form-control-sm target-input text-center" style="width:90px" value="${esc(data.target || '')}" placeholder="100%"></td>
+      <td><input type="text" class="form-control form-control-sm target-input text-center" style="width:90px" value="${esc(data.target || '')}" placeholder="100%" oninput="syncRowTargetAndAcc(this.closest('tr'))"></td>
       <td><input type="number" class="form-control form-control-sm budget-input text-end" style="width:90px" value="${data.budget || 0}" min="0" placeholder="0"></td>
-      <td><input type="text" class="form-control form-control-sm measure-input text-center" style="width:80px" value="${esc(data.measure || 'Q/T/E')}" placeholder="Q/T/E"></td>
-      <td><input type="number" class="form-control form-control-sm acc-input text-center" min="1" max="100" step="1" style="width:90px" value="${esc(actual)}" placeholder="1-100" oninput="validateAccInput(this)" onkeydown="enforceDigitsOnly(event)"></td>
+      <td><input type="${accType}" class="form-control form-control-sm acc-input text-center" ${maxAttr} data-mode="${accMode}" ${pctAttr} style="width:90px" value="${esc(actual)}" placeholder="${accPh}" oninput="validateAccInput(this)" onkeydown="enforceDigitsOnly(event)"></td>
       <td><input type="number" class="form-control form-control-sm rating-q text-center" min="1" max="5" step="0.1" style="width:60px" value="${q}" placeholder="1-5" oninput="computeRowRating(this)"></td>
       <td><input type="number" class="form-control form-control-sm rating-e text-center" min="1" max="5" step="0.1" style="width:60px" value="${e}" placeholder="1-5" oninput="computeRowRating(this)"></td>
       <td><input type="number" class="form-control form-control-sm rating-t text-center" min="1" max="5" step="0.1" style="width:60px" value="${t}" placeholder="1-5" oninput="computeRowRating(this)"></td>
       <td class="text-center fw-700 row-avg" style="font-size:0.85rem;background:#fafafa">${avg > 0 ? avg.toFixed(2) : '-'}</td>
-      <td><input type="text" class="form-control form-control-sm row-remarks bg-light" value="${esc(remarks)}" placeholder="Auto" readonly></td>
+      <td><select class="form-select form-select-sm row-remarks" style="min-width:130px">${renderRemarksOptions(remarks)}</select></td>
       <td class="text-center evidence-cell">${evidenceBtn}</td>`;
     return tr;
   }
@@ -628,7 +615,6 @@ $user = requireAuth(['superadmin']);
       const siInp      = tr.querySelector('.si-input');
       const targetInp  = tr.querySelector('.target-input');
       const budgetInp  = tr.querySelector('.budget-input');
-      const measureInp = tr.querySelector('.measure-input');
       const accInp     = tr.querySelector('.acc-input');
       const qInp       = tr.querySelector('.rating-q');
       const eInp       = tr.querySelector('.rating-e');
@@ -647,7 +633,7 @@ $user = requireAuth(['superadmin']);
         success_indicator: siInp?.value.trim() || '',
         target:            targetInp?.value.trim() || '',
         budget:            budgetInp?.value || '0',
-        measure:           measureInp?.value.trim() || '',
+        measure:           '',
         actual:            accInp?.value.trim() || '',
         q_rating:          q,
         e_rating:          e,
@@ -672,10 +658,8 @@ $user = requireAuth(['superadmin']);
     if (vals.length > 0) {
       const avg = vals.reduce((a, b) => a + b, 0) / vals.length;
       avgCell.textContent = avg.toFixed(2);
-      remarksInp.value = getAdjectivalText(avg);
     } else {
       avgCell.textContent = '-';
-      remarksInp.value = '';
     }
     computeAverages();
   }
@@ -757,7 +741,7 @@ $user = requireAuth(['superadmin']);
 
       const actionHtml = filePath
         ? `<a href="${filePath}" target="_blank" class="btn btn-outline-primary btn-sm"><i class="fa-solid fa-eye me-1"></i>View / Open</a>`
-        : `<button type="button" class="btn btn-outline-secondary btn-sm" onclick="showToast('Physical file not saved on server yet. Please upload via Evidence Upload.', 'warning')"><i class="fa-solid fa-file me-1"></i>Document Details</button>`;
+        : `<button type="button" class="btn btn-outline-secondary btn-sm" onclick="showToast('Physical file not saved on server yet. Please upload supporting evidence in the form.', 'warning')"><i class="fa-solid fa-file me-1"></i>Document Details</button>`;
 
       tbody.innerHTML += `<tr>
         <td>${i + 1}</td>
@@ -1113,7 +1097,6 @@ $user = requireAuth(['superadmin']);
         const siInp      = tr.querySelector('.si-input');
         const targetInp  = tr.querySelector('.target-input');
         const budgetInp  = tr.querySelector('.budget-input');
-        const measureInp = tr.querySelector('.measure-input');
         const accInp     = tr.querySelector('.acc-input');
         const qInp       = tr.querySelector('.rating-q');
         const eInp       = tr.querySelector('.rating-e');
@@ -1125,7 +1108,7 @@ $user = requireAuth(['superadmin']);
           si:      siInp?.value.trim() || '',
           target:  targetInp?.value.trim() || '',
           budget:  budgetInp?.value || '0',
-          measure: measureInp?.value.trim() || '',
+          measure: '',
           actual:  accInp?.value.trim() || '',
           q:       qInp?.value || '',
           e:       eInp?.value || '',
@@ -1164,7 +1147,6 @@ $user = requireAuth(['superadmin']);
           <td>${ep(r.si)}</td>
           <td class="tc">${ep(r.target)}</td>
           <td class="tc">${ep(r.budget)}</td>
-          <td class="tc">${ep(r.measure)}</td>
           <td class="tc">${ep(formattedActual)}</td>
           <td class="tc">${ep(r.q)}</td>
           <td class="tc">${ep(r.e)}</td>
@@ -1215,9 +1197,9 @@ td,th{border:1px solid #000;padding:1.5px 3px;vertical-align:middle;font-size:7.
 <div class="commit-wrap"><div class="commit-left">I,&nbsp;<span style="border-bottom:1px solid #000;padding:0 4px">${ep(name)}</span>,&nbsp;<span style="border-bottom:1px solid #000;padding:0 4px">${ep(pos)}</span>, commit to deliver and agree to be rated on the attainment of the following targets in accordance with the indicated measures for<br>the period&nbsp;<span style="border-bottom:1px solid #000;padding:0 4px">${ep(period)}</span>.</div><div class="commit-right"><span class="sig-line">${ep(name)}<br><span style="font-size:6.5pt;font-style:italic">(Campus Executive Officer)</span></span><div class="date-line">Date:&nbsp;<span style="border-bottom:1px solid #000;padding:0 4px">${ep(date)}</span></div></div></div>
 <table class="rev-table"><tr><th style="width:45%">REVIEWED / APPROVED BY</th><th style="width:10%">DATE</th><th style="width:35%">NOTED BY</th><th style="width:10%">DATE</th></tr>
 <tr><td style="height:32px;vertical-align:bottom"><div class="rev-name">VP FOR ACADEMIC AFFAIRS</div><div class="rev-role">(University System Rater)</div></td><td>&nbsp;</td><td style="text-align:center;vertical-align:middle"><div class="rev-name">University President</div><div class="rev-role">CSU System Administration</div></td><td>&nbsp;</td></tr></table>
-<table class="data-table"><colgroup><col style="width:17%"><col style="width:20%"><col style="width:7%"><col style="width:8%"><col style="width:7%"><col style="width:10%"><col style="width:4%"><col style="width:4%"><col style="width:4%"><col style="width:4%"><col style="width:15%"></colgroup>
-<thead><tr><th rowspan="2">MFO/PAP</th><th rowspan="2">SUCCESS INDICATORS</th><th rowspan="2">TARGET</th><th rowspan="2">BUDGET (₱)</th><th rowspan="2">MEASURE</th><th rowspan="2">ACTUAL ACCOMPLISHMENTS</th><th colspan="4">RATING</th><th rowspan="2">REMARKS</th></tr><tr><th>Q<sup>1</sup></th><th>E<sup>2</sup></th><th>T<sup>3</sup></th><th>A<sup>4</sup></th></tr></thead>
-<tbody><tr class="sec-row"><td colspan="11">A. CORE FUNCTIONS</td></tr>${buildRows(core,5)}<tr class="sec-row"><td colspan="11">B. STRATEGIC FUNCTIONS</td></tr>${buildRows(strategic,3)}<tr class="sec-row"><td colspan="11">C. SUPPORT FUNCTIONS</td></tr>${buildRows(support,3)}</tbody></table>
+<table class="data-table"><colgroup><col style="width:18%"><col style="width:22%"><col style="width:8%"><col style="width:9%"><col style="width:12%"><col style="width:4%"><col style="width:4%"><col style="width:4%"><col style="width:4%"><col style="width:15%"></colgroup>
+<thead><tr><th rowspan="2">MFO/PAP</th><th rowspan="2">SUCCESS INDICATORS</th><th rowspan="2">TARGET</th><th rowspan="2">BUDGET (₱)</th><th rowspan="2">ACTUAL ACCOMPLISHMENTS</th><th colspan="4">RATING</th><th rowspan="2">REMARKS</th></tr><tr><th>Q<sup>1</sup></th><th>E<sup>2</sup></th><th>T<sup>3</sup></th><th>A<sup>4</sup></th></tr></thead>
+<tbody><tr class="sec-row"><td colspan="10">A. CORE FUNCTIONS</td></tr>${buildRows(core,5)}<tr class="sec-row"><td colspan="10">B. STRATEGIC FUNCTIONS</td></tr>${buildRows(strategic,3)}<tr class="sec-row"><td colspan="10">C. SUPPORT FUNCTIONS</td></tr>${buildRows(support,3)}</tbody></table>
 <table class="summary-table"><tr><td class="lbl" style="width:20%">AVERAGE RATING:</td><td class="val">${finalAvg||''}</td></tr><tr><td class="lbl">FINAL AVERAGE RATING:</td><td class="val">${finalAvg||''}</td></tr><tr><td class="lbl">ADJECTIVAL RATING:</td><td class="val">${finalAvg?adj(finalAvg):''}</td></tr></table>
 <table class="sig-tbl"><tr><th style="width:30%">CAMPUS EXECUTIVE OFFICER</th><th style="width:10%">DATE</th><th style="width:30%">REVIEWED / APPROVED BY</th><th style="width:10%">DATE</th><th style="width:10%">FINAL RATING</th><th style="width:10%">DATE</th></tr>
 <tr style="height:52px"><td class="sig-name-cell">${ep(name)}</td><td>&nbsp;</td><td class="certify">VP for Academic Affairs / University President</td><td>&nbsp;</td><td class="sig-name-cell">${finalAvg||''}</td><td>&nbsp;</td></tr>

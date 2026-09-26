@@ -142,7 +142,6 @@ $user = requireAuth(['admin']);
             <li><strong>Success Indicator</strong> — A specific, measurable commitment (Target + Measure).</li>
             <li><strong>Target</strong> — The numeric goal or percentage you commit to achieve.</li>
             <li><strong>Budget Required</strong> — Estimated budget in Philippine Peso (0 if none needed).</li>
-            <li><strong>Measure</strong> — How it will be measured: <em>Q</em>=Quality, <em>Qn</em>=Quantity, <em>T</em>=Timeliness, <em>E</em>=Efficiency.</li>
             <li><strong>Actual Accomplishment</strong> — Your actual achievement (percentage 1-100 or quantity delivered).</li>
             <li><strong>Rating Scale</strong> — 5: Outstanding (4.50–5.00), 4: Very Satisfactory (3.50–4.49), 3: Satisfactory (2.50–3.49), 2: Unsatisfactory (1.50–2.49), 1: Poor (1.00–1.49).</li>
           </ul>
@@ -167,7 +166,6 @@ $user = requireAuth(['admin']);
             <th style="min-width:200px">Success Indicator</th>
             <th style="min-width:90px">Target</th>
             <th style="min-width:90px">Budget (₱)</th>
-            <th style="min-width:80px">Measure</th>
             <th style="min-width:100px">Actual Acc.</th>
             <th style="width:65px">Q</th>
             <th style="width:65px">E</th>
@@ -180,7 +178,7 @@ $user = requireAuth(['admin']);
         <tbody id="coreBody"></tbody>
         <tfoot>
           <tr class="avg-row">
-            <td colspan="9" class="text-end fw-600" style="font-size:0.83rem">Average Rating — Core Function:</td>
+            <td colspan="8" class="text-end fw-600" style="font-size:0.83rem">Average Rating — Core Function:</td>
             <td id="coreAvg" class="text-center fw-700">—</td>
             <td></td>
             <td></td>
@@ -206,7 +204,6 @@ $user = requireAuth(['admin']);
             <th style="min-width:200px">Success Indicator</th>
             <th style="min-width:90px">Target</th>
             <th style="min-width:90px">Budget (₱)</th>
-            <th style="min-width:80px">Measure</th>
             <th style="min-width:100px">Actual Acc.</th>
             <th style="width:65px">Q</th>
             <th style="width:65px">E</th>
@@ -219,7 +216,7 @@ $user = requireAuth(['admin']);
         <tbody id="strategicBody"></tbody>
         <tfoot>
           <tr class="avg-row">
-            <td colspan="9" class="text-end fw-600" style="font-size:0.83rem">Average Rating — Strategic Function:</td>
+            <td colspan="8" class="text-end fw-600" style="font-size:0.83rem">Average Rating — Strategic Function:</td>
             <td id="strategicAvg" class="text-center fw-700">—</td>
             <td></td>
             <td></td>
@@ -245,7 +242,6 @@ $user = requireAuth(['admin']);
             <th style="min-width:200px">Success Indicator</th>
             <th style="min-width:90px">Target</th>
             <th style="min-width:90px">Budget (₱)</th>
-            <th style="min-width:80px">Measure</th>
             <th style="min-width:100px">Actual Acc.</th>
             <th style="width:65px">Q</th>
             <th style="width:65px">E</th>
@@ -258,7 +254,7 @@ $user = requireAuth(['admin']);
         <tbody id="supportBody"></tbody>
         <tfoot>
           <tr class="avg-row">
-            <td colspan="9" class="text-end fw-600" style="font-size:0.83rem">Average Rating — Support Function:</td>
+            <td colspan="8" class="text-end fw-600" style="font-size:0.83rem">Average Rating — Support Function:</td>
             <td id="supportAvg" class="text-center fw-700">—</td>
             <td></td>
             <td></td>
@@ -459,25 +455,6 @@ $user = requireAuth(['admin']);
     });
   }
 
-  function validateAccInput(input) {
-    if (!input) return;
-    let v = input.value;
-    if (v === '') return;
-    let num = parseInt(v, 10);
-    if (isNaN(num)) {
-      input.value = '';
-      return;
-    }
-    if (num > 100) input.value = 100;
-    else if (num < 1) input.value = 1;
-    else input.value = num;
-  }
-
-  function enforceDigitsOnly(e) {
-    if (['e', 'E', '+', '-', '.'].includes(e.key)) {
-      e.preventDefault();
-    }
-  }
 
   function esc(val) {
     return (val || '').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -542,18 +519,27 @@ $user = requireAuth(['admin']);
     const uploadBtn = `<button type="button" class="btn btn-sm btn-outline-primary" title="Upload Evidence for this MFO" onclick="openUploadModalFor('${categoryKey}', '${mfoSafe}')"><i class="fa-solid fa-cloud-arrow-up"></i></button>`;
     const evidenceBtn = `<div class="d-inline-flex align-items-center justify-content-center gap-1">${viewBtn}${uploadBtn}</div>`;
 
+    const targetVal = (data.target || '').trim();
+    const isNA = /^(n\/?a|not applicable|none|n\s*a)$/i.test(targetVal);
+    const pctMatch = targetVal.match(/(\d+)\s*%/);
+    const accType = isNA ? 'text' : 'number';
+    const accMode = isNA ? 'text' : (pctMatch ? 'percentage' : 'numeric');
+    const accMax = pctMatch ? parseInt(pctMatch[1], 10) : (isNA ? '' : 100);
+    const accPh = isNA ? 'Enter text / N/A' : (pctMatch ? `1-${accMax}%` : '1-100');
+    const maxAttr = accMax ? `min="1" max="${accMax}" step="1"` : '';
+    const pctAttr = pctMatch ? `data-max-pct="${accMax}"` : '';
+
     tr.innerHTML = `
       <td><input type="text" class="form-control form-control-sm mfo-input" value="${esc(mfoVal)}" placeholder="e.g. Instruction" oninput="updateRowEvidenceBtn(this)"></td>
       <td><input type="text" class="form-control form-control-sm si-input" value="${esc(data.success_indicator || data.successIndicator || '')}" placeholder="Success indicator..."></td>
-      <td><input type="text" class="form-control form-control-sm target-input text-center" style="width:90px" value="${esc(data.target || '')}" placeholder="100%"></td>
+      <td><input type="text" class="form-control form-control-sm target-input text-center" style="width:90px" value="${esc(data.target || '')}" placeholder="100%" oninput="syncRowTargetAndAcc(this.closest('tr'))"></td>
       <td><input type="number" class="form-control form-control-sm budget-input text-end" style="width:90px" value="${data.budget || 0}" min="0" placeholder="0"></td>
-      <td><input type="text" class="form-control form-control-sm measure-input text-center" style="width:80px" value="${esc(data.measure || 'Q/T/E')}" placeholder="Q/T/E"></td>
-      <td><input type="number" class="form-control form-control-sm acc-input text-center" min="1" max="100" step="1" style="width:90px" value="${esc(actual)}" placeholder="1-100" oninput="validateAccInput(this)" onkeydown="enforceDigitsOnly(event)"></td>
+      <td><input type="${accType}" class="form-control form-control-sm acc-input text-center" ${maxAttr} data-mode="${accMode}" ${pctAttr} style="width:90px" value="${esc(actual)}" placeholder="${accPh}" oninput="validateAccInput(this)" onkeydown="enforceDigitsOnly(event)"></td>
       <td><input type="number" class="form-control form-control-sm rating-q text-center" min="1" max="5" step="0.1" style="width:60px" value="${q}" placeholder="1-5" oninput="computeRowRating(this)"></td>
       <td><input type="number" class="form-control form-control-sm rating-e text-center" min="1" max="5" step="0.1" style="width:60px" value="${e}" placeholder="1-5" oninput="computeRowRating(this)"></td>
       <td><input type="number" class="form-control form-control-sm rating-t text-center" min="1" max="5" step="0.1" style="width:60px" value="${t}" placeholder="1-5" oninput="computeRowRating(this)"></td>
       <td class="text-center fw-700 row-avg" style="font-size:0.85rem;background:#fafafa">${avg > 0 ? avg.toFixed(2) : '-'}</td>
-      <td><input type="text" class="form-control form-control-sm row-remarks bg-light" value="${esc(remarks)}" placeholder="Auto" readonly></td>
+      <td><select class="form-select form-select-sm row-remarks" style="min-width:130px">${renderRemarksOptions(remarks)}</select></td>
       <td class="text-center evidence-cell">${evidenceBtn}</td>`;
     return tr;
   }
@@ -582,7 +568,6 @@ $user = requireAuth(['admin']);
       const siInp      = tr.querySelector('.si-input');
       const targetInp  = tr.querySelector('.target-input');
       const budgetInp  = tr.querySelector('.budget-input');
-      const measureInp = tr.querySelector('.measure-input');
       const accInp     = tr.querySelector('.acc-input');
       const qInp       = tr.querySelector('.rating-q');
       const eInp       = tr.querySelector('.rating-e');
@@ -601,7 +586,7 @@ $user = requireAuth(['admin']);
         success_indicator: siInp?.value.trim() || '',
         target:            targetInp?.value.trim() || '',
         budget:            budgetInp?.value || '0',
-        measure:           measureInp?.value.trim() || '',
+        measure:           '',
         accomplishment:    accInp?.value.trim() || '',
         q_rating:          q,
         e_rating:          e,
@@ -626,10 +611,8 @@ $user = requireAuth(['admin']);
     if (vals.length > 0) {
       const avg = vals.reduce((a, b) => a + b, 0) / vals.length;
       avgCell.textContent = avg.toFixed(2);
-      remarksInp.value = getAdjectivalText(avg);
     } else {
       avgCell.textContent = '-';
-      remarksInp.value = '';
     }
     computeAverages();
   }
@@ -711,7 +694,7 @@ $user = requireAuth(['admin']);
 
       const actionHtml = filePath
         ? `<a href="${filePath}" target="_blank" class="btn btn-outline-primary btn-sm"><i class="fa-solid fa-eye me-1"></i>View / Open</a>`
-        : `<button type="button" class="btn btn-outline-secondary btn-sm" onclick="showToast('Physical file not saved on server yet. Please upload via Evidence Upload.', 'warning')"><i class="fa-solid fa-file me-1"></i>Document Details</button>`;
+        : `<button type="button" class="btn btn-outline-secondary btn-sm" onclick="showToast('Physical file not saved on server yet. Please upload supporting evidence in the form.', 'warning')"><i class="fa-solid fa-file me-1"></i>Document Details</button>`;
 
       tbody.innerHTML += `<tr>
         <td>${i + 1}</td>
@@ -1022,7 +1005,6 @@ $user = requireAuth(['admin']);
         const siInp      = tr.querySelector('.si-input');
         const targetInp  = tr.querySelector('.target-input');
         const budgetInp  = tr.querySelector('.budget-input');
-        const measureInp = tr.querySelector('.measure-input');
         const accInp     = tr.querySelector('.acc-input');
         const qInp       = tr.querySelector('.rating-q');
         const eInp       = tr.querySelector('.rating-e');
@@ -1034,7 +1016,7 @@ $user = requireAuth(['admin']);
           si:      siInp?.value.trim() || '',
           target:  targetInp?.value.trim() || '',
           budget:  budgetInp?.value || '0',
-          measure: measureInp?.value.trim() || '',
+          measure: '',
           actual:  accInp?.value.trim() || '',
           q:       qInp?.value || '',
           e:       eInp?.value || '',

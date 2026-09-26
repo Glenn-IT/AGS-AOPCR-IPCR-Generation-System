@@ -73,6 +73,114 @@ function getAdjectivalText(rating) {
   return 'Poor';
 }
 
+function renderRemarksOptions(selectedVal = '') {
+  const val = (selectedVal || '').trim();
+  let found = false;
+  let html = '<option value="">-- Select Remarks --</option>';
+
+  const ratings = ['Outstanding', 'Very Satisfactory', 'Satisfactory', 'Unsatisfactory', 'Poor'];
+  ratings.forEach(opt => {
+    const isSel = val.toLowerCase() === opt.toLowerCase();
+    if (isSel) found = true;
+    html += `<option value="${opt}" ${isSel ? 'selected' : ''}>${opt}</option>`;
+  });
+
+  if (val && !found) {
+    const safe = val.replace(/"/g, '&quot;');
+    html += `<option value="${safe}" selected>${safe}</option>`;
+  }
+  return html;
+}
+
+function syncRowTargetAndAcc(tr) {
+  if (!tr) return;
+  const targetInp = tr.querySelector('.target-input');
+  const targetCell = tr.querySelector('.target-cell') || tr.querySelector('td:nth-child(3)');
+  const targetVal = (targetInp ? targetInp.value : (targetCell ? targetCell.textContent : '')).trim();
+  const accInp = tr.querySelector('.acc-input') || tr.querySelector('input[data-field="actual"]');
+  if (!accInp) return;
+
+  const isNA = /^(n\/?a|not applicable|none|n\s*a)$/i.test(targetVal);
+  const pctMatch = targetVal.match(/(\d+)\s*%/);
+
+  if (isNA) {
+    accInp.type = 'text';
+    accInp.dataset.mode = 'text';
+    accInp.removeAttribute('min');
+    accInp.removeAttribute('max');
+    accInp.removeAttribute('step');
+    accInp.placeholder = 'Enter text / N/A';
+  } else if (pctMatch) {
+    const maxPct = parseInt(pctMatch[1], 10);
+    accInp.type = 'number';
+    accInp.dataset.mode = 'percentage';
+    accInp.dataset.maxPct = maxPct;
+    accInp.min = '1';
+    accInp.max = String(maxPct);
+    accInp.step = '1';
+    accInp.placeholder = `1-${maxPct}%`;
+    validateAccInput(accInp);
+  } else if (/^\d+$/.test(targetVal)) {
+    const maxNum = parseInt(targetVal, 10);
+    accInp.type = 'number';
+    accInp.dataset.mode = 'numeric';
+    accInp.dataset.maxNum = maxNum;
+    accInp.min = '1';
+    accInp.max = String(maxNum);
+    accInp.step = '1';
+    accInp.placeholder = `1-${maxNum}`;
+    validateAccInput(accInp);
+  } else {
+    accInp.type = 'text';
+    accInp.dataset.mode = 'text';
+    accInp.removeAttribute('min');
+    accInp.removeAttribute('max');
+    accInp.removeAttribute('step');
+    accInp.placeholder = 'Accomplishment...';
+  }
+}
+
+function validateAccInput(input) {
+  if (!input) return;
+  const mode = input.dataset ? input.dataset.mode : '';
+  if (input.type === 'text' || mode === 'text') {
+    return;
+  }
+  let v = input.value;
+  if (v === '') return;
+  let num = parseInt(v, 10);
+  if (isNaN(num)) {
+    input.value = '';
+    return;
+  }
+  if (mode === 'percentage') {
+    const maxPct = parseInt(input.dataset.maxPct, 10) || 100;
+    if (num > maxPct) input.value = maxPct;
+    else if (num < 1) input.value = 1;
+    else input.value = num;
+  } else if (mode === 'numeric') {
+    const maxNum = parseInt(input.dataset.maxNum, 10) || 100;
+    if (num > maxNum) input.value = maxNum;
+    else if (num < 1) input.value = 1;
+    else input.value = num;
+  } else {
+    if (num > 100) input.value = 100;
+    else if (num < 1) input.value = 1;
+    else input.value = num;
+  }
+}
+
+function enforceDigitsOnly(e) {
+  const input = e.target || e.srcElement;
+  if (input && (input.type === 'text' || (input.dataset && input.dataset.mode === 'text'))) {
+    return;
+  }
+  if (['e', 'E', '+', '-', '.'].includes(e.key)) {
+    e.preventDefault();
+  }
+}
+
+
 function getCategoryBadge(category) {
   const cat = (category || 'Other').toLowerCase();
   if (cat.includes('core')) {
@@ -116,7 +224,6 @@ function buildSidebar(role, activePage) {
       { icon: 'fa-gauge', label: 'Dashboard', href: 'dashboard.php', page: 'dashboard' },
       { section: 'IPCR / Performance' },
       { icon: 'fa-file-lines', label: 'IPCR Form', href: 'ipcr-form.php', page: 'ipcr-form' },
-      { icon: 'fa-paperclip', label: 'Evidence Upload', href: 'evidence.php', page: 'evidence' },
       { icon: 'fa-clipboard-check', label: 'Accomplishments & Ratings', href: 'accomplishments.php', page: 'accomplishments' },
       { icon: 'fa-file-alt', label: 'Reports', href: 'reports.php', page: 'reports' },
       { section: 'Management' },
@@ -129,7 +236,6 @@ function buildSidebar(role, activePage) {
       { icon: 'fa-gauge', label: 'Dashboard', href: 'dashboard.php', page: 'dashboard' },
       { section: 'Performance' },
       { icon: 'fa-file-lines', label: 'IPCR Form', href: 'ipcr-form.php', page: 'ipcr-form' },
-      { icon: 'fa-paperclip', label: 'Evidence Upload', href: 'evidence.php', page: 'evidence' },
       { icon: 'fa-eye', label: 'View Status', href: 'status.php', page: 'status' },
       { section: 'Account' },
       { icon: 'fa-user-cog', label: 'Account Management', href: 'account.php', page: 'account' }

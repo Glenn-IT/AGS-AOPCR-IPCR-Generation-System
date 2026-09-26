@@ -235,14 +235,25 @@ $user = requireAuth(['superadmin']);
               ? `<button type="button" class="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1" onclick="openEvidenceModalFor('${sec}', '${mfoSafe}')"><i class="fa-solid fa-paperclip"></i><span>View (${count})</span></button>`
               : `<button type="button" class="btn btn-sm btn-outline-secondary opacity-75 d-inline-flex align-items-center gap-1" onclick="openEvidenceModalFor('${sec}', '${mfoSafe}')"><i class="fa-solid fa-paperclip"></i><span>0 Files</span></button>`;
 
+            const targetVal = (item.target || '').trim();
+            const isNA = /^(n\/?a|not applicable|none|n\s*a)$/i.test(targetVal);
+            const pctMatch = targetVal.match(/(\d+)\s*%/);
+            const isNum = /^\d+$/.test(targetVal);
+            const accType = (isNA || (!pctMatch && !isNum)) ? 'text' : 'number';
+            const accMode = (isNA || (!pctMatch && !isNum)) ? 'text' : (pctMatch ? 'percentage' : 'numeric');
+            const accMax = pctMatch ? parseInt(pctMatch[1], 10) : (isNum ? parseInt(targetVal, 10) : '');
+            const accPh = (isNA || (!pctMatch && !isNum)) ? (isNA ? 'Enter text / N/A' : 'Accomplishment...') : (pctMatch ? `1-${accMax}%` : `1-${accMax}`);
+            const maxAttr = accMax ? `min="1" max="${accMax}" step="1"` : '';
+            const pctAttr = pctMatch ? `data-max-pct="${accMax}"` : (isNum ? `data-max-num="${accMax}"` : '');
+
             return `<tr>
             <td style="font-size:0.8rem;background:#fafafa">${item.mfo || '-'}</td>
             <td style="font-size:0.8rem;background:#fafafa">${item.success_indicator || '-'}</td>
-            <td style="font-size:0.8rem;background:#fafafa">${item.target || '-'}</td>
-            <td><input type="number" class="form-control form-control-sm" min="1" max="100" step="1" data-id="${item.id}" data-field="actual" value="${item.actual || ''}" placeholder="1-100" oninput="validateAccInput(this)" onkeydown="enforceDigitsOnly(event)"></td>
+            <td style="font-size:0.8rem;background:#fafafa" class="target-cell">${item.target || '-'}</td>
+            <td><input type="${accType}" class="form-control form-control-sm acc-input" ${maxAttr} data-mode="${accMode}" ${pctAttr} data-id="${item.id}" data-field="actual" value="${item.actual || ''}" placeholder="${accPh}" oninput="validateAccInput(this)" onkeydown="enforceDigitsOnly(event)"></td>
             <td><input type="number" class="form-control form-control-sm rating-input" min="1" max="5" step="0.5"
                  data-id="${item.id}" data-field="rating" value="${item.rating || ''}" oninput="recompute()"></td>
-            <td><input type="text" class="form-control form-control-sm" data-id="${item.id}" data-field="remarks" value="${item.remarks || ''}"></td>
+            <td><select class="form-select form-select-sm row-remarks" data-id="${item.id}" data-field="remarks" style="min-width:130px">${renderRemarksOptions(item.remarks || "")}</select></td>
             <td class="text-center">${evidenceBtn}</td>
           </tr>`;
           }).join('')}
@@ -254,25 +265,6 @@ $user = requireAuth(['superadmin']);
     recompute();
   }
 
-  function validateAccInput(input) {
-    if (!input) return;
-    let v = input.value;
-    if (v === '') return;
-    let num = parseInt(v, 10);
-    if (isNaN(num)) {
-      input.value = '';
-      return;
-    }
-    if (num > 100) input.value = 100;
-    else if (num < 1) input.value = 1;
-    else input.value = num;
-  }
-
-  function enforceDigitsOnly(e) {
-    if (['e', 'E', '+', '-', '.'].includes(e.key)) {
-      e.preventDefault();
-    }
-  }
 
   function recompute() {
     const inputs = document.querySelectorAll('.rating-input');
@@ -349,7 +341,7 @@ $user = requireAuth(['superadmin']);
 
       const actionHtml = filePath
         ? `<a href="${filePath}" target="_blank" class="btn btn-outline-primary btn-sm"><i class="fa-solid fa-eye me-1"></i>View / Open</a>`
-        : `<button type="button" class="btn btn-outline-secondary btn-sm" onclick="showToast('Physical file not saved on server yet. Please upload via Evidence Upload.', 'warning')"><i class="fa-solid fa-file me-1"></i>Document Details</button>`;
+        : `<button type="button" class="btn btn-outline-secondary btn-sm" onclick="showToast('Physical file not saved on server yet. Please upload supporting evidence in the form.', 'warning')"><i class="fa-solid fa-file me-1"></i>Document Details</button>`;
 
       tbody.innerHTML += `<tr>
         <td>${i + 1}</td>

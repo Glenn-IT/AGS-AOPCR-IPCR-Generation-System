@@ -243,7 +243,7 @@ $user = requireAuth(['admin']);
             <td><input type="number" class="form-control form-control-sm rating-e" min="1" max="5" step="0.1" data-id="${item.id}" data-field="e_rating" value="${item.e_rating || ''}" placeholder="1-5" oninput="recomputeRow(this)"></td>
             <td><input type="number" class="form-control form-control-sm rating-t" min="1" max="5" step="0.1" data-id="${item.id}" data-field="t_rating" value="${item.t_rating || ''}" placeholder="1-5" oninput="recomputeRow(this)"></td>
             <td class="text-center fw-700 row-avg" style="font-size:0.85rem;background:#fafafa">${avg > 0 ? avg.toFixed(2) : '-'}</td>
-            <td><input type="text" class="form-control form-control-sm row-remarks bg-light" data-id="${item.id}" data-field="remarks" value="${item.remarks || (avg > 0 ? getAdjectivalText(avg) : '')}" readonly placeholder="Auto"></td>
+            <td><select class="form-select form-select-sm row-remarks" data-id="${item.id}" data-field="remarks" style="min-width:130px">${renderRemarksOptions(item.remarks || "")}</select></td>
             <td class="text-center">${evidenceBtn}</td>
           </tr>`;
           }).join('')}
@@ -268,10 +268,8 @@ $user = requireAuth(['admin']);
     if (vals.length > 0) {
       const avg = vals.reduce((a, b) => a + b, 0) / vals.length;
       avgCell.textContent = avg.toFixed(2);
-      remarksInp.value = getAdjectivalText(avg);
     } else {
       avgCell.textContent = '-';
-      remarksInp.value = '';
     }
     recompute();
   }
@@ -354,7 +352,7 @@ $user = requireAuth(['admin']);
 
       const actionHtml = filePath
         ? `<a href="${filePath}" target="_blank" class="btn btn-outline-primary btn-sm"><i class="fa-solid fa-eye me-1"></i>View / Open</a>`
-        : `<button type="button" class="btn btn-outline-secondary btn-sm" onclick="showToast('Physical file not saved on server yet. Please upload via Evidence Upload.', 'warning')"><i class="fa-solid fa-file me-1"></i>Document Details</button>`;
+        : `<button type="button" class="btn btn-outline-secondary btn-sm" onclick="showToast('Physical file not saved on server yet. Please upload supporting evidence in the form.', 'warning')"><i class="fa-solid fa-file me-1"></i>Document Details</button>`;
 
       tbody.innerHTML += `<tr>
         <td>${i + 1}</td>

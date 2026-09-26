@@ -186,9 +186,9 @@ you MUST update both the PHP endpoint and ALL consumer Views listed below!
 
 | Endpoint | Method | Role | Request Payload | Response Schema | Calling Files / UI Components |
 |---|---|---|---|---|---|
-| `upload.php` | POST | `user`, `admin` | `multipart/form-data`: `file`, `ipcr_form_id`, `category`, `description` | `{success: bool, file: object, message: string}` | `views/users/evidence.php`, `views/admin/evidence.php` |
-| `list.php` | GET | Logged-in | `?ipcr_form_id=&user_id=` | `{success: bool, files: array}` | `views/users/evidence.php`, `views/admin/evidence.php`, `views/admin/review-ipcr.php` |
-| `delete.php` | POST | `user`, `admin` | `{id: int}` | `{success: bool, message: string}` | `views/users/evidence.php`, `views/admin/evidence.php` |
+| `upload.php` | POST | `user`, `admin` | `multipart/form-data`: `file`, `ipcr_form_id`, `category`, `description` | `{success: bool, file: object, message: string}` | `views/users/ipcr-form.php`, `views/admin/ipcr-form.php` |
+| `list.php` | GET | Logged-in | `?ipcr_form_id=&user_id=` | `{success: bool, files: array}` | `views/users/ipcr-form.php`, `views/admin/ipcr-form.php`, `views/admin/review-ipcr.php` |
+| `delete.php` | POST | `user`, `admin` | `{id: int}` | `{success: bool, message: string}` | `views/users/ipcr-form.php`, `views/admin/ipcr-form.php` |
 
 ### 3.7 Dashboards & Analytics (`api/dashboard/`)
 
@@ -238,6 +238,10 @@ Shared client scripts live in `assets/js/components.js` and `assets/js/auth.js`.
 | `getCategoryBadge(category)` | Category string (`core`, `strategic`, `support`) | Form items, Evidence list | Color styled badges. |
 | `renderUserAvatar(avatar, defaultInitial)` | String avatar URL or initials | Sidebar, Topnav, Account views | Handles both image paths (`uploads/avatars/*`) and 2-letter text initials. |
 | `showNotifications()` | LocalStorage / API | Topbar bell click | Renders unread notifications modal. |
+| `renderRemarksOptions(selectedVal)` | Optional selected string | All IPCR & OPCR forms and review tables | Renders `<select>` dropdown options for Adjectival Ratings only (*Outstanding*, *Very Satisfactory*, *Satisfactory*, *Unsatisfactory*, *Poor*). Accomplishment status choices removed per user specifications. |
+| `syncRowTargetAndAcc(tr)` | Table row `<tr>` | IPCR and OPCR form tables | Dynamically synchronizes AA input mode based on Target: percentage targets (e.g. `90%`) enforce `1%-X%`; `NA`/`N/A` targets enable text mode. |
+| `validateAccInput(input)` | `<input class="acc-input">` | IPCR & OPCR accomplishment inputs | Validates and clamps numeric/percentage accomplishments (skips clamping in text mode). |
+| `enforceDigitsOnly(event)` | Keyboard event | IPCR & OPCR accomplishment inputs | Restricts key inputs to integer digits for numeric/percentage targets; allows text input for `NA` targets. |
 
 ### 4.2 Authentication & Session JS (`assets/js/auth.js`)
 
@@ -303,8 +307,8 @@ Inventory of all web pages with their access roles, layout bindings, and data de
 | `accomplishments.php` | `admin` | `accomplishments` | `api/ipcr/list.php`, `api/ipcr/get.php`, `api/ipcr/review.php` | Tabular accomplishment review and ratings |
 | `kpi-management.php` | `admin` | `kpi-management` | `api/kpi/*`, `api/users/list.php` | Create/assign department KPIs to specific faculty members |
 | `reports.php` | `admin` | `reports` | `api/ipcr/list.php`, `api/timeline/list.php` | Department IPCR summary report & export |
-| `set-target.php` | `admin` | `set-target` | `api/opcr/save.php`, `api/opcr/get.php`, `api/timeline/list.php` | Office OPCR form: MFO, targets, measures, budget allocation |
-| `evidence.php` | `admin` | `evidence` | `api/evidence/*`, `api/ipcr/list.php` | Supporting documents upload per category for admin's own IPCR |
+| `set-target.php` | `admin` | `set-target` | `api/opcr/save.php`, `api/opcr/get.php`, `api/timeline/list.php` | Office OPCR form: MFO, targets, budget allocation |
+| `evidence.php` | `admin` | `evidence` | `api/evidence/*`, `api/ipcr/list.php` | *(Consolidated)* Redirects to `ipcr-form.php`; evidence upload & viewing integrated directly into IPCR Form |
 | `account.php` | `admin` | `account` | `api/user/*`, `api/auth/change-password.php` | Profile settings, avatar, security questions, activity history |
 
 ### 6.3 Faculty & Staff Views (`views/users/`)
@@ -312,8 +316,8 @@ Inventory of all web pages with their access roles, layout bindings, and data de
 | Page File | Role Guard | Active Nav Key | Key APIs Consumed | Primary Functionality |
 |---|---|---|---|---|
 | `dashboard.php` | `user` | `dashboard` | `api/dashboard/user-stats.php` | Personal rating status, pending reviews, active timeline alert |
-| `ipcr-form.php` | `user` | `ipcr-form` | `api/ipcr/save.php`, `api/ipcr/get.php`, `api/kpi/list.php`, `api/timeline/list.php`, `api/user/supervisor.php` | Main faculty IPCR entry: KPI selector, accomplishment entries, Q/E/T self-rating, draft/submit |
-| `evidence.php` | `user` | `evidence` | `api/evidence/*`, `api/ipcr/list.php` | Upload files (PDF, DOCX, PNG, JPG, XLSX up to 10MB) attached to IPCR categories |
+| `ipcr-form.php` | `user` | `ipcr-form` | `api/ipcr/save.php`, `api/ipcr/get.php`, `api/kpi/list.php`, `api/timeline/list.php`, `api/user/supervisor.php` | Main faculty IPCR entry: KPI selector, accomplishment entries, Q/E/T self-rating, evidence upload & viewing modals, draft/submit |
+| `evidence.php` | `user` | `evidence` | `api/evidence/*`, `api/ipcr/list.php` | *(Consolidated)* Redirects to `ipcr-form.php`; evidence upload & viewing integrated directly into IPCR Form |
 | `status.php` | `user` | `status` | `api/ipcr/list.php`, `api/ipcr/get.php` | Real-time tracking pipeline (Draft $\rightarrow$ Pending Review $\rightarrow$ Reviewed $\rightarrow$ Approved) |
 | `account.php` | `user` | `account` | `api/user/*`, `api/auth/change-password.php` | Personal account settings, profile photo, password change, audit logs |
 
@@ -341,6 +345,11 @@ flowchart LR
   - $2.50 - 3.49$: **Satisfactory**
   - $1.50 - 2.49$: **Unsatisfactory**
   - $1.00 - 1.49$: **Poor**
+- **Target & Actual Accomplishment (AA) Synchronization:**
+  - When Target contains a percentage (e.g. `90%`), AA is constrained to `1% - X%` (e.g. `1%-90%`).
+  - When Target is set to `NA` or `N/A`, AA accepts text input without numeric clamping.
+- **Remarks Field:**
+  - Remarks is a user-selectable dropdown list (`renderRemarksOptions`) rather than an auto-computed field, containing only standard adjectival ratings (*Outstanding*, *Very Satisfactory*, *Satisfactory*, *Unsatisfactory*, *Poor*). Accomplishment status choices were removed per user specifications.
 
 ### Chain 2: Notification & Supervisor Routing Chain
 

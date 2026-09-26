@@ -76,10 +76,10 @@ $user = requireAuth(['admin']);
     <div class="table-responsive">
       <table class="table table-bordered mb-0" id="coreTable">
         <thead class="table-light">
-          <tr><th>MFO/PAP</th><th>Success Indicator</th><th style="width:90px">Target</th><th style="width:80px">Budget</th><th style="width:80px">Measure</th><th>Actual Accomplishment</th><th style="width:90px">Avg. Rating</th><th class="no-print" style="width:50px">Del</th></tr>
+          <tr><th>MFO/PAP</th><th>Success Indicator</th><th style="width:90px">Target</th><th style="width:80px">Budget</th><th>Actual Accomplishment</th><th style="width:90px">Avg. Rating</th><th class="no-print" style="width:50px">Del</th></tr>
         </thead>
         <tbody id="coreBody"></tbody>
-        <tfoot><tr class="table-warning"><td colspan="6" class="text-end fw-bold" style="font-size:0.83rem">Average Rating — Core Function:</td><td id="coreAvg" class="text-center fw-bold">—</td><td class="no-print"></td></tr></tfoot>
+        <tfoot><tr class="table-warning"><td colspan="5" class="text-end fw-bold" style="font-size:0.83rem">Average Rating — Core Function:</td><td id="coreAvg" class="text-center fw-bold">—</td><td class="no-print"></td></tr></tfoot>
       </table>
     </div>
   </div>
@@ -93,10 +93,10 @@ $user = requireAuth(['admin']);
     <div class="table-responsive">
       <table class="table table-bordered mb-0" id="strategicTable">
         <thead class="table-light">
-          <tr><th>MFO/PAP</th><th>Success Indicator</th><th style="width:90px">Target</th><th style="width:80px">Budget</th><th style="width:80px">Measure</th><th>Actual Accomplishment</th><th style="width:90px">Avg. Rating</th><th class="no-print" style="width:50px">Del</th></tr>
+          <tr><th>MFO/PAP</th><th>Success Indicator</th><th style="width:90px">Target</th><th style="width:80px">Budget</th><th>Actual Accomplishment</th><th style="width:90px">Avg. Rating</th><th class="no-print" style="width:50px">Del</th></tr>
         </thead>
         <tbody id="strategicBody"></tbody>
-        <tfoot><tr class="table-warning"><td colspan="6" class="text-end fw-bold" style="font-size:0.83rem">Average Rating — Strategic Function:</td><td id="strategicAvg" class="text-center fw-bold">—</td><td class="no-print"></td></tr></tfoot>
+        <tfoot><tr class="table-warning"><td colspan="5" class="text-end fw-bold" style="font-size:0.83rem">Average Rating — Strategic Function:</td><td id="strategicAvg" class="text-center fw-bold">—</td><td class="no-print"></td></tr></tfoot>
       </table>
     </div>
   </div>
@@ -110,10 +110,10 @@ $user = requireAuth(['admin']);
     <div class="table-responsive">
       <table class="table table-bordered mb-0" id="supportTable">
         <thead class="table-light">
-          <tr><th>MFO/PAP</th><th>Success Indicator</th><th style="width:90px">Target</th><th style="width:80px">Budget</th><th style="width:80px">Measure</th><th>Actual Accomplishment</th><th style="width:90px">Avg. Rating</th><th class="no-print" style="width:50px">Del</th></tr>
+          <tr><th>MFO/PAP</th><th>Success Indicator</th><th style="width:90px">Target</th><th style="width:80px">Budget</th><th>Actual Accomplishment</th><th style="width:90px">Avg. Rating</th><th class="no-print" style="width:50px">Del</th></tr>
         </thead>
         <tbody id="supportBody"></tbody>
-        <tfoot><tr class="table-warning"><td colspan="6" class="text-end fw-bold" style="font-size:0.83rem">Average Rating — Support Function:</td><td id="supportAvg" class="text-center fw-bold">—</td><td class="no-print"></td></tr></tfoot>
+        <tfoot><tr class="table-warning"><td colspan="5" class="text-end fw-bold" style="font-size:0.83rem">Average Rating — Support Function:</td><td id="supportAvg" class="text-center fw-bold">—</td><td class="no-print"></td></tr></tfoot>
       </table>
     </div>
   </div>
@@ -217,36 +217,25 @@ $user = requireAuth(['admin']);
     });
   }
 
-  function validateAccInput(input) {
-    if (!input) return;
-    let v = input.value;
-    if (v === '') return;
-    let num = parseInt(v, 10);
-    if (isNaN(num)) {
-      input.value = '';
-      return;
-    }
-    if (num > 100) input.value = 100;
-    else if (num < 1) input.value = 1;
-    else input.value = num;
-  }
-
-  function enforceDigitsOnly(e) {
-    if (['e', 'E', '+', '-', '.'].includes(e.key)) {
-      e.preventDefault();
-    }
-  }
 
   function createRow(data = {}) {
     const tr = document.createElement('tr');
+    const targetVal = (data.target || '').trim();
+    const isNA = /^(n\/?a|not applicable|none|n\s*a)$/i.test(targetVal);
+    const pctMatch = targetVal.match(/(\d+)\s*%/);
+    const accType = isNA ? 'text' : 'number';
+    const accMode = isNA ? 'text' : (pctMatch ? 'percentage' : 'numeric');
+    const accMax = pctMatch ? parseInt(pctMatch[1], 10) : (isNA ? '' : 100);
+    const accPh = isNA ? 'Enter text / N/A' : (pctMatch ? `1-${accMax}%` : '1-100');
+    const maxAttr = accMax ? `min="1" max="${accMax}" step="1"` : '';
+    const pctAttr = pctMatch ? `data-max-pct="${accMax}"` : '';
     tr.dataset.itemId = data.itemId || '';
     tr.innerHTML = `
       <td><input type="text" class="form-control form-control-sm" value="${data.mfo || ''}" placeholder="e.g. Instruction"></td>
       <td><input type="text" class="form-control form-control-sm" value="${data.successIndicator || ''}" placeholder="Success indicator..."></td>
-      <td><input type="text" class="form-control form-control-sm" value="${data.target || ''}" placeholder="Target"></td>
+      <td><input type="text" class="form-control form-control-sm target-input" value="${data.target || ''}" placeholder="Target" oninput="syncRowTargetAndAcc(this.closest('tr'))"></td>
       <td><input type="number" class="form-control form-control-sm" value="${data.budget || '0'}" placeholder="0"></td>
-      <td><input type="text" class="form-control form-control-sm" value="${data.measure || ''}" placeholder="Q/T/E"></td>
-      <td><input type="number" class="form-control form-control-sm" min="1" max="100" step="1" value="${data.actual || ''}" placeholder="1-100" oninput="validateAccInput(this)" onkeydown="enforceDigitsOnly(event)"></td>
+      <td><input type="${accType}" class="form-control form-control-sm acc-input text-center" ${maxAttr} data-mode="${accMode}" ${pctAttr} value="${data.actual || ''}" placeholder="${accPh}" oninput="validateAccInput(this)" onkeydown="enforceDigitsOnly(event)"></td>
       <td><input type="number" class="form-control form-control-sm opcr-rating" min="1" max="5" step="0.01" value="${data.rating || ''}" placeholder="1-5" oninput="computeOPCRAverages()"></td>
       <td class="no-print text-center">
         <button class="btn btn-outline-danger btn-sm" onclick="this.closest('tr').remove();computeOPCRAverages()" title="Remove"><i class="fa-solid fa-trash"></i></button>
@@ -265,7 +254,7 @@ $user = requireAuth(['admin']);
     document.getElementById(tbodyId).querySelectorAll('tr').forEach(tr => {
       const inputs = tr.querySelectorAll('input');
       // inputs: [0]=mfo, [1]=indicator, [2]=target, [3]=budget, [4]=measure, [5]=actual, [6]=rating
-      rows.push({ mfo: inputs[0].value, successIndicator: inputs[1].value, target: inputs[2].value, budget: inputs[3].value, measure: inputs[4].value, actual: inputs[5].value, rating: inputs[6].value });
+      rows.push({ mfo: inputs[0]?.value || '', successIndicator: inputs[1]?.value || '', target: inputs[2]?.value || '', budget: inputs[3]?.value || '', actual: inputs[4]?.value || '', rating: inputs[5]?.value || '' });
     });
     return rows;
   }
@@ -399,7 +388,6 @@ $user = requireAuth(['admin']);
           <td>${ep(r.successIndicator)}</td>
           <td class="tc">${ep(r.target)}</td>
           <td class="tc">${ep(r.budget)}</td>
-          <td class="tc">${ep(r.measure)}</td>
           <td class="tc">${ep(r.actual ? (isNaN(r.actual) ? r.actual : r.actual + '%') : '')}</td>
           <td class="tc">${rat}</td>
           <td class="tc">${rat}</td>
@@ -526,18 +514,18 @@ td, th { border:1px solid #000; padding:1.5px 3px; vertical-align:middle; font-s
         <th rowspan="2">SUCCESS INDICATORS</th>
         <th rowspan="2">TARGET</th>
         <th rowspan="2">BUDGET (₱)</th>
-        <th rowspan="2">MEASURE</th>
+        
         <th rowspan="2">ACTUAL ACCOMPLISHMENTS</th>
         <th colspan="4">RATING</th>
       </tr>
       <tr><th>Q<sup>1</sup></th><th>E<sup>2</sup></th><th>T<sup>3</sup></th><th>A<sup>4</sup></th></tr>
     </thead>
     <tbody>
-      <tr class="sec-row"><td colspan="10">A. CORE FUNCTION</td></tr>
+      <tr class="sec-row"><td colspan="9">A. CORE FUNCTION</td></tr>
       ${buildRows(core, 4)}
-      <tr class="sec-row"><td colspan="10">B. STRATEGIC FUNCTION</td></tr>
+      <tr class="sec-row"><td colspan="9">B. STRATEGIC FUNCTION</td></tr>
       ${buildRows(strategic, 3)}
-      <tr class="sec-row"><td colspan="10">C. SUPPORT FUNCTION</td></tr>
+      <tr class="sec-row"><td colspan="9">C. SUPPORT FUNCTION</td></tr>
       ${buildRows(support, 3)}
     </tbody>
   </table>
@@ -571,7 +559,7 @@ td, th { border:1px solid #000; padding:1.5px 3px; vertical-align:middle; font-s
       <td>&nbsp;</td>
     </tr>
     <tr>
-      <td colspan="6" class="legend-note">Legend: 1:Quality &nbsp; 2:Efficiency &nbsp; 3:Timeliness &nbsp; 4:Average</td>
+      <td colspan="5" class="legend-note">Legend: 1:Quality &nbsp; 2:Efficiency &nbsp; 3:Timeliness &nbsp; 4:Average</td>
     </tr>
   </table>
 </div>

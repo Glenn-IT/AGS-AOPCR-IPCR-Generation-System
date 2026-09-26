@@ -330,7 +330,7 @@ $user = requireAuth(['user']);
 
       const actionHtml = filePath
         ? `<a href="${filePath}" target="_blank" class="btn btn-outline-primary btn-sm"><i class="fa-solid fa-eye me-1"></i>View / Open</a>`
-        : `<button type="button" class="btn btn-outline-secondary btn-sm" onclick="showToast('Physical file not saved on server yet. Please upload via Evidence Upload.', 'warning')"><i class="fa-solid fa-file me-1"></i>Document Details</button>`;
+        : `<button type="button" class="btn btn-outline-secondary btn-sm" onclick="showToast('Physical file not saved on server yet. Please upload supporting evidence in the form.', 'warning')"><i class="fa-solid fa-file me-1"></i>Document Details</button>`;
 
       tbody.innerHTML += `<tr>
         <td>${i + 1}</td>
@@ -601,25 +601,6 @@ $user = requireAuth(['user']);
     return '';
   }
 
-  function validateAccInput(input) {
-    if (!input) return;
-    let v = input.value;
-    if (v === '') return;
-    let num = parseInt(v, 10);
-    if (isNaN(num)) {
-      input.value = '';
-      return;
-    }
-    if (num > 100) input.value = 100;
-    else if (num < 1) input.value = 1;
-    else input.value = num;
-  }
-
-  function enforceDigitsOnly(e) {
-    if (['e', 'E', '+', '-', '.'].includes(e.key)) {
-      e.preventDefault();
-    }
-  }
 
   function enforceRatingKeys(e) {
     if (['e', 'E', '+', '-'].includes(e.key)) {
@@ -645,7 +626,7 @@ $user = requireAuth(['user']);
 
   function setReadOnly(on) {
     isReadOnly = on;
-    const allInputs = document.querySelectorAll('#coreBody input, #strategicBody input, #supportBody input, #ipcrDate');
+    const allInputs = document.querySelectorAll('#coreBody input, #coreBody select, #strategicBody input, #strategicBody select, #supportBody input, #supportBody select, #ipcrDate');
     allInputs.forEach(i => i.disabled = on);
     const editBtn = document.getElementById('editBtn2');
     if (editBtn) editBtn.style.display = on ? 'inline-flex' : 'none';
@@ -672,6 +653,19 @@ $user = requireAuth(['user']);
     return `<div class="d-inline-flex align-items-center justify-content-center gap-1">${viewBtn}${uploadBtn}</div>`;
   }
 
+  function getAccInputHtml(targetStr, val = '') {
+    const targetVal = (targetStr || '').trim();
+    const isNA = /^(n\/?a|not applicable|none|n\s*a)$/i.test(targetVal);
+    const pctMatch = targetVal.match(/(\d+)\s*%/);
+    const accType = isNA ? 'text' : 'number';
+    const accMode = isNA ? 'text' : (pctMatch ? 'percentage' : 'numeric');
+    const accMax = pctMatch ? parseInt(pctMatch[1], 10) : (isNA ? '' : 100);
+    const accPh = isNA ? 'Enter text / N/A' : (pctMatch ? `1-${accMax}%` : '1-100');
+    const maxAttr = accMax ? `min="1" max="${accMax}" step="1"` : '';
+    const pctAttr = pctMatch ? `data-max-pct="${accMax}"` : '';
+    const safeVal = (val || '').toString().replace(/"/g, '&quot;');
+    return `<input type="${accType}" class="form-control form-control-sm acc-input text-center" ${maxAttr} data-mode="${accMode}" ${pctAttr} placeholder="${accPh}" value="${safeVal}" oninput="validateAccInput(this)" onkeydown="enforceDigitsOnly(event)">`;
+  }
   function loadKpiSection(tbodyId, items, categoryKey = 'core') {
     const tbody = document.getElementById(tbodyId);
     tbody.innerHTML = '';
@@ -682,12 +676,12 @@ $user = requireAuth(['user']);
         <td style="font-size:0.82rem;background:#fafafa;white-space:nowrap">${item.mfo}${personalTag(item)}</td>
         <td style="font-size:0.82rem;background:#fafafa">${item.success_indicator}</td>
         <td style="font-size:0.82rem;background:#fafafa;white-space:nowrap">${item.target || '—'}</td>
-        <td><input type="number" class="form-control form-control-sm acc-input" min="1" max="100" step="1" placeholder="1-100" oninput="validateAccInput(this)" onkeydown="enforceDigitsOnly(event)"></td>
+        <td>${getAccInputHtml(item.target, "")}</td>
         <td><input type="number" class="form-control form-control-sm rating-q" min="1" max="5" step="0.1" placeholder="1-5" data-kpi="${item.id}" oninput="validateRatingInput(this);computeRowRating(this)" onkeydown="enforceRatingKeys(event)"></td>
         <td><input type="number" class="form-control form-control-sm rating-e" min="1" max="5" step="0.1" placeholder="1-5" data-kpi="${item.id}" oninput="validateRatingInput(this);computeRowRating(this)" onkeydown="enforceRatingKeys(event)"></td>
         <td><input type="number" class="form-control form-control-sm rating-t" min="1" max="5" step="0.1" placeholder="1-5" data-kpi="${item.id}" oninput="validateRatingInput(this);computeRowRating(this)" onkeydown="enforceRatingKeys(event)"></td>
         <td class="text-center fw-700 row-avg" style="font-size:0.85rem;background:#fafafa">-</td>
-        <td><input type="text" class="form-control form-control-sm row-remarks bg-light" placeholder="Auto" readonly></td>
+        <td><select class="form-select form-select-sm row-remarks" style="min-width:130px">${renderRemarksOptions("")}</select></td>
         <td class="text-center evidence-cell" data-cat="${categoryKey}" data-mfo="${mfoAttr}">${evidenceBtn}</td></tr>`;
     });
   }
@@ -706,12 +700,12 @@ $user = requireAuth(['user']);
         <td style="font-size:0.82rem;background:#fafafa;white-space:nowrap">${mfo}</td>
         <td style="font-size:0.82rem;background:#fafafa">${kpiItem.success_indicator || item.success_indicator || '-'}</td>
         <td style="font-size:0.82rem;background:#fafafa;white-space:nowrap">${kpiItem.target || item.target || '-'}</td>
-        <td><input type="number" class="form-control form-control-sm acc-input" min="1" max="100" step="1" placeholder="1-100" value="${item.accomplishment || ''}" oninput="validateAccInput(this)" onkeydown="enforceDigitsOnly(event)"></td>
+        <td>${getAccInputHtml(kpiItem.target || item.target, item.accomplishment)}</td>
         <td><input type="number" class="form-control form-control-sm rating-q" min="1" max="5" step="0.1" value="${item.q_rating || ''}" data-kpi="${item.kpi_id || ''}" oninput="validateRatingInput(this);computeRowRating(this)" onkeydown="enforceRatingKeys(event)"></td>
         <td><input type="number" class="form-control form-control-sm rating-e" min="1" max="5" step="0.1" value="${item.e_rating || ''}" data-kpi="${item.kpi_id || ''}" oninput="validateRatingInput(this);computeRowRating(this)" onkeydown="enforceRatingKeys(event)"></td>
         <td><input type="number" class="form-control form-control-sm rating-t" min="1" max="5" step="0.1" value="${item.t_rating || ''}" data-kpi="${item.kpi_id || ''}" oninput="validateRatingInput(this);computeRowRating(this)" onkeydown="enforceRatingKeys(event)"></td>
         <td class="text-center fw-700 row-avg" style="font-size:0.85rem;background:#fafafa">${avg > 0 ? avg.toFixed(2) : '-'}</td>
-        <td><input type="text" class="form-control form-control-sm row-remarks bg-light" value="${item.remarks || (avg > 0 ? getAdjectivalText(avg) : '')}" readonly placeholder="Auto"></td>
+        <td><select class="form-select form-select-sm row-remarks" style="min-width:130px">${renderRemarksOptions(item.remarks || "")}</select></td>
         <td class="text-center evidence-cell" data-cat="${categoryKey}" data-mfo="${mfoAttr}">${evidenceBtn}</td></tr>`;
     });
     // Surface KPIs added after this form was first saved (no ipcr_items row yet)
@@ -724,12 +718,12 @@ $user = requireAuth(['user']);
         <td style="font-size:0.82rem;background:#fafafa;white-space:nowrap">${k.mfo || '—'}${personalTag(k)}</td>
         <td style="font-size:0.82rem;background:#fafafa">${k.success_indicator || '—'}</td>
         <td style="font-size:0.82rem;background:#fafafa;white-space:nowrap">${k.target || '—'}</td>
-        <td><input type="number" class="form-control form-control-sm acc-input" min="1" max="100" step="1" placeholder="1-100" oninput="validateAccInput(this)" onkeydown="enforceDigitsOnly(event)"></td>
+        <td>${getAccInputHtml(k.target, "")}</td>
         <td><input type="number" class="form-control form-control-sm rating-q" min="1" max="5" step="0.1" placeholder="1-5" data-kpi="${k.id}" oninput="validateRatingInput(this);computeRowRating(this)" onkeydown="enforceRatingKeys(event)"></td>
         <td><input type="number" class="form-control form-control-sm rating-e" min="1" max="5" step="0.1" placeholder="1-5" data-kpi="${k.id}" oninput="validateRatingInput(this);computeRowRating(this)" onkeydown="enforceRatingKeys(event)"></td>
         <td><input type="number" class="form-control form-control-sm rating-t" min="1" max="5" step="0.1" placeholder="1-5" data-kpi="${k.id}" oninput="validateRatingInput(this);computeRowRating(this)" onkeydown="enforceRatingKeys(event)"></td>
         <td class="text-center fw-700 row-avg" style="font-size:0.85rem;background:#fafafa">-</td>
-        <td><input type="text" class="form-control form-control-sm row-remarks bg-light" placeholder="Auto" readonly></td>
+        <td><select class="form-select form-select-sm row-remarks" style="min-width:130px">${renderRemarksOptions("")}</select></td>
         <td class="text-center evidence-cell" data-cat="${categoryKey}" data-mfo="${mfoAttr}">${evidenceBtn}</td></tr>`;
     });
   }
@@ -786,10 +780,8 @@ $user = requireAuth(['user']);
     if (vals.length > 0) {
       const avg = vals.reduce((a, b) => a + b, 0) / vals.length;
       avgCell.textContent = avg.toFixed(2);
-      remarksInp.value = getAdjectivalText(avg);
     } else {
       avgCell.textContent = '-';
-      remarksInp.value = '';
     }
     computeOverallRating();
   }
