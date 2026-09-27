@@ -9,12 +9,13 @@ $db = getDB();
 $status      = $_GET['status'] ?? '';
 $timeline_id = intval($_GET['timeline_id'] ?? 0);
 $dept_id     = $_GET['department_id'] ?? '';
-$target_role = $_GET['target_role'] ?? '';
+$target_role    = $_GET['target_role'] ?? '';
+$my_submissions = intval($_GET['my_submissions'] ?? 0) === 1 || ($_GET['view'] ?? '') === 'own';
 
 $where  = ['1=1'];
 $params = [];
 
-if ($user['role'] === 'user') {
+if ($user['role'] === 'user' || $my_submissions) {
     $where[]  = 'f.user_id = ?';
     $params[] = $user['id'];
 } elseif ($user['role'] === 'admin') {

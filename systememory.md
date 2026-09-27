@@ -125,6 +125,7 @@ All backend functions and their downstream callers. **If you touch any of these,
 | `getAdjectivalRating($avg): string` | `string` | Converts numeric 1.0–5.0 rating to string: Outstanding ( $\ge 4.5$), Very Satisfactory ($\ge 3.5$), Satisfactory ($\ge 2.5$), Unsatisfactory ($\ge 1.5$), Poor ($>0$) | `api/ipcr/save.php`, `api/ipcr/review.php`, `api/opcr/save.php`, `assets/js/components.js` (`getAdjectivalText`) | - **Sync requirement:** PHP `getAdjectivalRating` and JS `getAdjectivalText` in `components.js` MUST use identical thresholds! |
 | `ensureIpcrColumns(PDO $db): void` | `void` | Auto-migrates missing columns (`q_rating`, `e_rating`, `t_rating`, `mfo`, `target`, `budget`, `measure`) and ensures `rating DECIMAL(3,2)` into `ipcr_items`; auto-migrates (`etl_type`, `weight_core`, `weight_strategic`, `weight_support`) into `ipcr_forms` | `api/ipcr/save.php`, `api/ipcr/review.php`, `api/ipcr/get.php` | If columns are permanently added to `schema.sql`, verify types match. Uses static caching per request. |
 | `ensureOpcrColumns(PDO $db): void` | `void` | Auto-migrates missing columns (`q_rating`, `e_rating`, `t_rating`, `measure`, `remarks`, `rating DECIMAL`) into `opcr_items` | `api/opcr/save.php`, `api/opcr/review.php`, `api/opcr/get.php` | Matches decimal rating migration in `opcr_items`. |
+| `checkNewKpisForUser(PDO $db, array $user, int $ipcrFormId): array` | `array` | Checks if there are active KPIs in user's scope not yet included in the submitted IPCR form. Returns `['has_new', 'new_count', 'new_kpi_ids']` | `api/ipcr/get.php`, `api/ipcr/save.php` | Used to block duplicate IPCR submission unless administrator/superadmin added new KPIs. |
 
 ---
 
@@ -152,9 +153,9 @@ you MUST update both the PHP endpoint and ALL consumer Views listed below!
 
 | Endpoint | Method | Role | Request Payload | Response Schema | Calling Files / UI Components |
 |---|---|---|---|---|---|
-| `save.php` | POST | `user`, `admin` | `{action: 'draft'\|'submit', ipcr_id, timeline_id, covered_period, core: [...], strategic: [...], support: [...]}` | `{success: bool, ipcr_id: int, status: string, overall_rating: float, message: string}` | `views/users/ipcr-form.php`, `views/admin/ipcr-form.php` |
-| `get.php` | GET | `user`, `admin`, `superadmin` | `?id=<ipcr_id>` | `{success: bool, form: object, items: object {core: [], strategic: [], support: []}, user: object}` | `views/users/ipcr-form.php`, `views/users/status.php`, `views/admin/review-ipcr.php`, `views/admin/accomplishments.php`, `views/superadmin/accomplishments.php` |
-| `list.php` | GET | Logged-in | `?timeline_id=&status=&department_id=&user_id=` | `{success: bool, forms: array}` | `views/users/status.php`, `views/admin/review-ipcr.php`, `views/admin/reports.php`, `views/superadmin/reports.php` |
+| `save.php` | POST | `user`, `admin` | `{action: 'draft'\|'submit', ipcr_id, timeline_id, covered_period, etl_type, weight_core, weight_strategic, weight_support, core: [...], strategic: [...], support: [...]}` | `{success: bool, ipcr_id: int, status: string, overall_rating: float, message: string}` | `views/users/ipcr-form.php`, `views/admin/ipcr-form.php` |
+| `get.php` | GET | `user`, `admin`, `superadmin` | `?id=<ipcr_id>` | `{success: bool, form: object, items: object {core: [], strategic: [], support: []}, user: object}` | `views/users/ipcr-form.php`, `views/users/status.php`, `views/admin/status.php`, `views/admin/review-ipcr.php`, `views/admin/accomplishments.php`, `views/superadmin/accomplishments.php` |
+| `list.php` | GET | Logged-in | `?timeline_id=&status=&department_id=&user_id=&my_submissions=1` | `{success: bool, forms: array}` | `views/users/status.php`, `views/admin/status.php`, `views/admin/review-ipcr.php`, `views/admin/reports.php`, `views/superadmin/reports.php` |
 | `review.php` | POST | `admin`, `superadmin` | `{ipcr_id: int, status: 'reviewed'\|'approved'\|'disapproved', remarks: string, ratings: [{item_id, q_rating, e_rating, t_rating, rating, accomplishment?, remarks?}]}` | `{success: bool, overall_rating: float, status: string, message: string}` | `views/admin/review-ipcr.php`, `views/admin/accomplishments.php`, `views/superadmin/accomplishments.php` |
 
 ### 3.3 OPCR Module (`api/opcr/`)
@@ -303,6 +304,7 @@ Inventory of all web pages with their access roles, layout bindings, and data de
 |---|---|---|---|---|
 | `dashboard.php` | `admin` | `dashboard` | `api/dashboard/admin-stats.php` | Department-scoped dashboard, faculty submission progress, pending review alerts |
 | `ipcr-form.php` | `admin` | `ipcr-form` | `api/ipcr/save.php`, `api/ipcr/get.php`, `api/kpi/list.php`, `api/timeline/list.php` | Personal IPCR form for Dean/Head |
+| `status.php` | `admin` | `status` | `api/ipcr/list.php?my_submissions=1`, `api/ipcr/get.php` | Real-time tracking pipeline for Admin's submitted IPCR (Submitted $\rightarrow$ Under Review $\rightarrow$ Final Decision), detail modal, and official Print Preview |
 | `review-ipcr.php` | `admin` | `accomplishments` | `api/ipcr/list.php`, `api/ipcr/get.php`, `api/ipcr/review.php`, `api/evidence/list.php` | Departmental IPCR reviewer with item-by-item rating modal & evidence inspector |
 | `accomplishments.php` | `admin` | `accomplishments` | `api/ipcr/list.php`, `api/ipcr/get.php`, `api/ipcr/review.php` | Tabular accomplishment review and ratings |
 | `kpi-management.php` | `admin` | `kpi-management` | `api/kpi/*`, `api/users/list.php` | Create/assign department KPIs to specific faculty members |

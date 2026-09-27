@@ -224,6 +224,7 @@ function buildSidebar(role, activePage) {
       { icon: 'fa-gauge', label: 'Dashboard', href: 'dashboard.php', page: 'dashboard' },
       { section: 'IPCR / Performance' },
       { icon: 'fa-file-lines', label: 'IPCR Form', href: 'ipcr-form.php', page: 'ipcr-form' },
+      { icon: 'fa-eye', label: 'View Status', href: 'status.php', page: 'status' },
       { icon: 'fa-clipboard-check', label: 'Accomplishments & Ratings', href: 'accomplishments.php', page: 'accomplishments' },
       { icon: 'fa-file-alt', label: 'Reports', href: 'reports.php', page: 'reports' },
       { section: 'Management' },

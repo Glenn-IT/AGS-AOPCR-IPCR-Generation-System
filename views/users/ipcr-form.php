@@ -38,6 +38,9 @@ $user = requireAuth(['user']);
     <span id="kpiInfoText"></span>
   </div>
 
+  <!-- Submission Status / New KPI Alert Banner -->
+  <div id="submissionStatusBanner" class="d-none no-print mb-3"></div>
+
   <!-- Print Header (visible on print only) -->
   <div class="d-none d-print-block text-center mb-3">
     <h5 class="fw-700">CAGAYAN STATE UNIVERSITY — PIAT CAMPUS</h5>
@@ -398,11 +401,139 @@ $user = requireAuth(['user']);
   let supervisor = null;
   let currentEvidence = [];
   let _evidenceModal = null;
+  let existingFormStatus = null;
+  let hasNewKpisGlobal = false;
 
   document.getElementById('ipcrName').value = session.name;
   document.getElementById('ipcrPosition').value = session.position || '-';
   document.getElementById('ipcrDate').value = new Date().toISOString().split('T')[0];
   document.getElementById('sigName').textContent = session.name.toUpperCase();
+
+  // ── ETL Weight Configuration & State ─────────────────────────────────────
+  const ETL_PRESETS = {
+    '18 ETL': { core: 10, strategicMin: 50, strategicMax: 65, strategicDef: 60, supportDef: 30 },
+    '15 ETL': { core: 20, strategicMin: 40, strategicMax: 55, strategicDef: 45, supportDef: 35 },
+    '12 ETL': { core: 30, strategicMin: 35, strategicMax: 50, strategicDef: 40, supportDef: 30 },
+    '9 ETL':  { core: 40, strategicMin: 30, strategicMax: 40, strategicDef: 35, supportDef: 25 },
+    '6 ETL':  { core: 50, strategicMin: 25, strategicMax: 25, strategicDef: 25, supportDef: 25 },
+    '3 ETL':  { core: 60, strategicMin: 20, strategicMax: 20, strategicDef: 20, supportDef: 20 },
+    '0 ETL':  { core: 70, strategicMin: 15, strategicMax: 15, strategicDef: 15, supportDef: 15 }
+  };
+
+  let currentEtl = '6 ETL';
+  let activeWeights = { core: 50, strategic: 25, support: 25 };
+
+  function selectEtl(etlKey, customWeights = null) {
+    if (!ETL_PRESETS[etlKey]) etlKey = '6 ETL';
+    currentEtl = etlKey;
+    const preset = ETL_PRESETS[etlKey];
+
+    if (customWeights && customWeights.core !== undefined) {
+      activeWeights.core = parseFloat(customWeights.core) || preset.core;
+      activeWeights.strategic = parseFloat(customWeights.strategic) || preset.strategicDef;
+      activeWeights.support = parseFloat(customWeights.support) || preset.supportDef;
+    } else {
+      activeWeights = {
+        core: preset.core,
+        strategic: preset.strategicDef,
+        support: preset.supportDef
+      };
+    }
+
+    // Sync select dropdown
+    const etlSel = document.getElementById('etlSelect');
+    if (etlSel && etlSel.value !== etlKey) etlSel.value = etlKey;
+
+    // Highlight active column in table
+    document.querySelectorAll('#etlMatrixTable .etl-col-header').forEach(th => {
+      th.classList.toggle('active-etl-col', th.dataset.etl === etlKey);
+    });
+    document.querySelectorAll('#etlMatrixTable .etl-cell').forEach(td => {
+      td.classList.toggle('active-etl-cell', td.dataset.etl === etlKey);
+    });
+
+    // Update active weight display badges
+    const lbl = document.getElementById('activeEtlLabel');
+    if (lbl) lbl.textContent = etlKey;
+
+    const bCore = document.getElementById('dispWeightCore');
+    const bStrat = document.getElementById('dispWeightStrategic');
+    const bSupp = document.getElementById('dispWeightSupport');
+    const bTot = document.getElementById('dispWeightTotal');
+    if (bCore) bCore.textContent = activeWeights.core + '%';
+    if (bStrat) bStrat.textContent = activeWeights.strategic + '%';
+    if (bSupp) bSupp.textContent = activeWeights.support + '%';
+    if (bTot) bTot.textContent = (activeWeights.core + activeWeights.strategic + activeWeights.support) + '%';
+
+    // Update section footer formula labels
+    const fCore = document.getElementById('coreFormulaText');
+    const fStrat = document.getElementById('strategicFormulaText');
+    const fSupp = document.getElementById('supportFormulaText');
+    if (fCore) fCore.textContent = `Average × ${(activeWeights.core / 100).toFixed(2)}`;
+    if (fStrat) fStrat.textContent = `Average × ${(activeWeights.strategic / 100).toFixed(2)}`;
+    if (fSupp) fSupp.textContent = `Average × ${(activeWeights.support / 100).toFixed(2)}`;
+
+    // Update breakdown card badges & weights
+    const sumBadge = document.getElementById('summaryEtlBadge');
+    if (sumBadge) sumBadge.textContent = etlKey;
+    const bdCore = document.getElementById('breakdownCoreWeight');
+    const bdStrat = document.getElementById('breakdownStrategicWeight');
+    const bdSupp = document.getElementById('breakdownSupportWeight');
+    if (bdCore) bdCore.textContent = activeWeights.core + '%';
+    if (bdStrat) bdStrat.textContent = activeWeights.strategic + '%';
+    if (bdSupp) bdSupp.textContent = activeWeights.support + '%';
+
+    // Range adjuster for flexible ETLs
+    const rangeDiv = document.getElementById('etlRangeAdjuster');
+    const rangeInp = document.getElementById('inpStrategicWeight');
+    if (rangeDiv && rangeInp) {
+      if (preset.strategicMin < preset.strategicMax) {
+        rangeDiv.classList.remove('d-none');
+        rangeDiv.classList.add('d-flex');
+        rangeInp.min = preset.strategicMin;
+        rangeInp.max = preset.strategicMax;
+        rangeInp.value = activeWeights.strategic;
+      } else {
+        rangeDiv.classList.add('d-none');
+        rangeDiv.classList.remove('d-flex');
+      }
+    }
+
+    // Recompute ratings with new weights
+    computeOverallRating();
+  }
+
+  function onEtlSelectChange(val) {
+    selectEtl(val);
+  }
+
+  function onCustomStrategicInput(val) {
+    const preset = ETL_PRESETS[currentEtl];
+    if (!preset) return;
+    let sVal = parseFloat(val);
+    if (isNaN(sVal)) return;
+    if (sVal < preset.strategicMin) sVal = preset.strategicMin;
+    if (sVal > preset.strategicMax) sVal = preset.strategicMax;
+    activeWeights.strategic = sVal;
+    activeWeights.support = 100 - activeWeights.core - activeWeights.strategic;
+
+    const bStrat = document.getElementById('dispWeightStrategic');
+    const bSupp = document.getElementById('dispWeightSupport');
+    if (bStrat) bStrat.textContent = activeWeights.strategic + '%';
+    if (bSupp) bSupp.textContent = activeWeights.support + '%';
+
+    const fStrat = document.getElementById('strategicFormulaText');
+    const fSupp = document.getElementById('supportFormulaText');
+    if (fStrat) fStrat.textContent = `Average × ${(activeWeights.strategic / 100).toFixed(2)}`;
+    if (fSupp) fSupp.textContent = `Average × ${(activeWeights.support / 100).toFixed(2)}`;
+
+    const bdStrat = document.getElementById('breakdownStrategicWeight');
+    const bdSupp = document.getElementById('breakdownSupportWeight');
+    if (bdStrat) bdStrat.textContent = activeWeights.strategic + '%';
+    if (bdSupp) bdSupp.textContent = activeWeights.support + '%';
+
+    computeOverallRating();
+  }
 
   function getMatchingEvidence(categoryKey, mfoText) {
     const list = currentEvidence || [];
@@ -662,9 +793,12 @@ $user = requireAuth(['user']);
       if (existRes?.form) {
         const f = existRes.form;
         existingIpcrId = f.id;
+        existingFormStatus = f.status;
+        hasNewKpisGlobal = Boolean(f.has_new_kpis);
+
         document.getElementById('ipcrOffice').value = f.department_name || session.department_id || '';
         document.getElementById('ipcrPeriod').value = f.covered_period;
-        document.getElementById('ipcrStatus').value = f.status;
+        document.getElementById('ipcrStatus').value = f.status === 'pending' ? 'Pending Review' : (f.status ? f.status.charAt(0).toUpperCase() + f.status.slice(1) : 'Draft');
 
         // Merge backend evidence files
         (f.evidence_files || []).forEach(bf => {
@@ -688,11 +822,60 @@ $user = requireAuth(['user']);
         loadSection('strategicBody', f.items.strategic, kpi.strategic, 'strategic');
         loadSection('supportBody', f.items.support, kpi.support, 'support');
 
-        if (['pending', 'reviewed', 'approved'].includes(f.status)) {
-          setReadOnly(true);
+        // Check submission state and whether new KPIs were added
+        const hasSubmitted = ['pending', 'reviewed', 'approved'].includes(f.status);
+        const statusBanner = document.getElementById('submissionStatusBanner');
+
+        if (hasSubmitted) {
+          if (hasNewKpisGlobal) {
+            // New KPI(s) added by administrator! Re-submission is permitted.
+            if (statusBanner) {
+              statusBanner.className = 'alert alert-warning border-warning shadow-sm py-2 px-3 mb-3 no-print';
+              statusBanner.innerHTML = `<div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                <div>
+                  <i class="fa-solid fa-bell text-warning me-2 fs-5"></i>
+                  <strong>New KPI Added by Administrator:</strong> Your department or administrator has added <strong>${f.new_kpi_count || ''}</strong> new KPI indicator(s) to this rating period. Please fill out your accomplishment and rating for the new indicator(s) below, then submit your updated IPCR.
+                </div>
+                <span class="badge bg-warning text-dark"><i class="fa-solid fa-clock-rotate-left me-1"></i>Re-submission Permitted</span>
+              </div>`;
+              statusBanner.classList.remove('d-none');
+            }
+            setReadOnly(false);
+            const btnSubmit = document.getElementById('btnSubmit2');
+            if (btnSubmit) {
+              btnSubmit.style.display = 'inline-flex';
+              btnSubmit.innerHTML = '<i class="fa-solid fa-paper-plane me-1"></i>Submit Updated IPCR';
+            }
+            const btnDraft = document.getElementById('btnSaveDraft2');
+            if (btnDraft) btnDraft.style.display = 'inline-flex';
+            const editBtn = document.getElementById('editBtn2');
+            if (editBtn) editBtn.style.display = 'none';
+          } else {
+            // Already submitted, and NO new KPIs added -> Duplicate submission is strictly disabled!
+            setReadOnly(true);
+            if (statusBanner) {
+              const statCls = f.status === 'approved' ? 'success' : (f.status === 'reviewed' ? 'primary' : 'warning');
+              statusBanner.className = 'alert alert-success border-success shadow-sm py-2 px-3 mb-3 no-print';
+              statusBanner.innerHTML = `<div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                <div>
+                  <i class="fa-solid fa-circle-check text-success me-2 fs-5"></i>
+                  <strong>IPCR Already Submitted:</strong> You have submitted your IPCR for this academic timeline (${f.covered_period}). Current status: <span class="badge bg-${statCls}">${f.status.toUpperCase()}</span>.
+                  <div class="text-muted small mt-1"><i class="fa-solid fa-lock me-1"></i>Duplicate submissions are disabled. Re-submission is not allowed unless a new KPI is added by your administrator.</div>
+                </div>
+              </div>`;
+              statusBanner.classList.remove('d-none');
+            }
+            const btnSubmit = document.getElementById('btnSubmit2');
+            if (btnSubmit) btnSubmit.style.display = 'none';
+            const btnDraft = document.getElementById('btnSaveDraft2');
+            if (btnDraft) btnDraft.style.display = 'none';
+            const editBtn = document.getElementById('editBtn2');
+            if (editBtn) editBtn.style.display = 'none';
+          }
         }
       } else {
         currentEvidence = userFiles;
+        selectEtl('6 ETL');
         loadKpiSection('coreBody', kpi.core, 'core');
         loadKpiSection('strategicBody', kpi.strategic, 'strategic');
         loadKpiSection('supportBody', kpi.support, 'support');
@@ -701,6 +884,7 @@ $user = requireAuth(['user']);
       }
     } else {
       currentEvidence = userFiles;
+      selectEtl('6 ETL');
       // No open timeline — show the KPI catalogue for reference but disable save/submit
       loadKpiSection('coreBody', kpi.core, 'core');
       loadKpiSection('strategicBody', kpi.strategic, 'strategic');
@@ -775,6 +959,13 @@ $user = requireAuth(['user']);
     isReadOnly = on;
     const allInputs = document.querySelectorAll('#coreBody input, #coreBody select, #strategicBody input, #strategicBody select, #supportBody input, #supportBody select, #ipcrDate');
     allInputs.forEach(i => i.disabled = on);
+    const etlSel = document.getElementById('etlSelect');
+    if (etlSel) etlSel.disabled = on;
+    const stratInp = document.getElementById('inpStrategicWeight');
+    if (stratInp) stratInp.disabled = on;
+    document.querySelectorAll('#etlMatrixTable .etl-col-header, #etlMatrixTable .etl-cell').forEach(el => {
+      el.style.pointerEvents = on ? 'none' : 'auto';
+    });
     const editBtn = document.getElementById('editBtn2');
     if (editBtn) editBtn.style.display = on ? 'inline-flex' : 'none';
     const actionBtns = [document.getElementById('btnSubmit2'), document.getElementById('btnSaveDraft2')];
@@ -782,10 +973,14 @@ $user = requireAuth(['user']);
   }
 
   function enableEdit() {
+    if (existingFormStatus && ['pending', 'reviewed', 'approved'].includes(existingFormStatus) && !hasNewKpisGlobal) {
+      showToast('You have already submitted your IPCR for this academic timeline. Re-submission is not allowed unless a new KPI is added by the administrator.', 'warning');
+      return;
+    }
     confirmModal('Allow editing of this IPCR? You can make changes and re-submit for review.', 'Enable Edit', () => {
       setReadOnly(false);
       document.getElementById('ipcrStatus').value = 'Draft';
-      showToast('IPCR is now editable. Remember to click Submit for Review after making changes.', 'info');
+      showToast('IPCR is now editable.', 'info');
     });
   }
 
@@ -927,8 +1122,14 @@ $user = requireAuth(['user']);
     if (vals.length > 0) {
       const avg = vals.reduce((a, b) => a + b, 0) / vals.length;
       avgCell.textContent = avg.toFixed(2);
+      if (remarksInp && (!remarksInp.value || ['Outstanding','Very Satisfactory','Satisfactory','Unsatisfactory','Poor'].includes(remarksInp.value))) {
+        remarksInp.value = getAdjectivalText(avg);
+      }
     } else {
       avgCell.textContent = '-';
+      if (remarksInp && ['Outstanding','Very Satisfactory','Satisfactory','Unsatisfactory','Poor'].includes(remarksInp.value)) {
+        remarksInp.value = '';
+      }
     }
     computeOverallRating();
   }
@@ -944,9 +1145,9 @@ $user = requireAuth(['user']);
     const strategicAvg = getSectionAvg('strategicBody');
     const supportAvg = getSectionAvg('supportBody');
 
-    const wCore = (activeWeights.core || 50) / 100;
-    const wStrat = (activeWeights.strategic || 25) / 100;
-    const wSupp = (activeWeights.support || 25) / 100;
+    const wCore = (activeWeights?.core || 50) / 100;
+    const wStrat = (activeWeights?.strategic || 25) / 100;
+    const wSupp = (activeWeights?.support || 25) / 100;
 
     const coreWeighted = coreAvg !== null ? (coreAvg * wCore) : null;
     const strategicWeighted = strategicAvg !== null ? (strategicAvg * wStrat) : null;
@@ -1009,10 +1210,10 @@ $user = requireAuth(['user']);
       ipcr_id: existingIpcrId || 0,
       timeline_id: activeTimeline.id,
       covered_period: period,
-      etl_type:         currentEtl,
-      weight_core:      activeWeights.core,
-      weight_strategic: activeWeights.strategic,
-      weight_support:   activeWeights.support,
+      etl_type:         currentEtl || '6 ETL',
+      weight_core:      activeWeights?.core || 50,
+      weight_strategic: activeWeights?.strategic || 25,
+      weight_support:   activeWeights?.support || 25,
       core:      getRows('coreBody'),
       strategic: getRows('strategicBody'),
       support:   getRows('supportBody'),
@@ -1026,13 +1227,14 @@ $user = requireAuth(['user']);
       const data = await res.json();
       if (data.success) {
         existingIpcrId = data.ipcr_id;
-        document.getElementById('ipcrStatus').value = data.status;
+        document.getElementById('ipcrStatus').value = data.status === 'pending' ? 'Pending' : 'Draft';
         showToast(data.message, 'success');
         return true;
       }
-      showToast(data.error, 'danger');
+      showToast(data.error || 'Failed to save form.', 'danger');
       return false;
-    } catch {
+    } catch (err) {
+      console.error(err);
       showToast('Server error. Make sure XAMPP is running.', 'danger');
       return false;
     }
@@ -1423,11 +1625,18 @@ td, th { border:1px solid #000; padding:1.5px 3px; vertical-align:middle; font-s
   }
 
   function submitIPCR() {
-    confirmModal('Are you sure you want to submit your IPCR for review?', 'Submit IPCR', async () => {
+    if (existingFormStatus && ['pending', 'reviewed', 'approved'].includes(existingFormStatus) && !hasNewKpisGlobal) {
+      showToast('You have already submitted your IPCR for this academic timeline. Duplicate submissions are not permitted unless a new KPI is added by the administrator.', 'warning');
+      return;
+    }
+    const confirmMsg = hasNewKpisGlobal
+      ? 'Submit your updated IPCR with the newly added KPI(s) for review?'
+      : 'Are you sure you want to submit your IPCR for review?';
+    confirmModal(confirmMsg, 'Submit IPCR', async () => {
       if (await saveIPCR('submit')) {
         document.getElementById('ipcrStatus').value = 'Pending';
-        setReadOnly(true);
-        showToast('IPCR submitted successfully for review! You can click Edit if you need to make changes before approval.', 'success');
+        showToast('IPCR submitted successfully for review!', 'success');
+        setTimeout(() => location.reload(), 1200);
       }
     });
   }

@@ -62,8 +62,8 @@ try {
     $db->beginTransaction();
 
     if ($ipcr_id > 0) {
-        // Update existing — only if it belongs to this user and is still draft/pending
-        $check = $db->prepare('SELECT id, status FROM ipcr_forms WHERE id = ? AND user_id = ?');
+        // Update existing form
+        $check = $db->prepare('SELECT id, status, date_submitted FROM ipcr_forms WHERE id = ? AND user_id = ?');
         $check->execute([$ipcr_id, $user['id']]);
         $existing = $check->fetch();
 
@@ -72,10 +72,18 @@ try {
             echo json_encode(['success' => false, 'error' => 'Form not found or access denied.']);
             exit;
         }
-        if (in_array($existing['status'], ['approved', 'reviewed'])) {
-            $db->rollBack();
-            echo json_encode(['success' => false, 'error' => 'Cannot edit a form that has already been reviewed or approved.']);
-            exit;
+
+        // If form has already been submitted (pending, reviewed, or approved):
+        if (in_array($existing['status'], ['pending', 'reviewed', 'approved'])) {
+            $newKpiInfo = checkNewKpisForUser($db, $user, $ipcr_id);
+            if (!$newKpiInfo['has_new']) {
+                $db->rollBack();
+                echo json_encode([
+                    'success' => false,
+                    'error' => 'You have already submitted your IPCR for this academic timeline. You cannot duplicate or re-submit unless a new KPI is added by the administrator.'
+                ]);
+                exit;
+            }
         }
 
         $db->prepare('UPDATE ipcr_forms SET timeline_id=?, covered_period=?, status=?, date_submitted=?, etl_type=?, weight_core=?, weight_strategic=?, weight_support=?, updated_at=NOW() WHERE id=?')
@@ -83,19 +91,35 @@ try {
 
         $db->prepare('DELETE FROM ipcr_items WHERE ipcr_form_id = ?')->execute([$ipcr_id]);
     } else {
-        // Check no existing non-disapproved form for this user+timeline
-        $dup = $db->prepare('SELECT id FROM ipcr_forms WHERE user_id=? AND timeline_id=? AND status != "disapproved"');
+        // Check if user already has an existing non-disapproved form for this timeline
+        $dup = $db->prepare('SELECT id, status, date_submitted FROM ipcr_forms WHERE user_id=? AND timeline_id=? AND status != "disapproved" ORDER BY id DESC LIMIT 1');
         $dup->execute([$user['id'], $timeline_id]);
-        if ($dup->fetch()) {
-            $db->rollBack();
-            echo json_encode(['success' => false, 'error' => 'You already have an IPCR form for this period.']);
-            exit;
+        $dupForm = $dup->fetch();
+        if ($dupForm) {
+            $ipcr_id = intval($dupForm['id']);
+
+            // If form has already been submitted (pending, reviewed, or approved):
+            if (in_array($dupForm['status'], ['pending', 'reviewed', 'approved'])) {
+                $newKpiInfo = checkNewKpisForUser($db, $user, $ipcr_id);
+                if (!$newKpiInfo['has_new']) {
+                    $db->rollBack();
+                    echo json_encode([
+                        'success' => false,
+                        'error' => 'You have already submitted your IPCR for this academic timeline. You cannot duplicate or re-submit unless a new KPI is added by the administrator.'
+                    ]);
+                    exit;
+                }
+            }
+
+            $db->prepare('UPDATE ipcr_forms SET timeline_id=?, covered_period=?, status=?, date_submitted=?, etl_type=?, weight_core=?, weight_strategic=?, weight_support=?, updated_at=NOW() WHERE id=?')
+               ->execute([$timeline_id, $covered_period, $status, $action === 'submit' ? date('Y-m-d') : ($dupForm['date_submitted'] ?? null), $etl_type, $weight_core, $weight_strategic, $weight_support, $ipcr_id]);
+            $db->prepare('DELETE FROM ipcr_items WHERE ipcr_form_id = ?')->execute([$ipcr_id]);
+        } else {
+            $db->prepare('INSERT INTO ipcr_forms (user_id, timeline_id, covered_period, status, date_submitted, etl_type, weight_core, weight_strategic, weight_support, updated_at) VALUES (?,?,?,?,?,?,?,?,?,NOW())')
+               ->execute([$user['id'], $timeline_id, $covered_period, $status, $action === 'submit' ? date('Y-m-d') : null, $etl_type, $weight_core, $weight_strategic, $weight_support]);
+
+            $ipcr_id = $db->lastInsertId();
         }
-
-        $db->prepare('INSERT INTO ipcr_forms (user_id, timeline_id, covered_period, status, date_submitted, etl_type, weight_core, weight_strategic, weight_support, updated_at) VALUES (?,?,?,?,?,?,?,?,?,NOW())')
-           ->execute([$user['id'], $timeline_id, $covered_period, $status, $action === 'submit' ? date('Y-m-d') : null, $etl_type, $weight_core, $weight_strategic, $weight_support]);
-
-        $ipcr_id = $db->lastInsertId();
     }
 
     ensureIpcrColumns($db);

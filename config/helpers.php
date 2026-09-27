@@ -111,3 +111,67 @@ function ensureOpcrColumns(PDO $db): void {
     $done = true;
 }
 
+/**
+ * Check if there are newly added active KPIs for a user that are NOT part of their existing IPCR form.
+ * Returns array: ['has_new' => bool, 'new_count' => int, 'new_kpi_ids' => array]
+ */
+function checkNewKpisForUser(PDO $db, array $user, int $ipcrFormId): array {
+    $role = $user['role'] ?? 'user';
+    $userId = intval($user['id']);
+    $userDept = $user['department_id'] ?? null;
+
+    $where = ['k.is_active = 1'];
+    $params = [];
+
+    if ($role === 'superadmin') {
+        // Superadmin sees all active
+    } elseif ($role === 'admin') {
+        $where[] = '(
+            (k.scope = "global")
+            OR (k.scope = "department" AND (k.department_id = ? OR k.department_id IS NULL))
+            OR (k.scope = "user" AND k.assigned_to = ?)
+            OR (k.created_by = ?)
+        )';
+        $params[] = $userDept;
+        $params[] = $userId;
+        $params[] = $userId;
+    } else {
+        $where[] = '(
+            (k.scope = "global" AND k.department_id IS NULL)
+            OR (k.scope = "department" AND k.department_id = ?)
+            OR (k.scope = "user" AND k.assigned_to = ?)
+        )';
+        $params[] = $userDept;
+        $params[] = $userId;
+    }
+
+    $sql = "SELECT k.id FROM kpi_items k WHERE " . implode(' AND ', $where);
+    $stmt = $db->prepare($sql);
+    $stmt->execute($params);
+    $activeKpiIds = $stmt->fetchAll(PDO::FETCH_COLUMN);
+
+    if (empty($activeKpiIds)) {
+        return ['has_new' => false, 'new_count' => 0, 'new_kpi_ids' => []];
+    }
+
+    // Get KPIs currently in this IPCR form
+    $itemStmt = $db->prepare("SELECT DISTINCT kpi_id FROM ipcr_items WHERE ipcr_form_id = ? AND kpi_id IS NOT NULL");
+    $itemStmt->execute([$ipcrFormId]);
+    $formKpiIds = $itemStmt->fetchAll(PDO::FETCH_COLUMN);
+
+    $formKpiMap = array_flip($formKpiIds);
+    $newKpis = [];
+    foreach ($activeKpiIds as $kid) {
+        if (!isset($formKpiMap[$kid])) {
+            $newKpis[] = intval($kid);
+        }
+    }
+
+    return [
+        'has_new'     => count($newKpis) > 0,
+        'new_count'   => count($newKpis),
+        'new_kpi_ids' => $newKpis
+    ];
+}
+
+

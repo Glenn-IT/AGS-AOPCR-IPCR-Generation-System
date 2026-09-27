@@ -82,6 +82,9 @@ $user = requireAuth(['admin']);
     <strong>No active submission period.</strong> The Super Admin has not opened a submission period yet. You can view and fill in the form, but saving and submitting are disabled until a period is opened.
   </div>
 
+  <!-- Submission Status / New KPI Alert Banner -->
+  <div id="submissionStatusBanner" class="d-none no-print mb-3"></div>
+
   <!-- Status Summary Banner -->
   <div class="opcr-summary-bar mb-3 d-flex align-items-center gap-3 flex-wrap">
     <span><i class="fa-solid fa-circle-info text-primary me-1"></i><strong>Status:</strong> <span id="statusBadge" class="badge bg-secondary ms-1">Draft</span></span>
@@ -505,6 +508,8 @@ $user = requireAuth(['admin']);
 
   let activeTimeline = null;
   let existingIpcrId = 0;
+  let existingFormStatus = null;
+  let hasNewKpisGlobal = false;
   let isReadOnly = false;
   let currentEvidence = [];
   let _evidenceModal = null;
@@ -516,6 +521,135 @@ $user = requireAuth(['admin']);
   document.getElementById('ipcrDate').value = new Date().toISOString().split('T')[0];
   document.getElementById('sigName').textContent = session.name.toUpperCase();
   document.getElementById('printDeptHeader').textContent = session.department_name || session.department || 'Administrator Office';
+
+  // ── ETL Weight Configuration & State ─────────────────────────────────────
+  const ETL_PRESETS = {
+    '18 ETL': { core: 10, strategicMin: 50, strategicMax: 65, strategicDef: 60, supportDef: 30 },
+    '15 ETL': { core: 20, strategicMin: 40, strategicMax: 55, strategicDef: 45, supportDef: 35 },
+    '12 ETL': { core: 30, strategicMin: 35, strategicMax: 50, strategicDef: 40, supportDef: 30 },
+    '9 ETL':  { core: 40, strategicMin: 30, strategicMax: 40, strategicDef: 35, supportDef: 25 },
+    '6 ETL':  { core: 50, strategicMin: 25, strategicMax: 25, strategicDef: 25, supportDef: 25 },
+    '3 ETL':  { core: 60, strategicMin: 20, strategicMax: 20, strategicDef: 20, supportDef: 20 },
+    '0 ETL':  { core: 70, strategicMin: 15, strategicMax: 15, strategicDef: 15, supportDef: 15 }
+  };
+
+  let currentEtl = '0 ETL';
+  let activeWeights = { core: 70, strategic: 15, support: 15 };
+
+  function selectEtl(etlKey, customWeights = null) {
+    if (!ETL_PRESETS[etlKey]) etlKey = '0 ETL';
+    currentEtl = etlKey;
+    const preset = ETL_PRESETS[etlKey];
+
+    if (customWeights && customWeights.core !== undefined) {
+      activeWeights.core = parseFloat(customWeights.core) || preset.core;
+      activeWeights.strategic = parseFloat(customWeights.strategic) || preset.strategicDef;
+      activeWeights.support = parseFloat(customWeights.support) || preset.supportDef;
+    } else {
+      activeWeights = {
+        core: preset.core,
+        strategic: preset.strategicDef,
+        support: preset.supportDef
+      };
+    }
+
+    // Sync select dropdown
+    const etlSel = document.getElementById('etlSelect');
+    if (etlSel && etlSel.value !== etlKey) etlSel.value = etlKey;
+
+    // Highlight active column in table
+    document.querySelectorAll('#etlMatrixTable .etl-col-header').forEach(th => {
+      th.classList.toggle('active-etl-col', th.dataset.etl === etlKey);
+    });
+    document.querySelectorAll('#etlMatrixTable .etl-cell').forEach(td => {
+      td.classList.toggle('active-etl-cell', td.dataset.etl === etlKey);
+    });
+
+    // Update active weight display badges
+    const lbl = document.getElementById('activeEtlLabel');
+    if (lbl) lbl.textContent = etlKey;
+
+    const bCore = document.getElementById('dispWeightCore');
+    const bStrat = document.getElementById('dispWeightStrategic');
+    const bSupp = document.getElementById('dispWeightSupport');
+    const bTot = document.getElementById('dispWeightTotal');
+    if (bCore) bCore.textContent = activeWeights.core + '%';
+    if (bStrat) bStrat.textContent = activeWeights.strategic + '%';
+    if (bSupp) bSupp.textContent = activeWeights.support + '%';
+    if (bTot) bTot.textContent = (activeWeights.core + activeWeights.strategic + activeWeights.support) + '%';
+
+    // Update section footer formula labels
+    const fCore = document.getElementById('coreFormulaText');
+    const fStrat = document.getElementById('strategicFormulaText');
+    const fSupp = document.getElementById('supportFormulaText');
+    if (fCore) fCore.textContent = `Average × ${(activeWeights.core / 100).toFixed(2)}`;
+    if (fStrat) fStrat.textContent = `Average × ${(activeWeights.strategic / 100).toFixed(2)}`;
+    if (fSupp) fSupp.textContent = `Average × ${(activeWeights.support / 100).toFixed(2)}`;
+
+    // Update breakdown card badges & weights
+    const sumBadge = document.getElementById('summaryEtlBadge');
+    if (sumBadge) sumBadge.textContent = etlKey;
+    const bdCore = document.getElementById('breakdownCoreWeight');
+    const bdStrat = document.getElementById('breakdownStrategicWeight');
+    const bdSupp = document.getElementById('breakdownSupportWeight');
+    if (bdCore) bdCore.textContent = activeWeights.core + '%';
+    if (bdStrat) bdStrat.textContent = activeWeights.strategic + '%';
+    if (bdSupp) bdSupp.textContent = activeWeights.support + '%';
+
+    // Range adjuster for flexible ETLs
+    const rangeDiv = document.getElementById('etlRangeAdjuster');
+    const rangeInp = document.getElementById('inpStrategicWeight');
+    if (rangeDiv && rangeInp) {
+      if (preset.strategicMin < preset.strategicMax) {
+        rangeDiv.classList.remove('d-none');
+        rangeDiv.classList.add('d-flex');
+        rangeInp.min = preset.strategicMin;
+        rangeInp.max = preset.strategicMax;
+        rangeInp.value = activeWeights.strategic;
+      } else {
+        rangeDiv.classList.add('d-none');
+        rangeDiv.classList.remove('d-flex');
+      }
+    }
+
+    if (typeof computeAverages === 'function') {
+      computeAverages();
+    }
+  }
+
+  function onEtlSelectChange(val) {
+    selectEtl(val);
+  }
+
+  function onCustomStrategicInput(val) {
+    const preset = ETL_PRESETS[currentEtl];
+    if (!preset) return;
+    let sVal = parseFloat(val);
+    if (isNaN(sVal)) return;
+    if (sVal < preset.strategicMin) sVal = preset.strategicMin;
+    if (sVal > preset.strategicMax) sVal = preset.strategicMax;
+    activeWeights.strategic = sVal;
+    activeWeights.support = 100 - activeWeights.core - activeWeights.strategic;
+
+    const bStrat = document.getElementById('dispWeightStrategic');
+    const bSupp = document.getElementById('dispWeightSupport');
+    if (bStrat) bStrat.textContent = activeWeights.strategic + '%';
+    if (bSupp) bSupp.textContent = activeWeights.support + '%';
+
+    const fStrat = document.getElementById('strategicFormulaText');
+    const fSupp = document.getElementById('supportFormulaText');
+    if (fStrat) fStrat.textContent = `Average × ${(activeWeights.strategic / 100).toFixed(2)}`;
+    if (fSupp) fSupp.textContent = `Average × ${(activeWeights.support / 100).toFixed(2)}`;
+
+    const bdStrat = document.getElementById('breakdownStrategicWeight');
+    const bdSupp = document.getElementById('breakdownSupportWeight');
+    if (bdStrat) bdStrat.textContent = activeWeights.strategic + '%';
+    if (bdSupp) bdSupp.textContent = activeWeights.support + '%';
+
+    if (typeof computeAverages === 'function') {
+      computeAverages();
+    }
+  }
 
   function updatePeriodSummary() {
     const p = document.getElementById('ipcrPeriod').value;
@@ -557,6 +691,10 @@ $user = requireAuth(['admin']);
   }
 
   function enableEdit() {
+    if (existingFormStatus && ['pending', 'reviewed', 'approved'].includes(existingFormStatus) && !hasNewKpisGlobal) {
+      showToast('You have already submitted your IPCR for this academic timeline. Re-submission is not allowed unless a new KPI is added.', 'warning');
+      return;
+    }
     confirmModal('Allow editing of this IPCR? You can make changes and re-submit for review.', 'Enable Edit', () => {
       setReadOnly(false);
       setStatus('draft');
@@ -659,15 +797,30 @@ $user = requireAuth(['admin']);
     computeAverages();
   }
 
-  function loadRows(tbodyId, items) {
+  function loadRows(tbodyId, items, sectionKpis = []) {
     const cat = tbodyId.replace('Body', '');
     const tbody = document.getElementById(tbodyId);
     tbody.innerHTML = '';
     if (items && items.length > 0) {
       items.forEach(item => tbody.appendChild(createRow(item, cat)));
-    } else {
+    } else if (!sectionKpis || sectionKpis.length === 0) {
       tbody.appendChild(createRow({}, cat));
     }
+    // Surface newly added KPIs not yet in saved form items
+    (sectionKpis || []).forEach(k => {
+      const already = (items || []).some(item => String(item.kpi_id) === String(k.id));
+      if (!already) {
+        tbody.appendChild(createRow({
+          kpi_id: k.id,
+          mfo: k.mfo,
+          success_indicator: k.success_indicator,
+          target: k.target,
+          budget: 0,
+          actual: '',
+          q: '', e: '', t: '', rating: '', remarks: ''
+        }, cat));
+      }
+    });
   }
 
   function getRows(tbodyId) {
@@ -1024,6 +1177,9 @@ $user = requireAuth(['admin']);
       if (existRes?.form) {
         const f = existRes.form;
         existingIpcrId = f.id;
+        existingFormStatus = f.status;
+        hasNewKpisGlobal = Boolean(f.has_new_kpis);
+
         document.getElementById('ipcrPeriod').value = f.covered_period || '';
         document.getElementById('ipcrOffice').value = f.department_name || session.department_name || session.department || 'Administrator Office';
         document.getElementById('printDeptHeader').textContent = f.department_name || session.department_name || session.department || 'Administrator Office';
@@ -1045,18 +1201,57 @@ $user = requireAuth(['admin']);
             support: f.weight_support
           });
         } else {
-          selectEtl('6 ETL');
+          selectEtl('0 ETL');
         }
 
-        loadRows('coreBody', f.items?.core?.length ? f.items.core : kpi.core || []);
-        loadRows('strategicBody', f.items?.strategic?.length ? f.items.strategic : kpi.strategic || []);
-        loadRows('supportBody', f.items?.support?.length ? f.items.support : kpi.support || []);
+        loadRows('coreBody', f.items?.core || [], kpi.core || []);
+        loadRows('strategicBody', f.items?.strategic || [], kpi.strategic || []);
+        loadRows('supportBody', f.items?.support || [], kpi.support || []);
 
-        if (['pending', 'reviewed', 'approved'].includes(f.status)) {
-          setReadOnly(true);
+        const hasSubmitted = ['pending', 'reviewed', 'approved'].includes(f.status);
+        const statusBanner = document.getElementById('submissionStatusBanner');
+
+        if (hasSubmitted) {
+          if (hasNewKpisGlobal) {
+            if (statusBanner) {
+              statusBanner.className = 'alert alert-warning border-warning shadow-sm py-2 px-3 mb-3 no-print';
+              statusBanner.innerHTML = `<div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                <div>
+                  <i class="fa-solid fa-bell text-warning me-2 fs-5"></i>
+                  <strong>New KPI Added by Administrator:</strong> <strong>${f.new_kpi_count || ''}</strong> new KPI indicator(s) were added for this period. Please fill in the new indicator(s) below, then submit your updated IPCR.
+                </div>
+                <span class="badge bg-warning text-dark"><i class="fa-solid fa-clock-rotate-left me-1"></i>Re-submission Permitted</span>
+              </div>`;
+              statusBanner.classList.remove('d-none');
+            }
+            setReadOnly(false);
+            const cBtns = [document.getElementById('confirmBtn'), document.getElementById('confirmBtn2')];
+            cBtns.forEach(b => { if (b) { b.style.display = 'inline-flex'; b.innerHTML = '<i class="fa-solid fa-paper-plane me-1"></i>Submit Updated IPCR'; } });
+            const dBtns = [document.getElementById('btnSaveDraft'), document.getElementById('btnSaveDraft2')];
+            dBtns.forEach(b => { if (b) b.style.display = 'inline-flex'; });
+            const eBtns = [document.getElementById('editBtn'), document.getElementById('editBtn2')];
+            eBtns.forEach(b => { if (b) b.style.display = 'none'; });
+          } else {
+            setReadOnly(true);
+            if (statusBanner) {
+              const statCls = f.status === 'approved' ? 'success' : (f.status === 'reviewed' ? 'primary' : 'warning');
+              statusBanner.className = 'alert alert-success border-success shadow-sm py-2 px-3 mb-3 no-print';
+              statusBanner.innerHTML = `<div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                <div>
+                  <i class="fa-solid fa-circle-check text-success me-2 fs-5"></i>
+                  <strong>IPCR Already Submitted:</strong> You have submitted your IPCR for this academic timeline (${f.covered_period}). Current status: <span class="badge bg-${statCls}">${f.status.toUpperCase()}</span>.
+                  <div class="text-muted small mt-1"><i class="fa-solid fa-lock me-1"></i>Duplicate submissions are disabled. Re-submission is not allowed unless a new KPI is added.</div>
+                </div>
+              </div>`;
+              statusBanner.classList.remove('d-none');
+            }
+            const cBtns = [document.getElementById('confirmBtn'), document.getElementById('confirmBtn2'), document.getElementById('btnSaveDraft'), document.getElementById('btnSaveDraft2'), document.getElementById('editBtn'), document.getElementById('editBtn2')];
+            cBtns.forEach(b => { if (b) b.style.display = 'none'; });
+          }
         }
       } else {
         currentEvidence = userFiles;
+        selectEtl('0 ETL');
         document.getElementById('ipcrPeriod').value = activeTimeline.semester + ' ' + activeTimeline.academic_year;
         setStatus('draft');
         loadRows('coreBody', kpi.core || []);
@@ -1065,6 +1260,7 @@ $user = requireAuth(['admin']);
       }
     } else {
       currentEvidence = userFiles;
+      selectEtl('0 ETL');
       document.getElementById('noTimelineAlert').classList.remove('d-none');
       setStatus('draft');
       loadRows('coreBody', kpi.core || []);
@@ -1137,6 +1333,10 @@ $user = requireAuth(['admin']);
   }
 
   function submitIPCR() {
+    if (existingFormStatus && ['pending', 'reviewed', 'approved'].includes(existingFormStatus) && !hasNewKpisGlobal) {
+      showToast('You have already submitted your IPCR for this academic timeline. Duplicate submissions are not permitted unless a new KPI is added.', 'warning');
+      return;
+    }
     if (activeTimeline) {
       const deadline = new Date(activeTimeline.submission_deadline);
       deadline.setHours(23, 59, 59);
@@ -1145,10 +1345,13 @@ $user = requireAuth(['admin']);
         return;
       }
     }
-    confirmModal('Submit your IPCR for review by the Campus Executive Officer?', 'Submit IPCR', async () => {
+    const confirmMsg = hasNewKpisGlobal
+      ? 'Submit your updated IPCR with the newly added KPI(s) for review by the Campus Executive Officer?'
+      : 'Submit your IPCR for review by the Campus Executive Officer?';
+    confirmModal(confirmMsg, 'Submit IPCR', async () => {
       const ok = await saveIPCR('submit');
       if (ok) {
-        setTimeout(() => window.location.href = 'dashboard.php', 1200);
+        setTimeout(() => window.location.href = 'status.php', 1200);
       }
     });
   }

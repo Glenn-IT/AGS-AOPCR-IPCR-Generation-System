@@ -90,5 +90,22 @@ try {
 } catch (Exception $e) {
     $form['evidence_files'] = [];
 }
+// Check for newly added KPIs that were added after this form was submitted
+$ownerUser = [
+    'id' => $form['user_id'],
+    'role' => ($form['user_id'] == $user['id']) ? $user['role'] : 'user',
+    'department_id' => $form['department_id']
+];
+if ($form['user_id'] != $user['id']) {
+    $uStmt = $db->prepare('SELECT role FROM users WHERE id = ?');
+    $uStmt->execute([$form['user_id']]);
+    $uRole = $uStmt->fetchColumn();
+    if ($uRole) $ownerUser['role'] = $uRole;
+}
+$newKpiInfo = checkNewKpisForUser($db, $ownerUser, $form['id']);
+$form['has_new_kpis']  = $newKpiInfo['has_new'];
+$form['new_kpi_count'] = $newKpiInfo['new_count'];
+$form['new_kpi_ids']   = $newKpiInfo['new_kpi_ids'];
+$form['can_resubmit']  = ($form['status'] === 'draft') || $newKpiInfo['has_new'];
 
 echo json_encode(['success' => true, 'form' => $form]);
