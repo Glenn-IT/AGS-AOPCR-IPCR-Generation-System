@@ -383,30 +383,7 @@ $user = requireAuth(['admin']);
     </div>
   </div>
 
-  <!-- Certification & Signatures Card -->
-  <div class="card mb-4">
-    <div class="card-header"><h6 class="mb-0"><i class="fa-solid fa-pen-nib me-2 text-primary"></i>Certification & Signatures</h6></div>
-    <div class="card-body">
-      <p style="font-size:0.83rem" class="mb-3">I hereby commit to deliver and agree to be rated on the attainment of the following targets in accordance with the indicated measures for the covered period.</p>
-      <div class="row g-4">
-        <div class="col-md-4 text-center">
-          <div style="border-bottom:1px solid #333;margin-bottom:4px;height:48px"></div>
-          <strong style="font-size:0.82rem" id="sigName"></strong><br>
-          <small class="text-muted">Ratee (Administrator / Head)</small>
-        </div>
-        <div class="col-md-4 text-center">
-          <div style="border-bottom:1px solid #333;margin-bottom:4px;height:48px"></div>
-          <strong style="font-size:0.82rem">HITLER C. DANGATAN, Ph.D.</strong><br>
-          <small class="text-muted">Campus Executive Officer (Rater)</small>
-        </div>
-        <div class="col-md-4 text-center">
-          <div style="border-bottom:1px solid #333;margin-bottom:4px;height:48px"></div>
-          <strong style="font-size:0.82rem">University President</strong><br>
-          <small class="text-muted">Approving Authority</small>
-        </div>
-      </div>
-    </div>
-  </div>
+
 
   <div class="d-flex gap-2 justify-content-end no-print mb-4 flex-wrap">
     <button class="btn btn-outline-primary" id="btnViewEvidence2" onclick="openEvidenceModal()"><i class="fa-solid fa-paperclip me-1"></i>View Evidence <span class="badge bg-primary text-white ms-1" id="evidenceCountBadge2">0</span></button>
@@ -519,7 +496,6 @@ $user = requireAuth(['admin']);
   document.getElementById('ipcrName').value = session.name;
   document.getElementById('ipcrPosition').value = session.position || 'Administrator';
   document.getElementById('ipcrDate').value = new Date().toISOString().split('T')[0];
-  document.getElementById('sigName').textContent = session.name.toUpperCase();
   document.getElementById('printDeptHeader').textContent = session.department_name || session.department || 'Administrator Office';
 
   // ── ETL Weight Configuration & State ─────────────────────────────────────

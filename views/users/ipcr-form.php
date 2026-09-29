@@ -277,24 +277,7 @@ $user = requireAuth(['user']);
     </div>
   </div>
 
-  <!-- Signature Block (for print) -->
-  <div class="row g-3 mt-3">
-    <div class="col-4 text-center">
-      <div style="border-top:1px solid #333;margin-top:40px;padding-top:5px;font-size:0.82rem">
-        <strong id="sigName"></strong><br><span class="text-muted">Ratee</span>
-      </div>
-    </div>
-    <div class="col-4 text-center">
-      <div style="border-top:1px solid #333;margin-top:40px;padding-top:5px;font-size:0.82rem">
-        <strong id="sigSupervisor">&nbsp;</strong><br><span class="text-muted">Immediate Supervisor / Rater</span>
-      </div>
-    </div>
-    <div class="col-4 text-center">
-      <div style="border-top:1px solid #333;margin-top:40px;padding-top:5px;font-size:0.82rem">
-        <strong>DR. MARIA SANTOS</strong><br><span class="text-muted">Campus Executive Officer</span>
-      </div>
-    </div>
-  </div>
+
 
   <div class="d-flex gap-2 justify-content-end mt-3 no-print flex-wrap">
     <button class="btn btn-outline-primary" id="btnViewEvidence2" onclick="openEvidenceModal()"><i class="fa-solid fa-paperclip me-1"></i>View Evidence <span class="badge bg-primary text-white ms-1" id="evidenceCountBadge2">0</span></button>
@@ -407,7 +390,6 @@ $user = requireAuth(['user']);
   document.getElementById('ipcrName').value = session.name;
   document.getElementById('ipcrPosition').value = session.position || '-';
   document.getElementById('ipcrDate').value = new Date().toISOString().split('T')[0];
-  document.getElementById('sigName').textContent = session.name.toUpperCase();
 
   // ── ETL Weight Configuration & State ─────────────────────────────────────
   const ETL_PRESETS = {
@@ -734,13 +716,12 @@ $user = requireAuth(['user']);
   }
 
   async function initForm() {
-    // Resolve the immediate supervisor for the signature blocks
+    // Resolve the immediate supervisor (used in print preview)
     const [supRes, evRes] = await Promise.all([
       fetch(API_BASE + 'user/supervisor.php', { credentials: 'include' }).then(r => r.json()).catch(() => null),
       fetch(API_BASE + 'evidence/list.php?user_id=' + session.id, { credentials: 'include' }).then(r => r.json()).catch(() => null),
     ]);
     supervisor = supRes?.supervisor || null;
-    document.getElementById('sigSupervisor').textContent = supervisor ? supervisor.name.toUpperCase() : ' ';
 
     // Load user's evidence from server and localStorage
     let userFiles = (evRes && evRes.files) ? [...evRes.files] : [];
