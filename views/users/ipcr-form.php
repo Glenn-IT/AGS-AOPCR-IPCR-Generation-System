@@ -189,7 +189,7 @@ $user = requireAuth(['user']);
     <div class="ipcr-section-header"><i class="fa-solid fa-star me-2"></i>A. CORE FUNCTION</div>
     <div class="table-responsive">
       <table class="table table-bordered mb-0">
-        <thead class="table-light" style="font-size:0.8rem"><tr><th style="width:110px">MFO / KRA</th><th>Success Indicators</th><th style="width:100px">Target</th><th style="width:110px">Actual Accomplishment</th><th style="width:70px">Q</th><th style="width:70px">E</th><th style="width:70px">T</th><th style="width:80px">Average</th><th>Remarks</th><th style="width:140px;text-align:center">Evidence</th></tr></thead>
+        <thead class="table-light" style="font-size:0.8rem"><tr><th style="width:110px">MFO / KRA</th><th>Success Indicators</th><th style="width:100px">Target</th><th style="width:110px">Actual Accomplishment</th><th style="width:70px" title="Rated by Supervisor" class="text-muted">Q</th><th style="width:70px" title="Rated by Supervisor" class="text-muted">E</th><th style="width:70px" title="Rated by Supervisor" class="text-muted">T</th><th style="width:80px">Avg</th><th>Remarks</th><th style="width:140px;text-align:center">Evidence</th></tr></thead>
         <tbody id="coreBody"></tbody>
         <tfoot>
           <tr class="bg-light">
@@ -211,7 +211,7 @@ $user = requireAuth(['user']);
     <div class="ipcr-section-header"><i class="fa-solid fa-chess me-2"></i>B. STRATEGIC FUNCTION</div>
     <div class="table-responsive">
       <table class="table table-bordered mb-0">
-        <thead class="table-light" style="font-size:0.8rem"><tr><th style="width:110px">MFO / KRA</th><th>Success Indicators</th><th style="width:100px">Target</th><th style="width:110px">Actual Accomplishment</th><th style="width:70px">Q</th><th style="width:70px">E</th><th style="width:70px">T</th><th style="width:80px">Average</th><th>Remarks</th><th style="width:140px;text-align:center">Evidence</th></tr></thead>
+        <thead class="table-light" style="font-size:0.8rem"><tr><th style="width:110px">MFO / KRA</th><th>Success Indicators</th><th style="width:100px">Target</th><th style="width:110px">Actual Accomplishment</th><th style="width:70px" title="Rated by Supervisor" class="text-muted">Q</th><th style="width:70px" title="Rated by Supervisor" class="text-muted">E</th><th style="width:70px" title="Rated by Supervisor" class="text-muted">T</th><th style="width:80px">Avg</th><th title="Filled by Supervisor" class="text-muted">Remarks</th><th style="width:140px;text-align:center">Evidence</th></tr></thead>
         <tbody id="strategicBody"></tbody>
         <tfoot>
           <tr class="bg-light">
@@ -233,7 +233,7 @@ $user = requireAuth(['user']);
     <div class="ipcr-section-header"><i class="fa-solid fa-hands-helping me-2"></i>C. SUPPORT FUNCTION</div>
     <div class="table-responsive">
       <table class="table table-bordered mb-0">
-        <thead class="table-light" style="font-size:0.8rem"><tr><th style="width:110px">MFO / KRA</th><th>Success Indicators</th><th style="width:100px">Target</th><th style="width:110px">Actual Accomplishment</th><th style="width:70px">Q</th><th style="width:70px">E</th><th style="width:70px">T</th><th style="width:80px">Average</th><th>Remarks</th><th style="width:140px;text-align:center">Evidence</th></tr></thead>
+        <thead class="table-light" style="font-size:0.8rem"><tr><th style="width:110px">MFO / KRA</th><th>Success Indicators</th><th style="width:100px">Target</th><th style="width:110px">Actual Accomplishment</th><th style="width:70px" title="Rated by Supervisor" class="text-muted">Q</th><th style="width:70px" title="Rated by Supervisor" class="text-muted">E</th><th style="width:70px" title="Rated by Supervisor" class="text-muted">T</th><th style="width:80px">Avg</th><th title="Filled by Supervisor" class="text-muted">Remarks</th><th style="width:140px;text-align:center">Evidence</th></tr></thead>
         <tbody id="supportBody"></tbody>
         <tfoot>
           <tr class="bg-light">
@@ -1019,11 +1019,11 @@ $user = requireAuth(['user']);
         <td style="font-size:0.82rem;background:#fafafa">${item.success_indicator}</td>
         <td style="font-size:0.82rem;background:#fafafa;white-space:nowrap">${item.target || '—'}</td>
         <td>${getAccInputHtml(item.target, "")}</td>
-        <td><input type="number" class="form-control form-control-sm rating-q" min="1" max="5" step="0.1" placeholder="1-5" data-kpi="${item.id}" oninput="validateRatingInput(this);computeRowRating(this)" onkeydown="enforceRatingKeys(event)"></td>
-        <td><input type="number" class="form-control form-control-sm rating-e" min="1" max="5" step="0.1" placeholder="1-5" data-kpi="${item.id}" oninput="validateRatingInput(this);computeRowRating(this)" onkeydown="enforceRatingKeys(event)"></td>
-        <td><input type="number" class="form-control form-control-sm rating-t" min="1" max="5" step="0.1" placeholder="1-5" data-kpi="${item.id}" oninput="validateRatingInput(this);computeRowRating(this)" onkeydown="enforceRatingKeys(event)"></td>
-        <td class="text-center fw-700 row-avg" style="font-size:0.85rem;background:#fafafa">-</td>
-        <td><select class="form-select form-select-sm row-remarks" style="min-width:130px">${renderRemarksOptions("")}</select></td>
+        <td class="text-center text-muted" style="font-size:0.82rem;background:#f8f9fa" title="To be rated by your immediate supervisor">—</td>
+        <td class="text-center text-muted" style="font-size:0.82rem;background:#f8f9fa" title="To be rated by your immediate supervisor">—</td>
+        <td class="text-center text-muted" style="font-size:0.82rem;background:#f8f9fa" title="To be rated by your immediate supervisor">—</td>
+        <td class="text-center fw-700 row-avg" style="font-size:0.85rem;background:#fafafa">—</td>
+        <td class="text-center text-muted" style="font-size:0.82rem;background:#f8f9fa" title="To be filled by your immediate supervisor">—</td>
         <td class="text-center evidence-cell" data-cat="${categoryKey}" data-mfo="${mfoAttr}">${evidenceBtn}</td></tr>`;
     });
   }
@@ -1043,11 +1043,11 @@ $user = requireAuth(['user']);
         <td style="font-size:0.82rem;background:#fafafa">${kpiItem.success_indicator || item.success_indicator || '-'}</td>
         <td style="font-size:0.82rem;background:#fafafa;white-space:nowrap">${kpiItem.target || item.target || '-'}</td>
         <td>${getAccInputHtml(kpiItem.target || item.target, item.accomplishment)}</td>
-        <td><input type="number" class="form-control form-control-sm rating-q" min="1" max="5" step="0.1" value="${item.q_rating || ''}" data-kpi="${item.kpi_id || ''}" oninput="validateRatingInput(this);computeRowRating(this)" onkeydown="enforceRatingKeys(event)"></td>
-        <td><input type="number" class="form-control form-control-sm rating-e" min="1" max="5" step="0.1" value="${item.e_rating || ''}" data-kpi="${item.kpi_id || ''}" oninput="validateRatingInput(this);computeRowRating(this)" onkeydown="enforceRatingKeys(event)"></td>
-        <td><input type="number" class="form-control form-control-sm rating-t" min="1" max="5" step="0.1" value="${item.t_rating || ''}" data-kpi="${item.kpi_id || ''}" oninput="validateRatingInput(this);computeRowRating(this)" onkeydown="enforceRatingKeys(event)"></td>
-        <td class="text-center fw-700 row-avg" style="font-size:0.85rem;background:#fafafa">${avg > 0 ? avg.toFixed(2) : '-'}</td>
-        <td><select class="form-select form-select-sm row-remarks" style="min-width:130px">${renderRemarksOptions(item.remarks || "")}</select></td>
+        <td class="text-center fw-600" style="font-size:0.85rem;background:#f8f9fa" title="Rated by your immediate supervisor">${item.q_rating || '—'}</td>
+        <td class="text-center fw-600" style="font-size:0.85rem;background:#f8f9fa" title="Rated by your immediate supervisor">${item.e_rating || '—'}</td>
+        <td class="text-center fw-600" style="font-size:0.85rem;background:#f8f9fa" title="Rated by your immediate supervisor">${item.t_rating || '—'}</td>
+        <td class="text-center fw-700 row-avg" style="font-size:0.85rem;background:#fafafa">${avg > 0 ? avg.toFixed(2) : '—'}</td>
+        <td class="text-center fw-600" style="font-size:0.82rem;background:#f8f9fa" title="Filled by your immediate supervisor">${item.remarks || '—'}</td>
         <td class="text-center evidence-cell" data-cat="${categoryKey}" data-mfo="${mfoAttr}">${evidenceBtn}</td></tr>`;
     });
     // Surface KPIs added after this form was first saved (no ipcr_items row yet)
@@ -1061,11 +1061,11 @@ $user = requireAuth(['user']);
         <td style="font-size:0.82rem;background:#fafafa">${k.success_indicator || '—'}</td>
         <td style="font-size:0.82rem;background:#fafafa;white-space:nowrap">${k.target || '—'}</td>
         <td>${getAccInputHtml(k.target, "")}</td>
-        <td><input type="number" class="form-control form-control-sm rating-q" min="1" max="5" step="0.1" placeholder="1-5" data-kpi="${k.id}" oninput="validateRatingInput(this);computeRowRating(this)" onkeydown="enforceRatingKeys(event)"></td>
-        <td><input type="number" class="form-control form-control-sm rating-e" min="1" max="5" step="0.1" placeholder="1-5" data-kpi="${k.id}" oninput="validateRatingInput(this);computeRowRating(this)" onkeydown="enforceRatingKeys(event)"></td>
-        <td><input type="number" class="form-control form-control-sm rating-t" min="1" max="5" step="0.1" placeholder="1-5" data-kpi="${k.id}" oninput="validateRatingInput(this);computeRowRating(this)" onkeydown="enforceRatingKeys(event)"></td>
-        <td class="text-center fw-700 row-avg" style="font-size:0.85rem;background:#fafafa">-</td>
-        <td><select class="form-select form-select-sm row-remarks" style="min-width:130px">${renderRemarksOptions("")}</select></td>
+        <td class="text-center text-muted" style="font-size:0.82rem;background:#f8f9fa" title="To be rated by your immediate supervisor">—</td>
+        <td class="text-center text-muted" style="font-size:0.82rem;background:#f8f9fa" title="To be rated by your immediate supervisor">—</td>
+        <td class="text-center text-muted" style="font-size:0.82rem;background:#f8f9fa" title="To be rated by your immediate supervisor">—</td>
+        <td class="text-center fw-700 row-avg" style="font-size:0.85rem;background:#fafafa">—</td>
+        <td class="text-center text-muted" style="font-size:0.82rem;background:#f8f9fa" title="To be filled by your immediate supervisor">—</td>
         <td class="text-center evidence-cell" data-cat="${categoryKey}" data-mfo="${mfoAttr}">${evidenceBtn}</td></tr>`;
     });
   }
@@ -1074,16 +1074,6 @@ $user = requireAuth(['user']);
     const rows = [];
     document.getElementById(tbodyId).querySelectorAll('tr').forEach(tr => {
       const accInp     = tr.querySelector('.acc-input') || tr.querySelector('textarea');
-      const qInp       = tr.querySelector('.rating-q');
-      const eInp       = tr.querySelector('.rating-e');
-      const tInp       = tr.querySelector('.rating-t');
-      const avgCell    = tr.querySelector('.row-avg');
-      const remarksInp = tr.querySelector('.row-remarks');
-
-      const q = parseFloat(qInp?.value) || 0;
-      const e = parseFloat(eInp?.value) || 0;
-      const t = parseFloat(tInp?.value) || 0;
-      const a = parseFloat(avgCell?.textContent) || 0;
 
       const mfoCell = tr.cells[0];
       let mfoText = '';
@@ -1094,16 +1084,16 @@ $user = requireAuth(['user']);
       }
 
       rows.push({
-        kpi_id:            qInp?.dataset?.kpi || eInp?.dataset?.kpi || tInp?.dataset?.kpi || '',
+        kpi_id:            '',
         mfo:               mfoText,
         success_indicator: tr.cells[1]?.textContent?.trim() || '',
         target:            tr.cells[2]?.textContent?.trim() || '',
         accomplishment:    accInp?.value !== undefined ? accInp.value.trim() : '',
-        q_rating:          q,
-        e_rating:          e,
-        t_rating:          t,
-        rating:            a,
-        remarks:           remarksInp?.value || ''
+        q_rating:          null,
+        e_rating:          null,
+        t_rating:          null,
+        rating:            null,
+        remarks:           ''
       });
     });
     return rows;
@@ -1448,52 +1438,6 @@ td, th { border:1px solid #000; padding:1.5px 3px; vertical-align:middle; font-s
       <div class="date-line">Date:&nbsp;<span style="border-bottom:1px solid #000;padding:0 4px">${esc(date)}</span></div>
     </div>
   </div>
-  <table style="width:100%;border-collapse:collapse;margin:0;font-size:7pt;text-align:center;border-bottom:1px solid #000;">
-    <thead>
-      <tr style="background:#e5e7eb">
-        <th style="text-align:left;padding:2px 4px;font-size:7pt;">WEIGHT According to ETL</th>
-        <th style="padding:2px;font-size:7pt;${currentEtl==='18 ETL'?'background:#dbeafe;font-weight:700;border:1.5px solid #1d4ed8;':''}">18 ETL</th>
-        <th style="padding:2px;font-size:7pt;${currentEtl==='15 ETL'?'background:#dbeafe;font-weight:700;border:1.5px solid #1d4ed8;':''}">15 ETL</th>
-        <th style="padding:2px;font-size:7pt;${currentEtl==='12 ETL'?'background:#dbeafe;font-weight:700;border:1.5px solid #1d4ed8;':''}">12 ETL</th>
-        <th style="padding:2px;font-size:7pt;${currentEtl==='9 ETL'?'background:#dbeafe;font-weight:700;border:1.5px solid #1d4ed8;':''}">9 ETL</th>
-        <th style="padding:2px;font-size:7pt;${currentEtl==='6 ETL'?'background:#dbeafe;font-weight:700;border:1.5px solid #1d4ed8;':''}">6 ETL</th>
-        <th style="padding:2px;font-size:7pt;${currentEtl==='3 ETL'?'background:#dbeafe;font-weight:700;border:1.5px solid #1d4ed8;':''}">3 ETL</th>
-        <th style="padding:2px;font-size:7pt;${currentEtl==='0 ETL'?'background:#dbeafe;font-weight:700;border:1.5px solid #1d4ed8;':''}">0 ETL</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td style="text-align:left;padding:2px 4px;font-weight:600;">Core Functions</td>
-        <td style="${currentEtl==='18 ETL'?'font-weight:700;background:#eff6ff;':''}">10</td>
-        <td style="${currentEtl==='15 ETL'?'font-weight:700;background:#eff6ff;':''}">20</td>
-        <td style="${currentEtl==='12 ETL'?'font-weight:700;background:#eff6ff;':''}">30</td>
-        <td style="${currentEtl==='9 ETL'?'font-weight:700;background:#eff6ff;':''}">40</td>
-        <td style="${currentEtl==='6 ETL'?'font-weight:700;background:#eff6ff;':''}">50</td>
-        <td style="${currentEtl==='3 ETL'?'font-weight:700;background:#eff6ff;':''}">60</td>
-        <td style="${currentEtl==='0 ETL'?'font-weight:700;background:#eff6ff;':''}">70</td>
-      </tr>
-      <tr>
-        <td style="text-align:left;padding:2px 4px;font-weight:600;">Strategic Priorities</td>
-        <td style="${currentEtl==='18 ETL'?'font-weight:700;background:#eff6ff;':''}">50–65</td>
-        <td style="${currentEtl==='15 ETL'?'font-weight:700;background:#eff6ff;':''}">40–55</td>
-        <td style="${currentEtl==='12 ETL'?'font-weight:700;background:#eff6ff;':''}">35–50</td>
-        <td style="${currentEtl==='9 ETL'?'font-weight:700;background:#eff6ff;':''}">30–40</td>
-        <td style="${currentEtl==='6 ETL'?'font-weight:700;background:#eff6ff;':''}">25</td>
-        <td style="${currentEtl==='3 ETL'?'font-weight:700;background:#eff6ff;':''}">20</td>
-        <td style="${currentEtl==='0 ETL'?'font-weight:700;background:#eff6ff;':''}">15</td>
-      </tr>
-      <tr>
-        <td style="text-align:left;padding:2px 4px;font-weight:600;">Support Functions</td>
-        <td style="${currentEtl==='18 ETL'?'font-weight:700;background:#eff6ff;':''}">25–40</td>
-        <td style="${currentEtl==='15 ETL'?'font-weight:700;background:#eff6ff;':''}">25–40</td>
-        <td style="${currentEtl==='12 ETL'?'font-weight:700;background:#eff6ff;':''}">20–35</td>
-        <td style="${currentEtl==='9 ETL'?'font-weight:700;background:#eff6ff;':''}">20–30</td>
-        <td style="${currentEtl==='6 ETL'?'font-weight:700;background:#eff6ff;':''}">25</td>
-        <td style="${currentEtl==='3 ETL'?'font-weight:700;background:#eff6ff;':''}">20</td>
-        <td style="${currentEtl==='0 ETL'?'font-weight:700;background:#eff6ff;':''}">15</td>
-      </tr>
-    </tbody>
-  </table>
   <table class="rev-table">
     <tr>
       <th style="width:35%">REVIEWED BY</th>

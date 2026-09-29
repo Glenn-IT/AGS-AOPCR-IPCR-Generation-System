@@ -782,11 +782,11 @@ $user = requireAuth(['admin']);
       <td><input type="text" class="form-control form-control-sm target-input text-center" style="width:90px" value="${esc(data.target || '')}" placeholder="100%" oninput="syncRowTargetAndAcc(this.closest('tr'))"></td>
       <td><input type="number" class="form-control form-control-sm budget-input text-end" style="width:90px" value="${data.budget || 0}" min="0" placeholder="0"></td>
       <td><input type="${accType}" class="form-control form-control-sm acc-input text-center" ${maxAttr} data-mode="${accMode}" ${pctAttr} style="width:90px" value="${esc(actual)}" placeholder="${accPh}" oninput="validateAccInput(this)" onkeydown="enforceDigitsOnly(event)"></td>
-      <td><input type="number" class="form-control form-control-sm rating-q text-center" min="1" max="5" step="0.1" style="width:60px" value="${q}" placeholder="1-5" oninput="computeRowRating(this)"></td>
-      <td><input type="number" class="form-control form-control-sm rating-e text-center" min="1" max="5" step="0.1" style="width:60px" value="${e}" placeholder="1-5" oninput="computeRowRating(this)"></td>
-      <td><input type="number" class="form-control form-control-sm rating-t text-center" min="1" max="5" step="0.1" style="width:60px" value="${t}" placeholder="1-5" oninput="computeRowRating(this)"></td>
-      <td class="text-center fw-700 row-avg" style="font-size:0.85rem;background:#fafafa">${avg > 0 ? avg.toFixed(2) : '-'}</td>
-      <td><select class="form-select form-select-sm row-remarks" style="min-width:130px">${renderRemarksOptions(remarks)}</select></td>
+      <td class="text-center text-muted rating-q-cell" style="font-size:0.85rem;background:#f8f9fa;width:60px" title="Rated by Campus Executive Officer">${q || '—'}</td>
+      <td class="text-center text-muted rating-e-cell" style="font-size:0.85rem;background:#f8f9fa;width:60px" title="Rated by Campus Executive Officer">${e || '—'}</td>
+      <td class="text-center text-muted rating-t-cell" style="font-size:0.85rem;background:#f8f9fa;width:60px" title="Rated by Campus Executive Officer">${t || '—'}</td>
+      <td class="text-center fw-700 row-avg" style="font-size:0.85rem;background:#fafafa">${avg > 0 ? avg.toFixed(2) : '—'}</td>
+      <td class="text-center text-muted" style="font-size:0.85rem;background:#f8f9fa" title="Filled by Campus Executive Officer">${remarks || '—'}</td>
       <td class="text-center evidence-cell">${evidenceBtn}</td>`;
     return tr;
   }
@@ -831,16 +831,6 @@ $user = requireAuth(['admin']);
       const targetInp  = tr.querySelector('.target-input');
       const budgetInp  = tr.querySelector('.budget-input');
       const accInp     = tr.querySelector('.acc-input');
-      const qInp       = tr.querySelector('.rating-q');
-      const eInp       = tr.querySelector('.rating-e');
-      const tInp       = tr.querySelector('.rating-t');
-      const avgCell    = tr.querySelector('.row-avg');
-      const remarksInp = tr.querySelector('.row-remarks');
-
-      const q = parseFloat(qInp?.value) || null;
-      const e = parseFloat(eInp?.value) || null;
-      const t = parseFloat(tInp?.value) || null;
-      const a = parseFloat(avgCell?.textContent) || null;
 
       rows.push({
         kpi_id:            tr.dataset.kpiId || '',
@@ -850,11 +840,11 @@ $user = requireAuth(['admin']);
         budget:            budgetInp?.value || '0',
         measure:           '',
         accomplishment:    accInp?.value.trim() || '',
-        q_rating:          q,
-        e_rating:          e,
-        t_rating:          t,
-        rating:            a,
-        remarks:           remarksInp?.value || ''
+        q_rating:          null,
+        e_rating:          null,
+        t_rating:          null,
+        rating:            null,
+        remarks:           ''
       });
     });
     return rows;

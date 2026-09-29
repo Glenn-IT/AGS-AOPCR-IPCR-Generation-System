@@ -170,6 +170,7 @@ $user = requireAuth(['admin']);
       document.getElementById('reviewBody').innerHTML = '<div class="alert alert-danger">Could not load form.</div>';
       return;
     }
+    const f = res.form;
     let userFiles = f.evidence_files || [];
     if (f.user_id) {
       const lsFiles = JSON.parse(localStorage.getItem('csu_piat_files_' + f.user_id)) || [];
