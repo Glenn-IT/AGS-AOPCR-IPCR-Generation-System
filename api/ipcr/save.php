@@ -35,6 +35,10 @@ if (!$timeline_id) {
 
 $db = getDB();
 
+// Run column migrations BEFORE opening a transaction.
+// ALTER TABLE causes an implicit MySQL COMMIT which would break any open transaction.
+ensureIpcrColumns($db);
+
 // Check timeline exists and is open
 $tl = $db->prepare('SELECT * FROM timelines WHERE id = ? AND status = "open"');
 $tl->execute([$timeline_id]);
@@ -122,16 +126,30 @@ try {
         }
     }
 
-    ensureIpcrColumns($db);
-
     // Insert items — kpi_id is FK-constrained, so only accept ids that really exist
-    $validKpi = array_flip($db->query('SELECT id FROM kpi_items')->fetchAll(PDO::FETCH_COLUMN));
+    $allKpis = $db->query('SELECT id, mfo, success_indicator FROM kpi_items WHERE is_active = 1')->fetchAll();
+    $validKpi = array_flip(array_column($allKpis, 'id'));
 
     $insertItem = $db->prepare('INSERT INTO ipcr_items (ipcr_form_id, kpi_id, function_type, mfo, success_indicator, target, budget, measure, accomplishment, q_rating, e_rating, t_rating, rating, remarks) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)');
 
     foreach ([['core', $core], ['strategic', $strategic], ['support', $support]] as [$type, $items]) {
         foreach ($items as $item) {
             $kpiId = !empty($item['kpi_id']) ? intval($item['kpi_id']) : 0;
+
+            // If kpi_id is missing, try to resolve it by matching mfo + success_indicator
+            if (!$kpiId || !isset($validKpi[$kpiId])) {
+                $itemMfo = trim($item['mfo'] ?? '');
+                $itemSi  = trim($item['success_indicator'] ?? '');
+                foreach ($allKpis as $kRow) {
+                    if ($itemMfo && $itemSi &&
+                        trim($kRow['mfo'] ?? '') === $itemMfo &&
+                        trim($kRow['success_indicator'] ?? '') === $itemSi) {
+                        $kpiId = intval($kRow['id']);
+                        break;
+                    }
+                }
+            }
+
             $q = normalizeRating($item['q_rating'] ?? $item['q'] ?? null);
             $e = normalizeRating($item['e_rating'] ?? $item['e'] ?? null);
             $t = normalizeRating($item['t_rating'] ?? $item['t'] ?? null);

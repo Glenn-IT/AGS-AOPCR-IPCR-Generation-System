@@ -1,12 +1,16 @@
-1. Login
-   - [x] C:\xampp\htdocs\AGS-AOPCR-IPCR-Generation-System\img\CSU-Logo.png, Update the icon on the login ok use that logo (Resolved)
+admin
 
-2. User
-   IPCR Form
-   - [x] Remove the header buttons (`#btnViewEvidence`, `#btnUploadEvidence`, `Print`, `#btnSaveDraft`, `#btnSubmit` in `.page-header`) (Resolved)
-   - [x] Covered Period, it should not be editable (Resolved - set to readonly and auto-populated from active timeline)
-   - [x] Q,E,T - it should only accept 1 to 5 (Resolved - clamped oninput and restricted invalid symbols)
-   - [x] If the user submits the IPCR, provide the edit function just like on the admin side (`#editBtn2`, `setReadOnly`, and `enableEdit`) (Resolved)
+- can you fix the save draft function
+- it cannot submit IPCR it says
 
-3. My Profile
-   - [x] Upload Profile Picture Function (Resolved - added file upload, storage in uploads/avatars/, and avatar sync across navbar, sidebar, and account profile)
+  Error
+  Failed to save IPCR.
+
+ca nyou check the print output all users if the output overlaps it should go to the next page justlike that on the image
+![alt text](image.png)
+
+remove this also on the print output page all users
+![alt text](image-1.png)
+
+on the admin and super admin side can you cetner the name there justlike on the staff
+![alt text](image-2.png)

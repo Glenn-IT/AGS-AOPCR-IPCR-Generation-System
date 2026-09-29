@@ -385,6 +385,8 @@ th { background:#f0f0f0; font-weight:bold; text-transform:uppercase; font-size:8
 .sig-row { display:flex; justify-content:space-between; margin-top:35px; page-break-inside:avoid; }
 .sig-box { width:45%; text-align:center; }
 .sig-line { border-top:1px solid #000; margin-top:35px; padding-top:4px; font-weight:bold; font-size:8.5pt; }
+tr { page-break-inside:avoid; }
+thead { display:table-header-group; }
 </style>
 </head>
 <body>

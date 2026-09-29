@@ -747,7 +747,8 @@ $user = requireAuth(['admin']);
 
   function createRow(data = {}, categoryKey = 'core') {
     const tr = document.createElement('tr');
-    tr.dataset.kpiId = data.kpi_id || data.kpiId || '';
+    // Use kpi_id, kpiId, or id (when row comes from kpi/list.php) so the id is always stored
+    tr.dataset.kpiId = data.kpi_id || data.kpiId || data.id || '';
     tr.dataset.category = categoryKey;
     const q = data.q_rating !== undefined ? data.q_rating : (data.q || '');
     const e = data.e_rating !== undefined ? data.e_rating : (data.e || '');
@@ -806,9 +807,18 @@ $user = requireAuth(['admin']);
     } else if (!sectionKpis || sectionKpis.length === 0) {
       tbody.appendChild(createRow({}, cat));
     }
-    // Surface newly added KPIs not yet in saved form items
+    // Only add KPIs that are genuinely not yet represented in the saved form.
+    // Match by kpi_id first; fall back to mfo+success_indicator for rows
+    // that were saved before kpi_id was tracked (prevents duplicate rows).
     (sectionKpis || []).forEach(k => {
-      const already = (items || []).some(item => String(item.kpi_id) === String(k.id));
+      const already = (items || []).some(item => {
+        if (item.kpi_id && String(item.kpi_id) === String(k.id)) return true;
+        // Fallback: consider it a match if mfo AND success_indicator both align
+        if (k.mfo && item.mfo && k.mfo.trim() === item.mfo.trim() &&
+            k.success_indicator && item.success_indicator &&
+            k.success_indicator.trim() === item.success_indicator.trim()) return true;
+        return false;
+      });
       if (!already) {
         tbody.appendChild(createRow({
           kpi_id: k.id,
@@ -1476,8 +1486,10 @@ td,th{border:1px solid #000;padding:1.5px 3px;vertical-align:middle;font-size:7.
 .rev-table th{background:#fff;font-weight:700;font-size:7.5pt;text-align:center;padding:2px 4px;}
 .rev-table td{font-size:7.5pt;padding:3px 5px;vertical-align:bottom;}.rev-name{font-weight:700;font-size:7.8pt;}.rev-role{font-size:6.5pt;font-style:italic;}
 .data-table{border-top:1px solid #000;}.data-table th{background:#d9d9d9;font-weight:700;text-align:center;font-size:7.3pt;padding:2px 3px;}
-.data-table .sec-row td{background:#fed7aa;font-weight:700;font-size:7.8pt;text-align:left;padding:2px 5px;}
+.data-table thead{display:table-header-group;}
+.data-table .sec-row td{background:#fed7aa;font-weight:700;font-size:7.8pt;text-align:left;padding:2px 5px;page-break-after:avoid;}
 .data-table .data-row td{height:18px;font-size:7.5pt;padding:1px 3px;vertical-align:top;}
+.data-table .data-row{page-break-inside:avoid;}
 .summary-table td{border:1px solid #000;padding:1.5px 5px;font-size:7.5pt;}.summary-table .lbl{font-weight:700;}.summary-table .val{text-align:center;font-weight:700;}
 .sig-tbl th{background:#fff;font-weight:700;text-align:center;font-size:7.3pt;border:1px solid #000;padding:2px 4px;}
 .sig-tbl td{border:1px solid #000;padding:2px 4px;font-size:7.3pt;vertical-align:top;}
@@ -1490,41 +1502,30 @@ td,th{border:1px solid #000;padding:1.5px 3px;vertical-align:middle;font-size:7.
 <div class="div-field"><span class="uline">&nbsp;${ep(office)}&nbsp;</span><span class="field-lbl">Division/Office/College</span></div>
 <div class="commit-wrap"><div class="commit-left">I,&nbsp;<span style="border-bottom:1px solid #000;padding:0 4px">${ep(name)}</span>,&nbsp;<span style="border-bottom:1px solid #000;padding:0 4px">${ep(pos)}</span>, commit to deliver and agree to be rated on the attainment of the following targets in accordance with the indicated measures for<br>the period&nbsp;<span style="border-bottom:1px solid #000;padding:0 4px">${ep(period)}</span>.</div><div class="commit-right"><span class="sig-line">${ep(name)}<br><span style="font-size:6.5pt;font-style:italic">(name of employee)</span></span><div class="date-line">Date:&nbsp;<span style="border-bottom:1px solid #000;padding:0 4px">${ep(date)}</span></div></div></div>
 <table class="rev-table"><tr><th style="width:35%">REVIEWED BY</th><th style="width:10%">DATE</th><th style="width:45%">APPROVED BY</th><th style="width:10%">DATE</th></tr>
-<tr><td style="height:32px;vertical-align:bottom"><div class="rev-name">HITLER C. DANGATAN, Ph.D.</div><div class="rev-role">(Campus Executive Officer)</div></td><td>&nbsp;</td><td style="text-align:center;vertical-align:middle"><div class="rev-name">University President</div><div class="rev-role">CSU System Administration</div></td><td>&nbsp;</td></tr></table>
+<tr><td style="height:32px;vertical-align:bottom;text-align:center"><div class="rev-name">HITLER C. DANGATAN, Ph.D.</div><div class="rev-role">(Campus Executive Officer)</div></td><td>&nbsp;</td><td style="text-align:center;vertical-align:middle"><div class="rev-name">University President</div><div class="rev-role">CSU System Administration</div></td><td>&nbsp;</td></tr></table>
 <table class="data-table"><colgroup><col style="width:16%"><col style="width:18%"><col style="width:8%"><col style="width:8%"><col style="width:10%"><col style="width:15%"><col style="width:3%"><col style="width:3%"><col style="width:3%"><col style="width:3%"><col style="width:13%"></colgroup>
 <thead><tr><th rowspan="2">MFO/PAP</th><th rowspan="2">SUCCESS INDICATORS</th><th rowspan="2">TARGET</th><th rowspan="2">ALLOTTED<br>BUDGET</th><th rowspan="2">INDIVIDUALS ACCOUNTABLE</th><th rowspan="2">ACTUAL ACCOMPLISHMENTS</th><th colspan="4">RATING</th><th rowspan="2">REMARKS</th></tr><tr><th>Q<sup>1</sup></th><th>E<sup>2</sup></th><th>T<sup>3</sup></th><th>A<sup>4</sup></th></tr></thead>
 <tbody><tr class="sec-row"><td colspan="11">A. CORE FUNCTIONS</td></tr>${buildRows(core,4)}<tr class="sec-row"><td colspan="11">B. STRATEGIC FUNCTIONS</td></tr>${buildRows(strategic,3)}<tr class="sec-row"><td colspan="11">C. SUPPORT FUNCTIONS</td></tr>${buildRows(support,3)}</tbody></table>
-<table class="summary-table">
+<table class="summary-table" style="page-break-inside:avoid">
   <tr>
-    <td class="lbl" style="width:30%">CORE FUNCTION (Weight: ${activeWeights.core}%):</td>
-    <td class="val" style="width:20%">${coreAvg !== null ? coreAvg.toFixed(2) : '—'}</td>
-    <td class="lbl" style="width:30%">WEIGHTED CORE (${coreAvg !== null ? coreAvg.toFixed(2) : '0'} × ${(activeWeights.core/100).toFixed(2)}):</td>
-    <td class="val" style="width:20%">${coreWeighted !== null ? coreWeighted.toFixed(2) : '—'}</td>
+    <td class="lbl" style="width:40%">AVERAGE RATING:</td>
+    <td class="val" style="width:60%" colspan="3">${finalAvg ? finalAvg.toFixed(2) : '—'}</td>
   </tr>
   <tr>
-    <td class="lbl">STRATEGIC PRIORITIES (Weight: ${activeWeights.strategic}%):</td>
-    <td class="val">${stratAvg !== null ? stratAvg.toFixed(2) : '—'}</td>
-    <td class="lbl">WEIGHTED STRATEGIC (${stratAvg !== null ? stratAvg.toFixed(2) : '0'} × ${(activeWeights.strategic/100).toFixed(2)}):</td>
-    <td class="val">${stratWeighted !== null ? stratWeighted.toFixed(2) : '—'}</td>
-  </tr>
-  <tr>
-    <td class="lbl">SUPPORT FUNCTION (Weight: ${activeWeights.support}%):</td>
-    <td class="val">${suppAvg !== null ? suppAvg.toFixed(2) : '—'}</td>
-    <td class="lbl">WEIGHTED SUPPORT (${suppAvg !== null ? suppAvg.toFixed(2) : '0'} × ${(activeWeights.support/100).toFixed(2)}):</td>
-    <td class="val">${suppWeighted !== null ? suppWeighted.toFixed(2) : '—'}</td>
+    <td class="lbl">FINAL AVERAGE RATING:</td>
+    <td class="val" colspan="3">${finalAvg ? finalAvg.toFixed(2) : '—'}</td>
   </tr>
   <tr style="background:#f4f4f4">
-    <td class="lbl" colspan="3">FINAL WEIGHTED AVERAGE RATING (${esc(currentEtl)}):</td>
-    <td class="val" style="font-size:8.5pt">${finalAvg || ''}</td>
+    <td class="lbl">ADJECTIVAL RATING:</td>
+    <td class="val" colspan="3" style="font-size:8.5pt">${finalAvg ? adj(finalAvg) : ''}</td>
   </tr>
-  <tr style="background:#f4f4f4">
-    <td class="lbl" colspan="3">ADJECTIVAL RATING:</td>
-    <td class="val" style="font-size:8.5pt">${finalAvg ? adj(finalAvg) : ''}</td>
+  <tr>
+    <td class="lbl" colspan="4">COMMENTS AND RECOMMENDATION:</td>
   </tr>
 </table>
 <table class="sig-tbl"><tr><th style="width:18%">DISCUSSED WITH</th><th style="width:9%">DATE</th><th style="width:28%">ASSESSED BY</th><th style="width:9%">DATE</th><th style="width:27%">FINAL RATING BY</th><th style="width:9%">DATE</th></tr>
 <tr style="height:52px"><td>&nbsp;</td><td>&nbsp;</td><td class="certify">I certify that I discussed my assessment of the performance with the employee</td><td>&nbsp;</td><td class="sig-name-cell">Campus Executive Officer</td><td>&nbsp;</td></tr>
-<tr><td class="sig-name-cell" style="border-top:1px solid #aaa">${ep(name)}</td><td>&nbsp;</td><td class="sig-name-cell" style="border-top:1px solid #aaa">HITLER C. DANGATAN, Ph.D.<div class="rev-role">(Campus Executive Officer)</div></td><td>&nbsp;</td><td class="sig-name-cell" style="border-top:1px solid #aaa">University President</td><td>&nbsp;</td></tr>
+<tr><td class="sig-name-cell" style="border-top:1px solid #aaa;text-align:center">${ep(name)}</td><td>&nbsp;</td><td class="sig-name-cell" style="border-top:1px solid #aaa">HITLER C. DANGATAN, Ph.D.<div class="rev-role">(Campus Executive Officer)</div></td><td>&nbsp;</td><td class="sig-name-cell" style="border-top:1px solid #aaa">University President</td><td>&nbsp;</td></tr>
 <tr><td colspan="6" class="legend-note">Legend: 1:Quality &nbsp; 2:Efficiency &nbsp; 3:Timeliness &nbsp; 4:Average</td></tr></table>
 </div><script>setTimeout(()=>window.print(),700);<\/script></body></html>`;
 

@@ -1052,9 +1052,17 @@ $user = requireAuth(['user']);
         <td class="text-center fw-600" style="font-size:0.82rem;background:#f8f9fa" title="Filled by your immediate supervisor">${item.remarks || '—'}</td>
         <td class="text-center evidence-cell" data-cat="${categoryKey}" data-mfo="${mfoAttr}">${evidenceBtn}</td></tr>`;
     });
-    // Surface KPIs added after this form was first saved (no ipcr_items row yet)
+    // Surface KPIs added after this form was first saved (no ipcr_items row yet).
+    // Match by kpi_id first; fall back to mfo+success_indicator for rows saved before
+    // kpi_id was tracked (prevents duplicate rows from appearing).
     (sectionKpi || []).forEach(k => {
-      const already = (items || []).some(item => String(item.kpi_id) === String(k.id));
+      const already = (items || []).some(item => {
+        if (item.kpi_id && String(item.kpi_id) === String(k.id)) return true;
+        if (k.mfo && item.mfo && k.mfo.trim() === (item.mfo || '').trim() &&
+            k.success_indicator && item.success_indicator &&
+            k.success_indicator.trim() === item.success_indicator.trim()) return true;
+        return false;
+      });
       if (already) return;
       const evidenceBtn = getEvidenceBtn(categoryKey, k.mfo);
       const mfoAttr = (k.mfo || '').replace(/"/g, '&quot;');
@@ -1400,8 +1408,10 @@ td, th { border:1px solid #000; padding:1.5px 3px; vertical-align:middle; font-s
 .legend-right tr:last-child td { border-bottom:1px solid #000; }
 .data-table { border-top:1px solid #000; }
 .data-table th { background:#d9d9d9;font-weight:700;text-align:center;font-size:7.3pt;padding:2px 3px; }
-.data-table .sec-row td { background:#fed7aa;font-weight:700;font-size:7.8pt;text-align:left;padding:2px 5px; }
+.data-table .sec-row td { background:#fed7aa;font-weight:700;font-size:7.8pt;text-align:left;padding:2px 5px;page-break-after:avoid; }
+.data-table thead { display:table-header-group; }
 .data-table .data-row td { height:18px;font-size:7.5pt;padding:1px 3px;vertical-align:top; }
+.data-table .data-row { page-break-inside:avoid; }
 .summary-table td { border:1px solid #000;padding:1.5px 5px;font-size:7.5pt; }
 .summary-table .lbl { font-weight:700;font-size:7.5pt; }
 .summary-table .val { text-align:center;font-weight:700; }
