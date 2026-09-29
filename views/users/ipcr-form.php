@@ -1014,7 +1014,8 @@ $user = requireAuth(['user']);
     (items || []).forEach(item => {
       const evidenceBtn = getEvidenceBtn(categoryKey, item.mfo);
       const mfoAttr = (item.mfo || '').replace(/"/g, '&quot;');
-      tbody.innerHTML += `<tr>
+      const budgetVal = item.budget || 0;
+      tbody.innerHTML += `<tr data-budget="${budgetVal}">
         <td style="font-size:0.82rem;background:#fafafa;white-space:nowrap">${item.mfo}${personalTag(item)}</td>
         <td style="font-size:0.82rem;background:#fafafa">${item.success_indicator}</td>
         <td style="font-size:0.82rem;background:#fafafa;white-space:nowrap">${item.target || '—'}</td>
@@ -1038,7 +1039,8 @@ $user = requireAuth(['user']);
       const mfo = kpiItem.mfo || item.mfo || '-';
       const evidenceBtn = getEvidenceBtn(categoryKey, mfo);
       const mfoAttr = (mfo || '').replace(/"/g, '&quot;');
-      tbody.innerHTML += `<tr>
+      const budgetVal = item.budget !== undefined && item.budget !== null ? item.budget : (kpiItem.budget || 0);
+      tbody.innerHTML += `<tr data-budget="${budgetVal}">
         <td style="font-size:0.82rem;background:#fafafa;white-space:nowrap">${mfo}</td>
         <td style="font-size:0.82rem;background:#fafafa">${kpiItem.success_indicator || item.success_indicator || '-'}</td>
         <td style="font-size:0.82rem;background:#fafafa;white-space:nowrap">${kpiItem.target || item.target || '-'}</td>
@@ -1056,7 +1058,8 @@ $user = requireAuth(['user']);
       if (already) return;
       const evidenceBtn = getEvidenceBtn(categoryKey, k.mfo);
       const mfoAttr = (k.mfo || '').replace(/"/g, '&quot;');
-      tbody.innerHTML += `<tr>
+      const budgetVal = k.budget || 0;
+      tbody.innerHTML += `<tr data-budget="${budgetVal}">
         <td style="font-size:0.82rem;background:#fafafa;white-space:nowrap">${k.mfo || '—'}${personalTag(k)}</td>
         <td style="font-size:0.82rem;background:#fafafa">${k.success_indicator || '—'}</td>
         <td style="font-size:0.82rem;background:#fafafa;white-space:nowrap">${k.target || '—'}</td>
@@ -1265,10 +1268,12 @@ $user = requireAuth(['user']);
         const tInp       = tr.querySelector('.rating-t');
         const avgCell    = tr.querySelector('.row-avg');
         const remarksInp = tr.querySelector('.row-remarks');
+        const budgetVal  = tr.dataset.budget || '0';
         rows.push({
           mfo:     tds[0]?.textContent?.trim() || '',
           si:      tds[1]?.textContent?.trim() || '',
           target:  tds[2]?.textContent?.trim() || '',
+          budget:  budgetVal,
           actual:  accInp?.value !== undefined ? accInp.value.trim() : '',
           q:       qInp?.value || '',
           e:       eInp?.value || '',
@@ -1322,10 +1327,12 @@ $user = requireAuth(['user']);
       for (let i = 0; i < total; i++) {
         const r = rows[i] || {};
         const formattedActual = r.actual ? (isNaN(r.actual) ? r.actual : r.actual + '%') : '';
+        const formattedBudget = r.budget && parseFloat(r.budget) > 0 ? Number(r.budget).toLocaleString() : (r.budget !== undefined && r.budget !== '' ? r.budget : '0');
         html += `<tr class="data-row">
           <td>${esc(r.mfo)}</td>
           <td>${esc(r.si)}</td>
           <td class="tc">${esc(r.target)}</td>
+          <td class="tc">${esc(formattedBudget)}</td>
           <td>${esc(name)}</td>
           <td class="tc">${esc(formattedActual)}</td>
           <td class="tc">${esc(r.q)}</td>
@@ -1446,7 +1453,7 @@ td, th { border:1px solid #000; padding:1.5px 3px; vertical-align:middle; font-s
       <th style="width:10%">DATE</th>
     </tr>
     <tr>
-      <td style="height:32px;vertical-align:bottom">
+      <td style="height:32px;vertical-align:bottom;text-align:center">
         <div class="rev-name">${supName || '&nbsp;'}</div>
         <div class="rev-role">(immediate supervisor)</div>
       </td>
@@ -1473,16 +1480,17 @@ td, th { border:1px solid #000; padding:1.5px 3px; vertical-align:middle; font-s
   </div>
   <table class="data-table">
     <colgroup>
-      <col style="width:18%"><col style="width:20%"><col style="width:8%">
-      <col style="width:10%"><col style="width:17%">
+      <col style="width:16%"><col style="width:18%"><col style="width:8%"><col style="width:8%">
+      <col style="width:10%"><col style="width:15%">
       <col style="width:3%"><col style="width:3%"><col style="width:3%"><col style="width:3%">
-      <col style="width:15%">
+      <col style="width:13%">
     </colgroup>
     <thead>
       <tr>
         <th rowspan="2">MFO/KRA</th>
         <th rowspan="2">SUCCESS INDICATORS<br>(TARGET + MEASURE)</th>
         <th rowspan="2">TARGET</th>
+        <th rowspan="2">ALLOTTED<br>BUDGET</th>
         <th rowspan="2">INDIVIDUALS<br>ACCOUNTABLE</th>
         <th rowspan="2">ACTUAL<br>ACCOMPLISHMENTS</th>
         <th colspan="4">RATING</th>
@@ -1493,11 +1501,11 @@ td, th { border:1px solid #000; padding:1.5px 3px; vertical-align:middle; font-s
       </tr>
     </thead>
     <tbody>
-      <tr class="sec-row"><td colspan="10">A. CORE FUNCTION</td></tr>
+      <tr class="sec-row"><td colspan="11">A. CORE FUNCTION</td></tr>
       ${buildRows(core, 4)}
-      <tr class="sec-row"><td colspan="10">B. STRATEGIC FUNCTION</td></tr>
+      <tr class="sec-row"><td colspan="11">B. STRATEGIC FUNCTION</td></tr>
       ${buildRows(strategic, 3)}
-      <tr class="sec-row"><td colspan="10">C. SUPPORT FUNCTION</td></tr>
+      <tr class="sec-row"><td colspan="11">C. SUPPORT FUNCTION</td></tr>
       ${buildRows(support, 3)}
     </tbody>
   </table>
