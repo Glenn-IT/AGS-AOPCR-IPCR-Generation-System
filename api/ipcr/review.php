@@ -25,6 +25,10 @@ if (!$ipcr_id || !in_array($status, ['reviewed', 'approved', 'disapproved'])) {
 
 $db = getDB();
 
+// Run column migrations BEFORE opening a transaction.
+// ALTER TABLE causes an implicit MySQL COMMIT which would break any open transaction.
+ensureIpcrColumns($db);
+
 // Verify access — admin can only review their department's submissions
 $stmt = $db->prepare('SELECT f.*, u.department_id FROM ipcr_forms f JOIN users u ON f.user_id = u.id WHERE f.id = ?');
 $stmt->execute([$ipcr_id]);
@@ -41,8 +45,6 @@ if ($user['role'] === 'admin' && $form['department_id'] !== $user['department_id
 
 try {
     $db->beginTransaction();
-
-    ensureIpcrColumns($db);
 
     // Update individual item ratings if provided
     $updateItem = $db->prepare('UPDATE ipcr_items SET q_rating=?, e_rating=?, t_rating=?, rating=?, remarks=? WHERE id=? AND ipcr_form_id=?');

@@ -230,15 +230,19 @@ $user = requireAuth(['admin']);
       const total = Math.max((items||[]).length, minRows);
       for (let i = 0; i < total; i++) {
         const item = (items||[])[i] || {};
-        const rat = parseFloat(item.rating) > 0 ? item.rating : '';
+        const q = item.q_rating || '';
+        const e = item.e_rating || '';
+        const t = item.t_rating || '';
+        const avg = parseFloat(item.rating) > 0 ? parseFloat(item.rating).toFixed(2) : '';
         const formattedAcc = item.accomplishment !== null && item.accomplishment !== '' ? (isNaN(item.accomplishment) ? item.accomplishment : item.accomplishment + '%') : '';
         html += `<tr class="data-row">
           <td>${ep(item.mfo)}</td>
           <td>${ep(item.success_indicator)}</td>
           <td class="tc">${ep(item.target)}</td>
+          <td class="tc">${item.budget !== undefined && item.budget !== null ? item.budget : ''}</td>
           <td>${ep(f.user_name)}</td>
           <td class="tc">${ep(formattedAcc)}</td>
-          <td class="tc">${rat}</td><td class="tc">${rat}</td><td class="tc">${rat}</td><td class="tc b">${rat}</td>
+          <td class="tc">${q}</td><td class="tc">${e}</td><td class="tc">${t}</td><td class="tc b">${avg}</td>
           <td>${ep(item.remarks)}</td>
         </tr>`;
       }
@@ -316,8 +320,10 @@ td, th { border:1px solid #000; padding:1.5px 3px; vertical-align:middle; font-s
 .legend-right tr:last-child td { border-bottom:1px solid #000; }
 .data-table { border-top:1px solid #000; }
 .data-table th { background:#d9d9d9;font-weight:700;text-align:center;font-size:7.3pt;padding:2px 3px; }
-.data-table .sec-row td { background:#fed7aa;font-weight:700;font-size:7.8pt;text-align:left;padding:2px 5px; }
+.data-table thead { display:table-header-group; }
+.data-table .sec-row td { background:#fed7aa;font-weight:700;font-size:7.8pt;text-align:left;padding:2px 5px;page-break-after:avoid; }
 .data-table .data-row td { height:18px;font-size:7.5pt;padding:1px 3px;vertical-align:top; }
+.data-table .data-row { page-break-inside:avoid; }
 .summary-table td { border:1px solid #000;padding:1.5px 5px;font-size:7.5pt; }
 .summary-table .lbl { font-weight:700; } .summary-table .val { text-align:center;font-weight:700; }
 .sig-tbl th { background:#fff;font-weight:700;text-align:center;font-size:7.3pt;border:1px solid #000;padding:2px 4px; }
@@ -368,7 +374,7 @@ td, th { border:1px solid #000; padding:1.5px 3px; vertical-align:middle; font-s
       <th style="width:10%">DATE</th>
     </tr>
     <tr>
-      <td style="height:32px;vertical-align:bottom">
+      <td style="height:32px;vertical-align:bottom;text-align:center">
         <div class="rev-name">HITLER C. DANGATAN, Ph.D.</div><div class="rev-role">(Campus Executive Officer)</div>
       </td>
       <td>&nbsp;</td>
@@ -393,17 +399,18 @@ td, th { border:1px solid #000; padding:1.5px 3px; vertical-align:middle; font-s
   </div>
   <table class="data-table">
     <colgroup>
-      <col style="width:18%"><col style="width:20%"><col style="width:8%">
-      <col style="width:10%"><col style="width:17%">
+      <col style="width:16%"><col style="width:18%"><col style="width:8%">
+      <col style="width:8%"><col style="width:10%"><col style="width:15%">
       <col style="width:3%"><col style="width:3%"><col style="width:3%"><col style="width:3%">
-      <col style="width:15%">
+      <col style="width:13%">
     </colgroup>
     <thead>
       <tr>
         <th rowspan="2">MFO/PAP</th>
         <th rowspan="2">SUCCESS INDICATORS</th>
         <th rowspan="2">TARGET</th>
-        <th rowspan="2">INDIVIDUALS<br>ACCOUNTABLE</th>
+        <th rowspan="2">ALLOTTED<br>BUDGET</th>
+        <th rowspan="2">INDIVIDUALS ACCOUNTABLE</th>
         <th rowspan="2">ACTUAL<br>ACCOMPLISHMENTS</th>
         <th colspan="4">RATING</th>
         <th rowspan="2">REMARKS</th>
@@ -411,40 +418,29 @@ td, th { border:1px solid #000; padding:1.5px 3px; vertical-align:middle; font-s
       <tr><th>Q<sup>1</sup></th><th>E<sup>2</sup></th><th>T<sup>3</sup></th><th>A<sup>4</sup></th></tr>
     </thead>
     <tbody>
-      <tr class="sec-row"><td colspan="10">A. CORE FUNCTION</td></tr>
+      <tr class="sec-row"><td colspan="11">A. CORE FUNCTION</td></tr>
       ${buildRows(f.items?.core, 4)}
-      <tr class="sec-row"><td colspan="10">B. STRATEGIC FUNCTION</td></tr>
+      <tr class="sec-row"><td colspan="11">B. STRATEGIC FUNCTION</td></tr>
       ${buildRows(f.items?.strategic, 3)}
-      <tr class="sec-row"><td colspan="10">C. SUPPORT FUNCTION</td></tr>
+      <tr class="sec-row"><td colspan="11">C. SUPPORT FUNCTION</td></tr>
       ${buildRows(f.items?.support, 3)}
     </tbody>
   </table>
-  <table class="summary-table">
+  <table class="summary-table" style="page-break-inside:avoid">
     <tr>
-      <td class="lbl" style="width:30%">CORE FUNCTION (Weight: ${(wCore*100).toFixed(0)}%):</td>
-      <td class="val" style="width:20%">${coreAvg !== null ? coreAvg.toFixed(2) : '—'}</td>
-      <td class="lbl" style="width:30%">WEIGHTED CORE (${coreAvg !== null ? coreAvg.toFixed(2) : '0'} × ${wCore.toFixed(2)}):</td>
-      <td class="val" style="width:20%">${coreWeighted !== null ? coreWeighted.toFixed(2) : '—'}</td>
+      <td class="lbl" style="width:40%">AVERAGE RATING:</td>
+      <td class="val" style="width:60%" colspan="3">${finalAvg > 0 ? finalAvg.toFixed(2) : ''}</td>
     </tr>
     <tr>
-      <td class="lbl">STRATEGIC PRIORITIES (Weight: ${(wStrat*100).toFixed(0)}%):</td>
-      <td class="val">${stratAvg !== null ? stratAvg.toFixed(2) : '—'}</td>
-      <td class="lbl">WEIGHTED STRATEGIC (${stratAvg !== null ? stratAvg.toFixed(2) : '0'} × ${wStrat.toFixed(2)}):</td>
-      <td class="val">${stratWeighted !== null ? stratWeighted.toFixed(2) : '—'}</td>
-    </tr>
-    <tr>
-      <td class="lbl">SUPPORT FUNCTION (Weight: ${(wSupp*100).toFixed(0)}%):</td>
-      <td class="val">${suppAvg !== null ? suppAvg.toFixed(2) : '—'}</td>
-      <td class="lbl">WEIGHTED SUPPORT (${suppAvg !== null ? suppAvg.toFixed(2) : '0'} × ${wSupp.toFixed(2)}):</td>
-      <td class="val">${suppWeighted !== null ? suppWeighted.toFixed(2) : '—'}</td>
+      <td class="lbl">FINAL AVERAGE RATING:</td>
+      <td class="val" colspan="3">${finalAvg > 0 ? finalAvg.toFixed(2) : ''}</td>
     </tr>
     <tr style="background:#f4f4f4">
-      <td class="lbl" colspan="3">FINAL WEIGHTED AVERAGE RATING (${ep(etlName)}):</td>
-      <td class="val" style="font-size:8.5pt">${finalAvg > 0 ? finalAvg.toFixed(2) : ''}</td>
+      <td class="lbl">ADJECTIVAL RATING:</td>
+      <td class="val" colspan="3" style="font-size:8.5pt">${finalAvg > 0 ? adj(finalAvg) : ''}</td>
     </tr>
-    <tr style="background:#f4f4f4">
-      <td class="lbl" colspan="3">ADJECTIVAL RATING:</td>
-      <td class="val" style="font-size:8.5pt">${finalAvg > 0 ? adj(finalAvg) : ''}</td>
+    <tr>
+      <td class="lbl" colspan="4">COMMENTS AND RECOMMENDATION:</td>
     </tr>
   </table>
   <table class="sig-tbl">
@@ -464,7 +460,7 @@ td, th { border:1px solid #000; padding:1.5px 3px; vertical-align:middle; font-s
       <td>&nbsp;</td>
     </tr>
     <tr>
-      <td class="sig-name-cell" style="border-top:1px solid #aaa">${ep(f.user_name)}</td>
+      <td class="sig-name-cell" style="border-top:1px solid #aaa;text-align:center">${ep(f.user_name)}</td>
       <td>&nbsp;</td>
       <td class="sig-name-cell" style="border-top:1px solid #aaa">HITLER C. DANGATAN, Ph.D.<div class="rev-role">(Campus Executive Officer)</div></td>
       <td>&nbsp;</td>

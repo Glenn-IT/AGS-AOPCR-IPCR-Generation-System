@@ -314,8 +314,10 @@ td, th { border:1px solid #000; padding:1.5px 3px; vertical-align:middle; font-s
 .legend-right tr:last-child td { border-bottom:1px solid #000; }
 .data-table { border-top:1px solid #000; }
 .data-table th { background:#d9d9d9;font-weight:700;text-align:center;font-size:7.3pt;padding:2px 3px; }
-.data-table .sec-row td { background:#fed7aa;font-weight:700;font-size:7.8pt;text-align:left;padding:2px 5px; }
+.data-table thead { display:table-header-group; }
+.data-table .sec-row td { background:#fed7aa;font-weight:700;font-size:7.8pt;text-align:left;padding:2px 5px;page-break-after:avoid; }
 .data-table .data-row td { height:18px;font-size:7.5pt;padding:1px 3px;vertical-align:top; }
+.data-table .data-row { page-break-inside:avoid; }
 .summary-table td { border:1px solid #000;padding:1.5px 5px;font-size:7.5pt; }
 .summary-table .lbl { font-weight:700; } .summary-table .val { text-align:center;font-weight:700; }
 .sig-tbl th { background:#fff;font-weight:700;text-align:center;font-size:7.3pt;border:1px solid #000;padding:2px 4px; }
@@ -464,32 +466,21 @@ td, th { border:1px solid #000; padding:1.5px 3px; vertical-align:middle; font-s
       ${buildRows(f.items?.support, 3)}
     </tbody>
   </table>
-  <table class="summary-table">
+  <table class="summary-table" style="page-break-inside:avoid">
     <tr>
-      <td class="lbl" style="width:30%">CORE FUNCTION (Weight: ${(wCore*100).toFixed(0)}%):</td>
-      <td class="val" style="width:20%">${coreAvg !== null ? coreAvg.toFixed(2) : '—'}</td>
-      <td class="lbl" style="width:30%">WEIGHTED CORE (${coreAvg !== null ? coreAvg.toFixed(2) : '0'} × ${wCore.toFixed(2)}):</td>
-      <td class="val" style="width:20%">${coreWeighted !== null ? coreWeighted.toFixed(2) : '—'}</td>
+      <td class="lbl" style="width:40%">AVERAGE RATING:</td>
+      <td class="val" style="width:60%" colspan="3">${finalAvg > 0 ? finalAvg.toFixed(2) : ''}</td>
     </tr>
     <tr>
-      <td class="lbl">STRATEGIC PRIORITIES (Weight: ${(wStrat*100).toFixed(0)}%):</td>
-      <td class="val">${stratAvg !== null ? stratAvg.toFixed(2) : '—'}</td>
-      <td class="lbl">WEIGHTED STRATEGIC (${stratAvg !== null ? stratAvg.toFixed(2) : '0'} × ${wStrat.toFixed(2)}):</td>
-      <td class="val">${stratWeighted !== null ? stratWeighted.toFixed(2) : '—'}</td>
-    </tr>
-    <tr>
-      <td class="lbl">SUPPORT FUNCTION (Weight: ${(wSupp*100).toFixed(0)}%):</td>
-      <td class="val">${suppAvg !== null ? suppAvg.toFixed(2) : '—'}</td>
-      <td class="lbl">WEIGHTED SUPPORT (${suppAvg !== null ? suppAvg.toFixed(2) : '0'} × ${wSupp.toFixed(2)}):</td>
-      <td class="val">${suppWeighted !== null ? suppWeighted.toFixed(2) : '—'}</td>
+      <td class="lbl">FINAL AVERAGE RATING:</td>
+      <td class="val" colspan="3">${finalAvg > 0 ? finalAvg.toFixed(2) : ''}</td>
     </tr>
     <tr style="background:#f4f4f4">
-      <td class="lbl" colspan="3">FINAL WEIGHTED AVERAGE RATING (${ep(etlName)}):</td>
-      <td class="val" style="font-size:8.5pt">${finalAvg > 0 ? finalAvg.toFixed(2) : ''}</td>
+      <td class="lbl">ADJECTIVAL RATING:</td>
+      <td class="val" colspan="3" style="font-size:8.5pt">${finalAvg > 0 ? adj(finalAvg) : ''}</td>
     </tr>
-    <tr style="background:#f4f4f4">
-      <td class="lbl" colspan="3">ADJECTIVAL RATING:</td>
-      <td class="val" style="font-size:8.5pt">${finalAvg > 0 ? adj(finalAvg) : ''}</td>
+    <tr>
+      <td class="lbl" colspan="4">COMMENTS AND RECOMMENDATION:</td>
     </tr>
   </table>
   <table class="sig-tbl">
@@ -509,7 +500,7 @@ td, th { border:1px solid #000; padding:1.5px 3px; vertical-align:middle; font-s
       <td>&nbsp;</td>
     </tr>
     <tr>
-      <td class="sig-name-cell" style="border-top:1px solid #aaa">${ep(f.user_name)}</td>
+      <td class="sig-name-cell" style="border-top:1px solid #aaa;text-align:center">${ep(f.user_name)}</td>
       <td>&nbsp;</td>
       <td class="sig-name-cell" style="border-top:1px solid #aaa">${supName || ''}<div class="rev-role">(immediate supervisor)</div></td>
       <td>&nbsp;</td>

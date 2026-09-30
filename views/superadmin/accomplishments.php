@@ -435,7 +435,7 @@ $user = requireAuth(['superadmin']);
 
     try {
       const res = await fetch(API_BASE + 'ipcr/review.php', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ipcr_id: currentForm.id,
           status:  document.getElementById('finalStatus').value,
