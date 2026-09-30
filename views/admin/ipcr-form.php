@@ -1419,7 +1419,17 @@ $user = requireAuth(['admin']);
       const total = Math.max(rows.length, minRows);
       for (let i = 0; i < total; i++) {
         const r = rows[i] || {};
-        const formattedActual = r.actual ? (isNaN(r.actual) ? r.actual : r.actual + '%') : '';
+        let formattedActual = '';
+        if (r.actual !== undefined && r.actual !== null && String(r.actual).trim() !== '') {
+          const actStr = String(r.actual).trim();
+          if (actStr.includes('%')) {
+            formattedActual = actStr;
+          } else if (/%/.test(String(r.target || '')) && !isNaN(actStr)) {
+            formattedActual = actStr + '%';
+          } else {
+            formattedActual = actStr;
+          }
+        }
         const formattedBudget = r.budget && parseFloat(r.budget) > 0 ? Number(r.budget).toLocaleString() : (r.budget !== undefined && r.budget !== '' ? r.budget : '0');
         html += `<tr class="data-row">
           <td>${ep(r.mfo)}</td>
@@ -1470,6 +1480,14 @@ td,th{border:1px solid #000;padding:1.5px 3px;vertical-align:middle;font-size:7.
 .sig-tbl th{background:#fff;font-weight:700;text-align:center;font-size:7.3pt;border:1px solid #000;padding:2px 4px;}
 .sig-tbl td{border:1px solid #000;padding:2px 4px;font-size:7.3pt;vertical-align:top;}
 .sig-tbl .certify{font-style:italic;font-size:7pt;text-align:center;}.sig-tbl .sig-name-cell{font-weight:700;text-align:center;}
+.legend-wrap{display:table;width:100%;border-top:none;border-bottom:none;}
+.legend-blank{display:table-cell;width:38%;border-right:1px solid #000;}
+.legend-right{display:table-cell;width:62%;}
+.legend-right table{border:none;}
+.legend-right td{border:none;border-bottom:1px solid #ccc;font-size:7.3pt;padding:1px 3px;}
+.legend-right td:first-child{font-weight:700;text-align:center;border-right:1px solid #000;width:20px;border-left:1px solid #000;}
+.legend-right tr:first-child td{border-top:1px solid #000;}
+.legend-right tr:last-child td{border-bottom:1px solid #000;}
 .legend-note{font-size:6.5pt;padding:2px 5px;font-style:italic;}
 </style></head><body>
 <div class="no-print"><button class="btn-pdf" onclick="window.print()">&#128438; Print / Save as PDF</button><button class="btn-cls" onclick="window.close()">&#x2715; Close</button></div>
@@ -1479,9 +1497,59 @@ td,th{border:1px solid #000;padding:1.5px 3px;vertical-align:middle;font-size:7.
 <div class="commit-wrap"><div class="commit-left">I,&nbsp;<span style="border-bottom:1px solid #000;padding:0 4px">${ep(name)}</span>,&nbsp;<span style="border-bottom:1px solid #000;padding:0 4px">${ep(pos)}</span>, commit to deliver and agree to be rated on the attainment of the following targets in accordance with the indicated measures for<br>the period&nbsp;<span style="border-bottom:1px solid #000;padding:0 4px">${ep(period)}</span>.</div><div class="commit-right"><span class="sig-line">${ep(name)}<br><span style="font-size:6.5pt;font-style:italic">(name of employee)</span></span><div class="date-line">Date:&nbsp;<span style="border-bottom:1px solid #000;padding:0 4px">${ep(date)}</span></div></div></div>
 <table class="rev-table"><tr><th style="width:35%">REVIEWED BY</th><th style="width:10%">DATE</th><th style="width:45%">APPROVED BY</th><th style="width:10%">DATE</th></tr>
 <tr><td style="height:32px;vertical-align:bottom;text-align:center"><div class="rev-name">HITLER C. DANGATAN, Ph.D.</div><div class="rev-role">(Campus Executive Officer)</div></td><td>&nbsp;</td><td style="text-align:center;vertical-align:middle"><div class="rev-name">University President</div><div class="rev-role">CSU System Administration</div></td><td>&nbsp;</td></tr></table>
+<div class="legend-wrap" style="border-top:1px solid #000;">
+  <div class="legend-blank">&nbsp;</div>
+  <div class="legend-right">
+    <table>
+      <tr><td>R</td><td>5 – Outstanding &nbsp;- performance exceeded expectation by 30% and above of planned target</td></tr>
+      <tr><td>A</td><td>4 – Very Satisfactory &nbsp;- performance exceeded expectations by 15% to 29% of planned targets</td></tr>
+      <tr><td>T</td><td>3 – Satisfactory &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- performance met 90% to 114% of the planned targets</td></tr>
+      <tr><td>I</td><td>2 – Unsatisfactory &nbsp;&nbsp;- performance only met 51% to 89% of planned targets and failed to deliver one or</td></tr>
+      <tr><td>N</td><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;more critical aspects of the targets</td></tr>
+      <tr><td>G</td><td>1 – Poor &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- performance failed to deliver most of the targets by 50% and below</td></tr>
+    </table>
+  </div>
+</div>
 <table class="data-table"><colgroup><col style="width:16%"><col style="width:18%"><col style="width:8%"><col style="width:8%"><col style="width:10%"><col style="width:15%"><col style="width:3%"><col style="width:3%"><col style="width:3%"><col style="width:3%"><col style="width:13%"></colgroup>
 <thead><tr><th rowspan="2">MFO/PAP</th><th rowspan="2">SUCCESS INDICATORS</th><th rowspan="2">TARGET</th><th rowspan="2">ALLOTTED<br>BUDGET</th><th rowspan="2">INDIVIDUALS ACCOUNTABLE</th><th rowspan="2">ACTUAL ACCOMPLISHMENTS</th><th colspan="4">RATING</th><th rowspan="2">REMARKS</th></tr><tr><th>Q<sup>1</sup></th><th>E<sup>2</sup></th><th>T<sup>3</sup></th><th>A<sup>4</sup></th></tr></thead>
-<tbody><tr class="sec-row"><td colspan="11">A. CORE FUNCTIONS</td></tr>${buildRows(core,4)}<tr class="sec-row"><td colspan="11">B. STRATEGIC FUNCTIONS</td></tr>${buildRows(strategic,3)}<tr class="sec-row"><td colspan="11">C. SUPPORT FUNCTIONS</td></tr>${buildRows(support,3)}</tbody></table>
+<tbody>
+<tr class="sec-row"><td colspan="11">A. CORE FUNCTIONS</td></tr>
+${buildRows(core,4)}
+<tr class="data-row">
+  <td colspan="9" style="font-weight:700;text-align:left;padding-left:8px;">Average Rating</td>
+  <td class="tc b">${coreAvg !== null ? coreAvg.toFixed(2) : ''}</td>
+  <td>&nbsp;</td>
+</tr>
+<tr class="data-row">
+  <td colspan="9" style="font-weight:700;text-align:left;padding-left:8px;">Weighted Average Rating</td>
+  <td class="tc b">${coreWeighted !== null ? coreWeighted.toFixed(2) : ''}</td>
+  <td>&nbsp;</td>
+</tr>
+<tr class="sec-row"><td colspan="11">B. STRATEGIC FUNCTIONS</td></tr>
+${buildRows(strategic,3)}
+<tr class="data-row">
+  <td colspan="9" style="font-weight:700;text-align:left;padding-left:8px;">Average Rating</td>
+  <td class="tc b">${stratAvg !== null ? stratAvg.toFixed(2) : ''}</td>
+  <td>&nbsp;</td>
+</tr>
+<tr class="data-row">
+  <td colspan="9" style="font-weight:700;text-align:left;padding-left:8px;">Weighted Average Rating</td>
+  <td class="tc b">${stratWeighted !== null ? stratWeighted.toFixed(2) : ''}</td>
+  <td>&nbsp;</td>
+</tr>
+<tr class="sec-row"><td colspan="11">C. SUPPORT FUNCTIONS</td></tr>
+${buildRows(support,3)}
+<tr class="data-row">
+  <td colspan="9" style="font-weight:700;text-align:left;padding-left:8px;">Average Rating</td>
+  <td class="tc b">${suppAvg !== null ? suppAvg.toFixed(2) : ''}</td>
+  <td>&nbsp;</td>
+</tr>
+<tr class="data-row">
+  <td colspan="9" style="font-weight:700;text-align:left;padding-left:8px;">Weighted Average Rating</td>
+  <td class="tc b">${suppWeighted !== null ? suppWeighted.toFixed(2) : ''}</td>
+  <td>&nbsp;</td>
+</tr>
+</tbody></table>
 <table class="summary-table" style="page-break-inside:avoid">
   <tr>
     <td class="lbl" style="width:40%">AVERAGE RATING:</td>

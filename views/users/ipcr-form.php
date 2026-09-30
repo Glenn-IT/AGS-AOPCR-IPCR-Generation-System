@@ -1353,7 +1353,17 @@ $user = requireAuth(['user']);
       const total = Math.max(rows.length, minRows);
       for (let i = 0; i < total; i++) {
         const r = rows[i] || {};
-        const formattedActual = r.actual ? (isNaN(r.actual) ? r.actual : r.actual + '%') : '';
+        let formattedActual = '';
+        if (r.actual !== undefined && r.actual !== null && String(r.actual).trim() !== '') {
+          const actStr = String(r.actual).trim();
+          if (actStr.includes('%')) {
+            formattedActual = actStr;
+          } else if (/%/.test(String(r.target || '')) && !isNaN(actStr)) {
+            formattedActual = actStr + '%';
+          } else {
+            formattedActual = actStr;
+          }
+        }
         const formattedBudget = r.budget && parseFloat(r.budget) > 0 ? Number(r.budget).toLocaleString() : (r.budget !== undefined && r.budget !== '' ? r.budget : '0');
         html += `<tr class="data-row">
           <td>${esc(r.mfo)}</td>
@@ -1532,10 +1542,40 @@ td, th { border:1px solid #000; padding:1.5px 3px; vertical-align:middle; font-s
     <tbody>
       <tr class="sec-row"><td colspan="11">A. CORE FUNCTION</td></tr>
       ${buildRows(core, 4)}
+      <tr class="data-row">
+        <td colspan="9" style="font-weight:700;text-align:left;padding-left:8px;">Average Rating</td>
+        <td class="tc b">${coreAvg !== null ? coreAvg.toFixed(2) : ''}</td>
+        <td>&nbsp;</td>
+      </tr>
+      <tr class="data-row">
+        <td colspan="9" style="font-weight:700;text-align:left;padding-left:8px;">Weighted Average Rating</td>
+        <td class="tc b">${coreWeighted !== null ? coreWeighted.toFixed(2) : ''}</td>
+        <td>&nbsp;</td>
+      </tr>
       <tr class="sec-row"><td colspan="11">B. STRATEGIC FUNCTION</td></tr>
       ${buildRows(strategic, 3)}
+      <tr class="data-row">
+        <td colspan="9" style="font-weight:700;text-align:left;padding-left:8px;">Average Rating</td>
+        <td class="tc b">${stratAvg !== null ? stratAvg.toFixed(2) : ''}</td>
+        <td>&nbsp;</td>
+      </tr>
+      <tr class="data-row">
+        <td colspan="9" style="font-weight:700;text-align:left;padding-left:8px;">Weighted Average Rating</td>
+        <td class="tc b">${stratWeighted !== null ? stratWeighted.toFixed(2) : ''}</td>
+        <td>&nbsp;</td>
+      </tr>
       <tr class="sec-row"><td colspan="11">C. SUPPORT FUNCTION</td></tr>
       ${buildRows(support, 3)}
+      <tr class="data-row">
+        <td colspan="9" style="font-weight:700;text-align:left;padding-left:8px;">Average Rating</td>
+        <td class="tc b">${suppAvg !== null ? suppAvg.toFixed(2) : ''}</td>
+        <td>&nbsp;</td>
+      </tr>
+      <tr class="data-row">
+        <td colspan="9" style="font-weight:700;text-align:left;padding-left:8px;">Weighted Average Rating</td>
+        <td class="tc b">${suppWeighted !== null ? suppWeighted.toFixed(2) : ''}</td>
+        <td>&nbsp;</td>
+      </tr>
     </tbody>
   </table>
   <table class="summary-table" style="page-break-inside:avoid">

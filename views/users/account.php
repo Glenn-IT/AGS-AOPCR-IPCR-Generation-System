@@ -1,6 +1,15 @@
 <?php
 require_once '../../config/session.php';
 $user = requireAuth(['user']);
+$db = getDB();
+$stmt = $db->prepare('SELECT u.*, d.name AS department_name FROM users u LEFT JOIN departments d ON u.department_id = d.id WHERE u.id = ? LIMIT 1');
+$stmt->execute([$user['id']]);
+$fresh = $stmt->fetch();
+if ($fresh) {
+    unset($fresh['password']);
+    $user = array_merge($user, $fresh);
+    $_SESSION['user'] = $user;
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -234,6 +243,8 @@ $user = requireAuth(['user']);
   const session = requireAuth(['user']);
   initLayout('user', 'account', [{ label: 'Account Management' }]);
 
+  const roleLabels = { superadmin: 'Super Administrator', admin: 'Administrator', user: 'Faculty / Staff' };
+
   function updateAvatarUI(avatarVal) {
     const el = document.getElementById('profileAvatar');
     if (!el) return;
@@ -246,9 +257,9 @@ $user = requireAuth(['user']);
   }
 
   updateAvatarUI(session.avatar);
-  document.getElementById('profileName').textContent = session.name;
+  document.getElementById('profileName').textContent = session.name || '-';
   document.getElementById('profilePosition').textContent = session.position || '-';
-  document.getElementById('profileRole').textContent = roleLabels[session.role] || session.role;
+  document.getElementById('profileRole').textContent = roleLabels[session.role] || session.role || 'Staff';
 
   async function uploadProfilePicture(input) {
     const file = input.files?.[0];
@@ -283,14 +294,27 @@ $user = requireAuth(['user']);
       showToast('Server error during upload.', 'danger');
     }
   }
-  document.getElementById('profileDept').textContent = session.department || '-';
+  document.getElementById('profileDept').textContent = session.department_name || session.department || '-';
   document.getElementById('profileEmail').textContent = session.email || '-';
-  document.getElementById('profileLastLogin').textContent = session.lastLogin || '-';
-  document.getElementById('editName').value = session.name;
-  document.getElementById('editUsername').value = session.username;
+  document.getElementById('profileLastLogin').textContent = (session.last_login || session.lastLogin) ? formatDate(session.last_login || session.lastLogin) : '-';
+  document.getElementById('editName').value = session.name || '';
+  document.getElementById('editUsername').value = session.username || '';
   document.getElementById('editEmail').value = session.email || '';
   document.getElementById('editGender').value = session.gender || '';
-  document.getElementById('editPosition').value = session.position || '';
+
+  const posSel = document.getElementById('editPosition');
+  if (session.position) {
+    let hasOpt = Array.from(posSel.options).some(o => o.value === session.position);
+    if (!hasOpt) {
+      const opt = document.createElement('option');
+      opt.value = session.position;
+      opt.textContent = session.position;
+      posSel.appendChild(opt);
+    }
+    posSel.value = session.position;
+  } else {
+    posSel.value = '';
+  }
 
   document.getElementById('profileForm').addEventListener('submit', async function(e) {
     e.preventDefault();

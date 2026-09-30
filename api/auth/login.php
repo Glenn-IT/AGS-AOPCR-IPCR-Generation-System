@@ -121,6 +121,8 @@ $sessionUser = [
     'gender'          => $user['gender'],
     'avatar'          => $user['avatar'],
     'status'          => $user['status'],
+    'last_login'      => date('Y-m-d H:i:s'),
+    'lastLogin'       => date('Y-m-d H:i:s'),
 ];
 
 setSessionUser($sessionUser);

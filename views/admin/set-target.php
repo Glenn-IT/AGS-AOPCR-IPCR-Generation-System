@@ -367,9 +367,30 @@ $user = requireAuth(['admin']);
     const core      = getRows('coreBody');
     const strategic = getRows('strategicBody');
     const support   = getRows('supportBody');
-    const all       = [...core, ...strategic, ...support];
-    const avgs      = all.map(r => parseFloat(r.rating)).filter(v => v > 0);
-    const finalAvg  = avgs.length ? parseFloat((avgs.reduce((a,b)=>a+b,0)/avgs.length).toFixed(2)) : 0;
+
+    const cAvgs = core.map(r => parseFloat(r.rating)).filter(v => v > 0);
+    const coreAvg = cAvgs.length ? (cAvgs.reduce((a,b) => a+b, 0) / cAvgs.length) : null;
+
+    const sAvgs = strategic.map(r => parseFloat(r.rating)).filter(v => v > 0);
+    const stratAvg = sAvgs.length ? (sAvgs.reduce((a,b) => a+b, 0) / sAvgs.length) : null;
+
+    const supAvgs = support.map(r => parseFloat(r.rating)).filter(v => v > 0);
+    const suppAvg = supAvgs.length ? (supAvgs.reduce((a,b) => a+b, 0) / supAvgs.length) : null;
+
+    const wCore = 0.70;
+    const wStrat = 0.15;
+    const wSupp = 0.15;
+
+    const coreWeighted = coreAvg !== null ? (coreAvg * wCore) : null;
+    const stratWeighted = stratAvg !== null ? (stratAvg * wStrat) : null;
+    const suppWeighted = suppAvg !== null ? (suppAvg * wSupp) : null;
+
+    let sum = 0, weightSum = 0;
+    if (coreWeighted !== null) { sum += coreWeighted; weightSum += wCore; }
+    if (stratWeighted !== null) { sum += stratWeighted; weightSum += wStrat; }
+    if (suppWeighted !== null) { sum += suppWeighted; weightSum += wSupp; }
+
+    const finalAvg = weightSum > 0 ? parseFloat((sum / weightSum).toFixed(2)) : 0;
 
     function adj(v) {
       if(v>=4.5)return'Outstanding';if(v>=3.5)return'Very Satisfactory';
@@ -382,13 +403,23 @@ $user = requireAuth(['admin']);
       const total = Math.max(rows.length, minRows);
       for (let i = 0; i < total; i++) {
         const r = rows[i] || {};
-        const rat = parseFloat(r.rating) > 0 ? r.rating : '';
+        let formattedActual = '';
+        if (r.actual !== undefined && r.actual !== null && String(r.actual).trim() !== '') {
+          const actStr = String(r.actual).trim();
+          if (actStr.includes('%')) {
+            formattedActual = actStr;
+          } else if (/%/.test(String(r.target || '')) && !isNaN(actStr)) {
+            formattedActual = actStr + '%';
+          } else {
+            formattedActual = actStr;
+          }
+        }
         html += `<tr class="data-row">
           <td>${ep(r.mfo)}</td>
           <td>${ep(r.successIndicator)}</td>
           <td class="tc">${ep(r.target)}</td>
           <td class="tc">${ep(r.budget)}</td>
-          <td class="tc">${ep(r.actual ? (isNaN(r.actual) ? r.actual : r.actual + '%') : '')}</td>
+          <td class="tc">${ep(formattedActual)}</td>
           <td class="tc">${rat}</td>
           <td class="tc">${rat}</td>
           <td class="tc">${rat}</td>
@@ -447,6 +478,14 @@ td, th { border:1px solid #000; padding:1.5px 3px; vertical-align:middle; font-s
 .sig-tbl td { border:1px solid #000;padding:2px 4px;font-size:7.3pt;vertical-align:top; }
 .sig-tbl .certify { font-style:italic;font-size:7pt;text-align:center; }
 .sig-tbl .sig-name-cell { font-weight:700;text-align:center; }
+.legend-wrap { display:table;width:100%;border-top:none;border-bottom:none; }
+.legend-blank { display:table-cell;width:38%;border-right:1px solid #000; }
+.legend-right { display:table-cell;width:62%; }
+.legend-right table { border:none; }
+.legend-right td { border:none;border-bottom:1px solid #ccc;font-size:7.3pt;padding:1px 3px; }
+.legend-right td:first-child { font-weight:700;text-align:center;border-right:1px solid #000;width:20px;border-left:1px solid #000; }
+.legend-right tr:first-child td { border-top:1px solid #000; }
+.legend-right tr:last-child td { border-bottom:1px solid #000; }
 .legend-note { font-size:6.5pt;padding:2px 5px;font-style:italic; }
 </style>
 </head>
@@ -502,11 +541,24 @@ td, th { border:1px solid #000; padding:1.5px 3px; vertical-align:middle; font-s
       <td>&nbsp;</td>
     </tr>
   </table>
+  <div class="legend-wrap" style="border-top:1px solid #000;">
+    <div class="legend-blank">&nbsp;</div>
+    <div class="legend-right">
+      <table>
+        <tr><td>R</td><td>5 – Outstanding &nbsp;- performance exceeded expectation by 30% and above of planned target</td></tr>
+        <tr><td>A</td><td>4 – Very Satisfactory &nbsp;- performance exceeded expectations by 15% to 29% of planned targets</td></tr>
+        <tr><td>T</td><td>3 – Satisfactory &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- performance met 90% to 114% of the planned targets</td></tr>
+        <tr><td>I</td><td>2 – Unsatisfactory &nbsp;&nbsp;- performance only met 51% to 89% of planned targets and failed to deliver one or</td></tr>
+        <tr><td>N</td><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;more critical aspects of the targets</td></tr>
+        <tr><td>G</td><td>1 – Poor &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- performance failed to deliver most of the targets by 50% and below</td></tr>
+      </table>
+    </div>
+  </div>
   <table class="data-table">
     <colgroup>
-      <col style="width:15%"><col style="width:22%"><col style="width:8%">
-      <col style="width:7%"><col style="width:7%"><col style="width:18%">
-      <col style="width:3%"><col style="width:3%"><col style="width:3%"><col style="width:3%">
+      <col style="width:18%"><col style="width:24%"><col style="width:10%">
+      <col style="width:10%"><col style="width:22%">
+      <col style="width:4%"><col style="width:4%"><col style="width:4%"><col style="width:4%">
     </colgroup>
     <thead>
       <tr>
@@ -523,10 +575,34 @@ td, th { border:1px solid #000; padding:1.5px 3px; vertical-align:middle; font-s
     <tbody>
       <tr class="sec-row"><td colspan="9">A. CORE FUNCTION</td></tr>
       ${buildRows(core, 4)}
+      <tr class="data-row">
+        <td colspan="8" style="font-weight:700;text-align:left;padding-left:8px;">Average Rating</td>
+        <td class="tc b">${coreAvg !== null ? coreAvg.toFixed(2) : ''}</td>
+      </tr>
+      <tr class="data-row">
+        <td colspan="8" style="font-weight:700;text-align:left;padding-left:8px;">Weighted Average Rating</td>
+        <td class="tc b">${coreWeighted !== null ? coreWeighted.toFixed(2) : ''}</td>
+      </tr>
       <tr class="sec-row"><td colspan="9">B. STRATEGIC FUNCTION</td></tr>
       ${buildRows(strategic, 3)}
+      <tr class="data-row">
+        <td colspan="8" style="font-weight:700;text-align:left;padding-left:8px;">Average Rating</td>
+        <td class="tc b">${stratAvg !== null ? stratAvg.toFixed(2) : ''}</td>
+      </tr>
+      <tr class="data-row">
+        <td colspan="8" style="font-weight:700;text-align:left;padding-left:8px;">Weighted Average Rating</td>
+        <td class="tc b">${stratWeighted !== null ? stratWeighted.toFixed(2) : ''}</td>
+      </tr>
       <tr class="sec-row"><td colspan="9">C. SUPPORT FUNCTION</td></tr>
       ${buildRows(support, 3)}
+      <tr class="data-row">
+        <td colspan="8" style="font-weight:700;text-align:left;padding-left:8px;">Average Rating</td>
+        <td class="tc b">${suppAvg !== null ? suppAvg.toFixed(2) : ''}</td>
+      </tr>
+      <tr class="data-row">
+        <td colspan="8" style="font-weight:700;text-align:left;padding-left:8px;">Weighted Average Rating</td>
+        <td class="tc b">${suppWeighted !== null ? suppWeighted.toFixed(2) : ''}</td>
+      </tr>
     </tbody>
   </table>
   <table class="summary-table">

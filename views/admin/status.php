@@ -233,8 +233,17 @@ $user = requireAuth(['admin']);
         const q = item.q_rating || '';
         const e = item.e_rating || '';
         const t = item.t_rating || '';
-        const avg = parseFloat(item.rating) > 0 ? parseFloat(item.rating).toFixed(2) : '';
-        const formattedAcc = item.accomplishment !== null && item.accomplishment !== '' ? (isNaN(item.accomplishment) ? item.accomplishment : item.accomplishment + '%') : '';
+        let formattedAcc = '';
+        if (item.accomplishment !== null && item.accomplishment !== undefined && String(item.accomplishment).trim() !== '') {
+          const accStr = String(item.accomplishment).trim();
+          if (accStr.includes('%')) {
+            formattedAcc = accStr;
+          } else if (/%/.test(String(item.target || '')) && !isNaN(accStr)) {
+            formattedAcc = accStr + '%';
+          } else {
+            formattedAcc = accStr;
+          }
+        }
         html += `<tr class="data-row">
           <td>${ep(item.mfo)}</td>
           <td>${ep(item.success_indicator)}</td>
@@ -420,10 +429,40 @@ td, th { border:1px solid #000; padding:1.5px 3px; vertical-align:middle; font-s
     <tbody>
       <tr class="sec-row"><td colspan="11">A. CORE FUNCTION</td></tr>
       ${buildRows(f.items?.core, 4)}
+      <tr class="data-row">
+        <td colspan="9" style="font-weight:700;text-align:left;padding-left:8px;">Average Rating</td>
+        <td class="tc b">${coreAvg !== null ? coreAvg.toFixed(2) : ''}</td>
+        <td>&nbsp;</td>
+      </tr>
+      <tr class="data-row">
+        <td colspan="9" style="font-weight:700;text-align:left;padding-left:8px;">Weighted Average Rating</td>
+        <td class="tc b">${coreWeighted !== null ? coreWeighted.toFixed(2) : ''}</td>
+        <td>&nbsp;</td>
+      </tr>
       <tr class="sec-row"><td colspan="11">B. STRATEGIC FUNCTION</td></tr>
       ${buildRows(f.items?.strategic, 3)}
+      <tr class="data-row">
+        <td colspan="9" style="font-weight:700;text-align:left;padding-left:8px;">Average Rating</td>
+        <td class="tc b">${stratAvg !== null ? stratAvg.toFixed(2) : ''}</td>
+        <td>&nbsp;</td>
+      </tr>
+      <tr class="data-row">
+        <td colspan="9" style="font-weight:700;text-align:left;padding-left:8px;">Weighted Average Rating</td>
+        <td class="tc b">${stratWeighted !== null ? stratWeighted.toFixed(2) : ''}</td>
+        <td>&nbsp;</td>
+      </tr>
       <tr class="sec-row"><td colspan="11">C. SUPPORT FUNCTION</td></tr>
       ${buildRows(f.items?.support, 3)}
+      <tr class="data-row">
+        <td colspan="9" style="font-weight:700;text-align:left;padding-left:8px;">Average Rating</td>
+        <td class="tc b">${suppAvg !== null ? suppAvg.toFixed(2) : ''}</td>
+        <td>&nbsp;</td>
+      </tr>
+      <tr class="data-row">
+        <td colspan="9" style="font-weight:700;text-align:left;padding-left:8px;">Weighted Average Rating</td>
+        <td class="tc b">${suppWeighted !== null ? suppWeighted.toFixed(2) : ''}</td>
+        <td>&nbsp;</td>
+      </tr>
     </tbody>
   </table>
   <table class="summary-table" style="page-break-inside:avoid">
