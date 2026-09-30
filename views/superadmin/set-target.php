@@ -149,6 +149,96 @@ $user = requireAuth(['superadmin']);
     </div>
   </div>
 
+  <!-- ── ETL Matrix Selection Card ──────────────────────────────────────── -->
+  <div class="card mb-3 border-primary shadow-sm" id="etlMatrixCard">
+    <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2 py-2" style="background:#FFF4E6">
+      <div class="d-flex align-items-center gap-2">
+        <i class="fa-solid fa-scale-balanced text-primary fs-5"></i>
+        <div>
+          <h6 class="mb-0 fw-700 text-dark">WEIGHT According to ETL</h6>
+          <small class="text-muted">Equivalent Teaching Load (ETL) & Category Weight Distribution Matrix</small>
+        </div>
+      </div>
+      <div class="d-flex align-items-center gap-2">
+        <label for="etlSelect" class="form-label mb-0 fw-600 text-nowrap" style="font-size:0.85rem">Select ETL:</label>
+        <select class="form-select form-select-sm fw-600" id="etlSelect" style="width:140px;border-color:var(--primary)" onchange="onEtlSelectChange(this.value)">
+          <option value="18 ETL">18 ETL</option>
+          <option value="15 ETL">15 ETL</option>
+          <option value="12 ETL">12 ETL</option>
+          <option value="9 ETL">9 ETL</option>
+          <option value="6 ETL">6 ETL</option>
+          <option value="3 ETL">3 ETL</option>
+          <option value="0 ETL" selected>0 ETL</option>
+        </select>
+      </div>
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-bordered text-center align-middle mb-0 etl-table" id="etlMatrixTable">
+          <thead class="table-light">
+            <tr style="font-size:0.83rem">
+              <th class="text-start bg-light" style="width:190px">WEIGHT According to ETL</th>
+              <th class="etl-col-header" data-etl="18 ETL" onclick="selectEtl('18 ETL')" title="Click to select 18 ETL">18 ETL</th>
+              <th class="etl-col-header" data-etl="15 ETL" onclick="selectEtl('15 ETL')" title="Click to select 15 ETL">15 ETL</th>
+              <th class="etl-col-header" data-etl="12 ETL" onclick="selectEtl('12 ETL')" title="Click to select 12 ETL">12 ETL</th>
+              <th class="etl-col-header" data-etl="9 ETL" onclick="selectEtl('9 ETL')" title="Click to select 9 ETL">9 ETL</th>
+              <th class="etl-col-header" data-etl="6 ETL" onclick="selectEtl('6 ETL')" title="Click to select 6 ETL">6 ETL</th>
+              <th class="etl-col-header" data-etl="3 ETL" onclick="selectEtl('3 ETL')" title="Click to select 3 ETL">3 ETL</th>
+              <th class="etl-col-header active-etl-col" data-etl="0 ETL" onclick="selectEtl('0 ETL')" title="Click to select 0 ETL">0 ETL</th>
+            </tr>
+          </thead>
+          <tbody style="font-size:0.84rem">
+            <tr>
+              <th class="text-start bg-light fw-600">Core Functions</th>
+              <td class="etl-cell" data-etl="18 ETL" onclick="selectEtl('18 ETL')">10</td>
+              <td class="etl-cell" data-etl="15 ETL" onclick="selectEtl('15 ETL')">20</td>
+              <td class="etl-cell" data-etl="12 ETL" onclick="selectEtl('12 ETL')">30</td>
+              <td class="etl-cell" data-etl="9 ETL" onclick="selectEtl('9 ETL')">40</td>
+              <td class="etl-cell" data-etl="6 ETL" onclick="selectEtl('6 ETL')">50</td>
+              <td class="etl-cell" data-etl="3 ETL" onclick="selectEtl('3 ETL')">60</td>
+              <td class="etl-cell active-etl-cell" data-etl="0 ETL" onclick="selectEtl('0 ETL')">70</td>
+            </tr>
+            <tr>
+              <th class="text-start bg-light fw-600">Strategic Priorities</th>
+              <td class="etl-cell" data-etl="18 ETL" onclick="selectEtl('18 ETL')">50–65</td>
+              <td class="etl-cell" data-etl="15 ETL" onclick="selectEtl('15 ETL')">40–55</td>
+              <td class="etl-cell" data-etl="12 ETL" onclick="selectEtl('12 ETL')">35–50</td>
+              <td class="etl-cell" data-etl="9 ETL" onclick="selectEtl('9 ETL')">30–40</td>
+              <td class="etl-cell" data-etl="6 ETL" onclick="selectEtl('6 ETL')">25</td>
+              <td class="etl-cell" data-etl="3 ETL" onclick="selectEtl('3 ETL')">20</td>
+              <td class="etl-cell active-etl-cell" data-etl="0 ETL" onclick="selectEtl('0 ETL')">15</td>
+            </tr>
+            <tr>
+              <th class="text-start bg-light fw-600">Support Functions</th>
+              <td class="etl-cell" data-etl="18 ETL" onclick="selectEtl('18 ETL')">25–40</td>
+              <td class="etl-cell" data-etl="15 ETL" onclick="selectEtl('15 ETL')">25–40</td>
+              <td class="etl-cell" data-etl="12 ETL" onclick="selectEtl('12 ETL')">20–35</td>
+              <td class="etl-cell" data-etl="9 ETL" onclick="selectEtl('9 ETL')">20–30</td>
+              <td class="etl-cell" data-etl="6 ETL" onclick="selectEtl('6 ETL')">25</td>
+              <td class="etl-cell" data-etl="3 ETL" onclick="selectEtl('3 ETL')">20</td>
+              <td class="etl-cell active-etl-cell" data-etl="0 ETL" onclick="selectEtl('0 ETL')">15</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <!-- Active Weights summary bar / controls -->
+      <div class="p-2 px-3 bg-light border-top d-flex align-items-center justify-content-between flex-wrap gap-2" style="font-size:0.83rem">
+        <div class="d-flex align-items-center gap-3 flex-wrap">
+          <span class="text-muted"><i class="fa-solid fa-check-circle text-success me-1"></i>Active Preset: <strong id="activeEtlLabel" class="text-primary">0 ETL</strong></span>
+          <span class="badge bg-white text-dark border px-2 py-1">Core: <strong id="dispWeightCore" class="text-primary">70%</strong> (0.70)</span>
+          <span class="badge bg-white text-dark border px-2 py-1">Strategic: <strong id="dispWeightStrategic" class="text-primary">15%</strong> (0.15)</span>
+          <span class="badge bg-white text-dark border px-2 py-1">Support: <strong id="dispWeightSupport" class="text-primary">15%</strong> (0.15)</span>
+          <span class="badge bg-success text-white px-2 py-1"><i class="fa-solid fa-equals me-1"></i>Total: <strong id="dispWeightTotal">100%</strong></span>
+        </div>
+        <div id="etlRangeAdjuster" class="d-none align-items-center gap-2">
+          <small class="text-muted">Adjust Strategic %:</small>
+          <input type="number" id="inpStrategicWeight" class="form-control form-control-sm text-center" style="width:65px" min="15" max="65" step="1" oninput="onCustomStrategicInput(this.value)">
+          <small class="text-muted">&rarr; Support auto-balances to 100%</small>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Instructions Accordion -->
   <div class="accordion mb-3 no-print" id="instructionAccordion">
     <div class="accordion-item border-0 shadow-sm">
@@ -200,8 +290,12 @@ $user = requireAuth(['superadmin']);
         <tbody id="coreBody"></tbody>
         <tfoot>
           <tr class="avg-row">
-            <td colspan="8" class="text-end fw-600" style="font-size:0.83rem">Average Rating — Core Function:</td>
-            <td id="coreAvg" class="text-center fw-700">—</td>
+            <td colspan="8" class="text-end fw-600" style="font-size:0.83rem">
+              Average Rating — Core Function: <span id="coreAvg" class="fw-700 text-dark ms-1">—</span>
+              <span class="mx-2 text-muted">|</span>
+              Weighted Average (<span id="coreFormulaText">Average × 0.70</span>):
+            </td>
+            <td id="coreWeightedAvg" class="text-center fw-700 text-primary" style="font-size:0.88rem">—</td>
             <td></td>
             <td></td>
           </tr>
@@ -238,8 +332,12 @@ $user = requireAuth(['superadmin']);
         <tbody id="strategicBody"></tbody>
         <tfoot>
           <tr class="avg-row">
-            <td colspan="8" class="text-end fw-600" style="font-size:0.83rem">Average Rating — Strategic Function:</td>
-            <td id="strategicAvg" class="text-center fw-700">—</td>
+            <td colspan="8" class="text-end fw-600" style="font-size:0.83rem">
+              Average Rating — Strategic Function: <span id="strategicAvg" class="fw-700 text-dark ms-1">—</span>
+              <span class="mx-2 text-muted">|</span>
+              Weighted Average (<span id="strategicFormulaText">Average × 0.15</span>):
+            </td>
+            <td id="strategicWeightedAvg" class="text-center fw-700 text-primary" style="font-size:0.88rem">—</td>
             <td></td>
             <td></td>
           </tr>
@@ -276,8 +374,12 @@ $user = requireAuth(['superadmin']);
         <tbody id="supportBody"></tbody>
         <tfoot>
           <tr class="avg-row">
-            <td colspan="8" class="text-end fw-600" style="font-size:0.83rem">Average Rating — Support Function:</td>
-            <td id="supportAvg" class="text-center fw-700">—</td>
+            <td colspan="8" class="text-end fw-600" style="font-size:0.83rem">
+              Average Rating — Support Function: <span id="supportAvg" class="fw-700 text-dark ms-1">—</span>
+              <span class="mx-2 text-muted">|</span>
+              Weighted Average (<span id="supportFormulaText">Average × 0.15</span>):
+            </td>
+            <td id="supportWeightedAvg" class="text-center fw-700 text-primary" style="font-size:0.88rem">—</td>
             <td></td>
             <td></td>
           </tr>
@@ -291,7 +393,7 @@ $user = requireAuth(['superadmin']);
     <div class="card-body d-flex align-items-center justify-content-between flex-wrap gap-2" style="background:#FFF4E6">
       <div>
         <h6 class="mb-0 fw-700"><i class="fa-solid fa-calculator me-2 text-primary"></i>Computed Overall Rating</h6>
-        <small class="text-muted">Computed from Core, Strategic, and Support rated indicators</small>
+        <small class="text-muted">Weighted Average of Core, Strategic, and Support Functions based on <span id="summaryEtlBadge" class="badge bg-primary">0 ETL</span></small>
       </div>
       <div class="d-flex align-items-center gap-3">
         <span class="fs-4 fw-700 text-primary" id="finalAvgDisplay">—</span>
@@ -465,6 +567,124 @@ $user = requireAuth(['superadmin']);
     { mfo: 'Campus Maintenance', success_indicator: 'At least 90% of maintenance requests acted upon within 3 working days', target: '90%', budget: '120000', measure: 'T/E', accomplishment: '', q_rating: '', e_rating: '', t_rating: '', rating: '', remarks: '' }
   ];
 
+  // ── ETL Weight Configuration & State ─────────────────────────────────────
+  const ETL_PRESETS = {
+    '18 ETL': { core: 10, strategicMin: 50, strategicMax: 65, strategicDef: 60, supportDef: 30 },
+    '15 ETL': { core: 20, strategicMin: 40, strategicMax: 55, strategicDef: 45, supportDef: 35 },
+    '12 ETL': { core: 30, strategicMin: 35, strategicMax: 50, strategicDef: 40, supportDef: 30 },
+    '9 ETL':  { core: 40, strategicMin: 30, strategicMax: 40, strategicDef: 35, supportDef: 25 },
+    '6 ETL':  { core: 50, strategicMin: 25, strategicMax: 25, strategicDef: 25, supportDef: 25 },
+    '3 ETL':  { core: 60, strategicMin: 20, strategicMax: 20, strategicDef: 20, supportDef: 20 },
+    '0 ETL':  { core: 70, strategicMin: 15, strategicMax: 15, strategicDef: 15, supportDef: 15 }
+  };
+
+  let currentEtl = '0 ETL';
+  let activeWeights = { core: 70, strategic: 15, support: 15 };
+
+  function selectEtl(etlKey, customWeights = null) {
+    if (!ETL_PRESETS[etlKey]) etlKey = '0 ETL';
+    currentEtl = etlKey;
+    const preset = ETL_PRESETS[etlKey];
+
+    if (customWeights && customWeights.core !== undefined) {
+      activeWeights.core = parseFloat(customWeights.core) || preset.core;
+      activeWeights.strategic = parseFloat(customWeights.strategic) || preset.strategicDef;
+      activeWeights.support = parseFloat(customWeights.support) || preset.supportDef;
+    } else {
+      activeWeights = {
+        core: preset.core,
+        strategic: preset.strategicDef,
+        support: preset.supportDef
+      };
+    }
+
+    // Sync select dropdown
+    const etlSel = document.getElementById('etlSelect');
+    if (etlSel && etlSel.value !== etlKey) etlSel.value = etlKey;
+
+    // Highlight active column in table
+    document.querySelectorAll('#etlMatrixTable .etl-col-header').forEach(th => {
+      th.classList.toggle('active-etl-col', th.dataset.etl === etlKey);
+    });
+    document.querySelectorAll('#etlMatrixTable .etl-cell').forEach(td => {
+      td.classList.toggle('active-etl-cell', td.dataset.etl === etlKey);
+    });
+
+    // Update active weight display badges
+    const lbl = document.getElementById('activeEtlLabel');
+    if (lbl) lbl.textContent = etlKey;
+
+    const bCore = document.getElementById('dispWeightCore');
+    const bStrat = document.getElementById('dispWeightStrategic');
+    const bSupp = document.getElementById('dispWeightSupport');
+    const bTot = document.getElementById('dispWeightTotal');
+    if (bCore) bCore.textContent = activeWeights.core + '%';
+    if (bStrat) bStrat.textContent = activeWeights.strategic + '%';
+    if (bSupp) bSupp.textContent = activeWeights.support + '%';
+    if (bTot) bTot.textContent = (activeWeights.core + activeWeights.strategic + activeWeights.support) + '%';
+
+    // Update section footer formula labels
+    const fCore = document.getElementById('coreFormulaText');
+    const fStrat = document.getElementById('strategicFormulaText');
+    const fSupp = document.getElementById('supportFormulaText');
+    if (fCore) fCore.textContent = `Average × ${(activeWeights.core / 100).toFixed(2)}`;
+    if (fStrat) fStrat.textContent = `Average × ${(activeWeights.strategic / 100).toFixed(2)}`;
+    if (fSupp) fSupp.textContent = `Average × ${(activeWeights.support / 100).toFixed(2)}`;
+
+    // Update summary badge
+    const sumBadge = document.getElementById('summaryEtlBadge');
+    if (sumBadge) sumBadge.textContent = etlKey;
+
+    // Range adjuster for flexible ETLs
+    const rangeDiv = document.getElementById('etlRangeAdjuster');
+    const rangeInp = document.getElementById('inpStrategicWeight');
+    if (rangeDiv && rangeInp) {
+      if (preset.strategicMin < preset.strategicMax) {
+        rangeDiv.classList.remove('d-none');
+        rangeDiv.classList.add('d-flex');
+        rangeInp.min = preset.strategicMin;
+        rangeInp.max = preset.strategicMax;
+        rangeInp.value = activeWeights.strategic;
+      } else {
+        rangeDiv.classList.add('d-none');
+        rangeDiv.classList.remove('d-flex');
+      }
+    }
+
+    if (typeof computeAverages === 'function') {
+      computeAverages();
+    }
+  }
+
+  function onEtlSelectChange(val) {
+    selectEtl(val);
+  }
+
+  function onCustomStrategicInput(val) {
+    const preset = ETL_PRESETS[currentEtl];
+    if (!preset) return;
+    let sVal = parseFloat(val);
+    if (isNaN(sVal)) return;
+    if (sVal < preset.strategicMin) sVal = preset.strategicMin;
+    if (sVal > preset.strategicMax) sVal = preset.strategicMax;
+    activeWeights.strategic = sVal;
+    activeWeights.support = 100 - activeWeights.core - activeWeights.strategic;
+
+    const bStrat = document.getElementById('dispWeightStrategic');
+    const bSupp = document.getElementById('dispWeightSupport');
+    if (bStrat) bStrat.textContent = activeWeights.strategic + '%';
+    if (bSupp) bSupp.textContent = activeWeights.support + '%';
+
+    const fStrat = document.getElementById('strategicFormulaText');
+    const fSupp = document.getElementById('supportFormulaText');
+    if (fStrat) fStrat.textContent = `Average × ${(activeWeights.strategic / 100).toFixed(2)}`;
+    if (fSupp) fSupp.textContent = `Average × ${(activeWeights.support / 100).toFixed(2)}`;
+
+    if (typeof computeAverages === 'function') {
+      computeAverages();
+    }
+  }
+
   function updatePeriodSummary() {
     const p = document.getElementById('opcrPeriod').value;
     document.getElementById('summaryPeriod').textContent = p || '—';
@@ -495,6 +715,14 @@ $user = requireAuth(['superadmin']);
     actionBtns.forEach(b => { if (b) b.style.display = on ? 'none' : 'inline-flex'; });
     const addBtns = document.querySelectorAll('.ipcr-section-header button');
     addBtns.forEach(b => b.disabled = on);
+    const etlSel = document.getElementById('etlSelect');
+    if (etlSel) etlSel.disabled = on;
+    const inpStrat = document.getElementById('inpStrategicWeight');
+    if (inpStrat) inpStrat.disabled = on;
+    document.querySelectorAll('#etlMatrixTable .etl-col-header, #etlMatrixTable .etl-cell').forEach(el => {
+      el.style.pointerEvents = on ? 'none' : '';
+      el.style.opacity = on ? '0.75' : '';
+    });
   }
 
   function enableEdit() {
@@ -665,16 +893,48 @@ $user = requireAuth(['superadmin']);
   }
 
   function computeAverages() {
-    ['core', 'strategic', 'support'].forEach(section => {
-      const avgCells = document.querySelectorAll(`#${section}Body .row-avg`);
+    function getSectionAvg(tbodyId) {
+      const avgCells = document.querySelectorAll(`#${tbodyId} .row-avg`);
       const vals = Array.from(avgCells).map(c => parseFloat(c.textContent)).filter(v => !isNaN(v) && v > 0);
-      const avg = vals.length ? (vals.reduce((a, b) => a + b, 0) / vals.length) : null;
-      document.getElementById(`${section}Avg`).textContent = avg !== null ? avg.toFixed(2) : '—';
-    });
+      return vals.length > 0 ? (vals.reduce((a, b) => a + b, 0) / vals.length) : null;
+    }
 
-    // Final Overall Average
-    const allRowAvgs = Array.from(document.querySelectorAll('.row-avg')).map(c => parseFloat(c.textContent)).filter(v => !isNaN(v) && v > 0);
-    const finalAvg = allRowAvgs.length ? (allRowAvgs.reduce((a, b) => a + b, 0) / allRowAvgs.length) : null;
+    const coreAvg = getSectionAvg('coreBody');
+    const strategicAvg = getSectionAvg('strategicBody');
+    const supportAvg = getSectionAvg('supportBody');
+
+    const wCore = (activeWeights.core || 70) / 100;
+    const wStrat = (activeWeights.strategic || 15) / 100;
+    const wSupp = (activeWeights.support || 15) / 100;
+
+    const coreWeighted = coreAvg !== null ? (coreAvg * wCore) : null;
+    const strategicWeighted = strategicAvg !== null ? (strategicAvg * wStrat) : null;
+    const supportWeighted = supportAvg !== null ? (supportAvg * wSupp) : null;
+
+    // Update section footers
+    const elCoreAvg = document.getElementById('coreAvg');
+    const elCoreW = document.getElementById('coreWeightedAvg');
+    if (elCoreAvg) elCoreAvg.textContent = coreAvg !== null ? coreAvg.toFixed(2) : '—';
+    if (elCoreW) elCoreW.textContent = coreWeighted !== null ? coreWeighted.toFixed(2) : '—';
+
+    const elStratAvg = document.getElementById('strategicAvg');
+    const elStratW = document.getElementById('strategicWeightedAvg');
+    if (elStratAvg) elStratAvg.textContent = strategicAvg !== null ? strategicAvg.toFixed(2) : '—';
+    if (elStratW) elStratW.textContent = strategicWeighted !== null ? strategicWeighted.toFixed(2) : '—';
+
+    const elSuppAvg = document.getElementById('supportAvg');
+    const elSuppW = document.getElementById('supportWeightedAvg');
+    if (elSuppAvg) elSuppAvg.textContent = supportAvg !== null ? supportAvg.toFixed(2) : '—';
+    if (elSuppW) elSuppW.textContent = supportWeighted !== null ? supportWeighted.toFixed(2) : '—';
+
+    // Compute overall weighted average
+    let sumWeighted = 0;
+    let activeWeightSum = 0;
+    if (coreWeighted !== null) { sumWeighted += coreWeighted; activeWeightSum += wCore; }
+    if (strategicWeighted !== null) { sumWeighted += strategicWeighted; activeWeightSum += wStrat; }
+    if (supportWeighted !== null) { sumWeighted += supportWeighted; activeWeightSum += wSupp; }
+
+    const finalAvg = activeWeightSum > 0 ? (sumWeighted / activeWeightSum) : null;
 
     const display = document.getElementById('finalAvgDisplay');
     const summary = document.getElementById('summaryRating');
@@ -919,6 +1179,16 @@ $user = requireAuth(['superadmin']);
         document.getElementById('lastSaved').textContent = f.updated_at ? new Date(f.updated_at).toLocaleString('en-PH') : 'Saved';
         setStatus(f.status || 'draft');
 
+        if (f.etl_type) {
+          selectEtl(f.etl_type, {
+            core: f.weight_core,
+            strategic: f.weight_strategic,
+            support: f.weight_support
+          });
+        } else {
+          selectEtl('0 ETL');
+        }
+
         // Merge backend evidence files
         (f.evidence_files || []).forEach(bf => {
           if (!userFiles.some(uf => uf.original_name === bf.original_name || uf.name === bf.original_name)) {
@@ -939,6 +1209,15 @@ $user = requireAuth(['superadmin']);
         document.getElementById('opcrPeriod').value = savedLocal.coveredPeriod || (activeTimeline.semester + ' ' + activeTimeline.academic_year);
         document.getElementById('opcrDate').value = savedLocal.date || new Date().toISOString().split('T')[0];
         document.getElementById('opcrSemester').value = savedLocal.semester || 'January to June';
+        if (savedLocal.etlType) {
+          selectEtl(savedLocal.etlType, {
+            core: savedLocal.weightCore,
+            strategic: savedLocal.weightStrategic,
+            support: savedLocal.weightSupport
+          });
+        } else {
+          selectEtl('0 ETL');
+        }
         loadRows('coreBody', savedLocal.coreFunction || DEFAULT_CORE);
         loadRows('strategicBody', savedLocal.strategicFunction || DEFAULT_STRATEGIC);
         loadRows('supportBody', savedLocal.supportFunction || DEFAULT_SUPPORT);
@@ -948,6 +1227,7 @@ $user = requireAuth(['superadmin']);
       } else {
         currentEvidence = userFiles;
         document.getElementById('opcrPeriod').value = activeTimeline.semester + ' ' + activeTimeline.academic_year;
+        selectEtl('0 ETL');
         setStatus('draft');
         loadRows('coreBody', DEFAULT_CORE);
         loadRows('strategicBody', DEFAULT_STRATEGIC);
@@ -960,11 +1240,21 @@ $user = requireAuth(['superadmin']);
         document.getElementById('opcrPeriod').value = savedLocal.coveredPeriod || '';
         document.getElementById('opcrDate').value = savedLocal.date || new Date().toISOString().split('T')[0];
         document.getElementById('opcrSemester').value = savedLocal.semester || 'January to June';
+        if (savedLocal.etlType) {
+          selectEtl(savedLocal.etlType, {
+            core: savedLocal.weightCore,
+            strategic: savedLocal.weightStrategic,
+            support: savedLocal.weightSupport
+          });
+        } else {
+          selectEtl('0 ETL');
+        }
         loadRows('coreBody', savedLocal.coreFunction || DEFAULT_CORE);
         loadRows('strategicBody', savedLocal.strategicFunction || DEFAULT_STRATEGIC);
         loadRows('supportBody', savedLocal.supportFunction || DEFAULT_SUPPORT);
         setStatus(savedLocal.status || 'draft');
       } else {
+        selectEtl('0 ETL');
         setStatus('draft');
         loadRows('coreBody', DEFAULT_CORE);
         loadRows('strategicBody', DEFAULT_STRATEGIC);
@@ -1005,6 +1295,10 @@ $user = requireAuth(['superadmin']);
       coveredPeriod: period,
       date: document.getElementById('opcrDate').value,
       semester: document.getElementById('opcrSemester').value,
+      etlType: currentEtl,
+      weightCore: activeWeights.core,
+      weightStrategic: activeWeights.strategic,
+      weightSupport: activeWeights.support,
       status: action === 'submit' ? 'approved' : 'draft',
       overallRating: overallVal,
       coreFunction: coreRows,
@@ -1020,6 +1314,10 @@ $user = requireAuth(['superadmin']);
         opcr_id: existingOpcrId || 0,
         timeline_id: activeTimeline.id,
         covered_period: period,
+        etl_type: currentEtl,
+        weight_core: activeWeights.core,
+        weight_strategic: activeWeights.strategic,
+        weight_support: activeWeights.support,
         core:      coreRows,
         strategic: strategicRows,
         support:   supportRows,
@@ -1123,9 +1421,31 @@ $user = requireAuth(['superadmin']);
     const core      = getFormRows('coreBody');
     const strategic = getFormRows('strategicBody');
     const support   = getFormRows('supportBody');
-    const allRows   = [...core, ...strategic, ...support];
-    const avgs      = allRows.map(r => parseFloat(r.a)).filter(v => v > 0);
-    const finalAvg  = avgs.length ? parseFloat((avgs.reduce((a,b) => a+b,0) / avgs.length).toFixed(2)) : 0;
+
+    const etlName = currentEtl || '0 ETL';
+    const wCore   = (activeWeights.core || 70) / 100;
+    const wStrat  = (activeWeights.strategic || 15) / 100;
+    const wSupp   = (activeWeights.support || 15) / 100;
+
+    const cAvgs = core.map(r => parseFloat(r.a)).filter(v => v > 0);
+    const coreAvg = cAvgs.length ? (cAvgs.reduce((a,b) => a+b, 0) / cAvgs.length) : null;
+
+    const sAvgs = strategic.map(r => parseFloat(r.a)).filter(v => v > 0);
+    const stratAvg = sAvgs.length ? (sAvgs.reduce((a,b) => a+b, 0) / sAvgs.length) : null;
+
+    const supAvgs = support.map(r => parseFloat(r.a)).filter(v => v > 0);
+    const suppAvg = supAvgs.length ? (supAvgs.reduce((a,b) => a+b, 0) / supAvgs.length) : null;
+
+    const coreWeighted = coreAvg !== null ? (coreAvg * wCore) : null;
+    const stratWeighted = stratAvg !== null ? (stratAvg * wStrat) : null;
+    const suppWeighted = suppAvg !== null ? (suppAvg * wSupp) : null;
+
+    let sum = 0, weightSum = 0;
+    if (coreWeighted !== null) { sum += coreWeighted; weightSum += wCore; }
+    if (stratWeighted !== null) { sum += stratWeighted; weightSum += wStrat; }
+    if (suppWeighted !== null) { sum += suppWeighted; weightSum += wSupp; }
+
+    const finalAvg = weightSum > 0 ? parseFloat((sum / weightSum).toFixed(2)) : 0;
 
     function adj(avg) {
       if (avg >= 4.5) return 'Outstanding';
@@ -1219,7 +1539,7 @@ td,th{border:1px solid #000;padding:1.5px 3px;vertical-align:middle;font-size:7.
   </td>
   <td>&nbsp;</td>
   <td class="sig-name-cell" style="border-top:1px solid #aaa;text-align:center">
-    <div class="rev-name">${finalAvg ? finalAvg : ''}</div>
+    <div class="rev-name">${finalAvg ? finalAvg.toFixed(2) : ''}</div>
     <div class="rev-role">${finalAvg ? adj(finalAvg) : ''}</div>
   </td>
   <td>&nbsp;</td>

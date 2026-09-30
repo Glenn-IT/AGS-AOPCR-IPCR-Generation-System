@@ -17,6 +17,10 @@ $action         = $body['action'] ?? 'draft';  // 'draft' or 'submit'
 $opcr_id        = intval($body['opcr_id'] ?? 0);
 $timeline_id    = intval($body['timeline_id'] ?? 0);
 $covered_period = trim($body['covered_period'] ?? '');
+$etl_type       = trim($body['etl_type'] ?? '0 ETL');
+$weight_core    = isset($body['weight_core']) ? floatval($body['weight_core']) : 70.0;
+$weight_strategic = isset($body['weight_strategic']) ? floatval($body['weight_strategic']) : 15.0;
+$weight_support = isset($body['weight_support']) ? floatval($body['weight_support']) : 15.0;
 $core           = $body['core'] ?? [];
 $strategic      = $body['strategic'] ?? [];
 $support        = $body['support'] ?? [];
@@ -61,8 +65,8 @@ try {
             echo json_encode(['success' => false, 'error' => 'Form not found.']); 
             exit; 
         }
-        $db->prepare('UPDATE opcr_forms SET timeline_id=?,covered_period=?,status=?,date_submitted=?,updated_at=NOW() WHERE id=?')
-           ->execute([$timeline_id, $covered_period, $status, $action==='submit'?date('Y-m-d'):null, $opcr_id]);
+        $db->prepare('UPDATE opcr_forms SET timeline_id=?,covered_period=?,status=?,date_submitted=?,etl_type=?,weight_core=?,weight_strategic=?,weight_support=?,updated_at=NOW() WHERE id=?')
+           ->execute([$timeline_id, $covered_period, $status, $action==='submit'?date('Y-m-d'):null, $etl_type, $weight_core, $weight_strategic, $weight_support, $opcr_id]);
         $db->prepare('DELETE FROM opcr_items WHERE opcr_form_id=?')->execute([$opcr_id]);
     } else {
         // Check for existing form for this admin & timeline
@@ -71,12 +75,12 @@ try {
         $existingRow = $dup->fetch();
         if ($existingRow) {
             $opcr_id = $existingRow['id'];
-            $db->prepare('UPDATE opcr_forms SET timeline_id=?,covered_period=?,status=?,date_submitted=?,updated_at=NOW() WHERE id=?')
-               ->execute([$timeline_id, $covered_period, $status, $action==='submit'?date('Y-m-d'):null, $opcr_id]);
+            $db->prepare('UPDATE opcr_forms SET timeline_id=?,covered_period=?,status=?,date_submitted=?,etl_type=?,weight_core=?,weight_strategic=?,weight_support=?,updated_at=NOW() WHERE id=?')
+               ->execute([$timeline_id, $covered_period, $status, $action==='submit'?date('Y-m-d'):null, $etl_type, $weight_core, $weight_strategic, $weight_support, $opcr_id]);
             $db->prepare('DELETE FROM opcr_items WHERE opcr_form_id=?')->execute([$opcr_id]);
         } else {
-            $db->prepare('INSERT INTO opcr_forms (admin_id,department_id,timeline_id,covered_period,status,date_submitted) VALUES (?,?,?,?,?,?)')
-               ->execute([$user['id'], $dept_id, $timeline_id, $covered_period, $status, $action==='submit'?date('Y-m-d'):null]);
+            $db->prepare('INSERT INTO opcr_forms (admin_id,department_id,timeline_id,covered_period,status,date_submitted,etl_type,weight_core,weight_strategic,weight_support) VALUES (?,?,?,?,?,?,?,?,?,?)')
+               ->execute([$user['id'], $dept_id, $timeline_id, $covered_period, $status, $action==='submit'?date('Y-m-d'):null, $etl_type, $weight_core, $weight_strategic, $weight_support]);
             $opcr_id = $db->lastInsertId();
         }
     }
@@ -127,10 +131,32 @@ try {
         }
     }
 
-    // Compute overall rating from items
-    $avgStmt = $db->prepare('SELECT AVG(rating) FROM opcr_items WHERE opcr_form_id=? AND rating IS NOT NULL AND rating > 0');
-    $avgStmt->execute([$opcr_id]);
-    $calcOverall = floatval($avgStmt->fetchColumn()) ?: 0.00;
+    // Compute overall rating using the form's ETL weights
+    $wCore = $weight_core / 100.0;
+    $wStrat = $weight_strategic / 100.0;
+    $wSupp = $weight_support / 100.0;
+
+    $secAvgs = [];
+    foreach (['core', 'strategic', 'support'] as $stype) {
+        $stmtSec = $db->prepare('SELECT AVG(rating) FROM opcr_items WHERE opcr_form_id = ? AND function_type = ? AND rating IS NOT NULL AND rating > 0');
+        $stmtSec->execute([$opcr_id, $stype]);
+        $val = $stmtSec->fetchColumn();
+        $secAvgs[$stype] = ($val !== null && $val !== false && is_numeric($val)) ? floatval($val) : null;
+    }
+
+    $weightedSum = 0;
+    $activeWeightsTotal = 0;
+    if ($secAvgs['core'] !== null) { $weightedSum += $secAvgs['core'] * $wCore; $activeWeightsTotal += $wCore; }
+    if ($secAvgs['strategic'] !== null) { $weightedSum += $secAvgs['strategic'] * $wStrat; $activeWeightsTotal += $wStrat; }
+    if ($secAvgs['support'] !== null) { $weightedSum += $secAvgs['support'] * $wSupp; $activeWeightsTotal += $wSupp; }
+
+    if ($activeWeightsTotal > 0) {
+        $calcOverall = round($weightedSum / $activeWeightsTotal, 2);
+    } else {
+        $avgStmt = $db->prepare('SELECT AVG(rating) FROM opcr_items WHERE opcr_form_id=? AND rating IS NOT NULL AND rating > 0');
+        $avgStmt->execute([$opcr_id]);
+        $calcOverall = floatval($avgStmt->fetchColumn()) ?: 0.00;
+    }
 
     $db->prepare('UPDATE opcr_forms SET overall_rating=? WHERE id=?')->execute([$calcOverall, $opcr_id]);
 

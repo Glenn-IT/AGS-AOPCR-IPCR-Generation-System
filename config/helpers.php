@@ -103,6 +103,14 @@ function ensureOpcrColumns(PDO $db): void {
                 ADD COLUMN measure VARCHAR(200) DEFAULT NULL,
                 ADD COLUMN remarks VARCHAR(200) DEFAULT NULL");
         }
+        $etlCols = $db->query("SHOW COLUMNS FROM opcr_forms LIKE 'etl_type'")->fetchAll();
+        if (empty($etlCols)) {
+            $db->exec("ALTER TABLE opcr_forms 
+                ADD COLUMN etl_type VARCHAR(20) DEFAULT '0 ETL',
+                ADD COLUMN weight_core DECIMAL(5,2) DEFAULT 70.00,
+                ADD COLUMN weight_strategic DECIMAL(5,2) DEFAULT 15.00,
+                ADD COLUMN weight_support DECIMAL(5,2) DEFAULT 15.00");
+        }
         // Ensure rating can store decimal values like 4.67
         $db->exec("ALTER TABLE opcr_items MODIFY COLUMN rating DECIMAL(3,2) DEFAULT NULL");
     } catch (Exception $e) {

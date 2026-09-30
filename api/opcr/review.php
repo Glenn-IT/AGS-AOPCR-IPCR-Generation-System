@@ -51,10 +51,36 @@ try {
         ]);
     }
 
-    // Compute average from all items
-    $avg = $db->prepare('SELECT AVG(rating) FROM opcr_items WHERE opcr_form_id=? AND rating IS NOT NULL');
-    $avg->execute([$opcr_id]);
-    $avgRating = round(floatval($avg->fetchColumn()), 2);
+    // Compute overall rating using the form's ETL weights
+    $formWeightStmt = $db->prepare('SELECT etl_type, weight_core, weight_strategic, weight_support FROM opcr_forms WHERE id = ?');
+    $formWeightStmt->execute([$opcr_id]);
+    $fw = $formWeightStmt->fetch() ?: [];
+
+    $wCore = (isset($fw['weight_core']) && $fw['weight_core'] > 0) ? floatval($fw['weight_core']) / 100.0 : 0.70;
+    $wStrat = (isset($fw['weight_strategic']) && $fw['weight_strategic'] > 0) ? floatval($fw['weight_strategic']) / 100.0 : 0.15;
+    $wSupp = (isset($fw['weight_support']) && $fw['weight_support'] > 0) ? floatval($fw['weight_support']) / 100.0 : 0.15;
+
+    $secAvgs = [];
+    foreach (['core', 'strategic', 'support'] as $stype) {
+        $stmtSec = $db->prepare('SELECT AVG(rating) FROM opcr_items WHERE opcr_form_id = ? AND function_type = ? AND rating IS NOT NULL AND rating > 0');
+        $stmtSec->execute([$opcr_id, $stype]);
+        $val = $stmtSec->fetchColumn();
+        $secAvgs[$stype] = ($val !== null && $val !== false && is_numeric($val)) ? floatval($val) : null;
+    }
+
+    $weightedSum = 0;
+    $activeWeightsTotal = 0;
+    if ($secAvgs['core'] !== null) { $weightedSum += $secAvgs['core'] * $wCore; $activeWeightsTotal += $wCore; }
+    if ($secAvgs['strategic'] !== null) { $weightedSum += $secAvgs['strategic'] * $wStrat; $activeWeightsTotal += $wStrat; }
+    if ($secAvgs['support'] !== null) { $weightedSum += $secAvgs['support'] * $wSupp; $activeWeightsTotal += $wSupp; }
+
+    if ($activeWeightsTotal > 0) {
+        $avgRating = round($weightedSum / $activeWeightsTotal, 2);
+    } else {
+        $avg = $db->prepare('SELECT AVG(rating) FROM opcr_items WHERE opcr_form_id=? AND rating IS NOT NULL');
+        $avg->execute([$opcr_id]);
+        $avgRating = round(floatval($avg->fetchColumn()), 2);
+    }
 
     $db->prepare('UPDATE opcr_forms SET status=?,overall_rating=?,remarks=?,reviewed_by=?,reviewed_at=NOW() WHERE id=?')
        ->execute([$status, $avgRating, $remarks, $user['id'], $opcr_id]);
