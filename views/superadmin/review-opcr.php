@@ -171,25 +171,6 @@ $user = requireAuth(['superadmin']);
       return;
     }
     let userFiles = f.evidence_files || [];
-    const targetId = f.admin_id || f.user_id;
-    if (targetId) {
-      const lsFiles = JSON.parse(localStorage.getItem('csu_piat_files_' + targetId)) || [];
-      lsFiles.forEach(lf => {
-        if (!userFiles.some(uf => uf.id === lf.id || uf.original_name === lf.name || uf.name === lf.name)) {
-          userFiles.push({
-            id: lf.id,
-            original_name: lf.name || lf.original_name,
-            name: lf.name || lf.original_name,
-            category: lf.category || 'Evidence',
-            description: lf.description || 'No description',
-            file_size: lf.size || lf.file_size || 0,
-            uploaded_at: lf.date || lf.uploaded_at || '',
-            file_path: lf.file_path || lf.path || '',
-            data_url: lf.data_url || lf.file_url || ''
-          });
-        }
-      });
-    }
     f.evidence_files = userFiles;
     _currentForm = f;
 
@@ -278,22 +259,42 @@ $user = requireAuth(['superadmin']);
 
   function getMatchingEvidence(categoryKey, mfoText) {
     const list = _currentForm?.evidence_files || [];
-    const catSearch = (categoryKey || '').toLowerCase();
+    const catSearch = (categoryKey || '').toLowerCase().trim();
     const mfoSearch = (mfoText || '').toLowerCase().trim();
 
-    return list.filter(file => {
-      const fCat = (file.category || '').toLowerCase();
-      const fDesc = (file.description || '').toLowerCase();
-      const fName = (file.original_name || file.name || '').toLowerCase();
+    if (mfoSearch) {
+      return list.filter(file => {
+        const fCat = (file.category || '').toLowerCase().trim();
+        const fMfo = (file.mfo || '').toLowerCase().trim();
+        const fDesc = (file.description || '').toLowerCase().trim();
 
-      if (fCat.includes(catSearch) || (catSearch === 'core' && fCat.includes('core')) || (catSearch === 'strategic' && fCat.includes('strategic')) || (catSearch === 'support' && fCat.includes('support'))) {
-        return true;
-      }
-      if (mfoSearch && (fDesc.includes(mfoSearch) || fName.includes(mfoSearch))) {
-        return true;
-      }
-      return false;
-    });
+        // If file category is specified and conflicts with section, skip
+        if (catSearch && fCat && fCat !== 'other' && fCat !== 'evidence' && fCat !== catSearch) {
+          return false;
+        }
+
+        // Match against explicit mfo field
+        if (fMfo && (fMfo === mfoSearch || fMfo.includes(mfoSearch) || mfoSearch.includes(fMfo))) {
+          return true;
+        }
+
+        // Match against description if not default placeholder
+        if (fDesc && fDesc !== 'uploaded evidence' && (fDesc === mfoSearch || fDesc.includes(mfoSearch) || mfoSearch.includes(fDesc))) {
+          return true;
+        }
+
+        return false;
+      });
+    }
+
+    if (catSearch && catSearch !== 'all') {
+      return list.filter(file => {
+        const fCat = (file.category || '').toLowerCase().trim();
+        return fCat === catSearch || (catSearch === 'core' && fCat.includes('core')) || (catSearch === 'strategic' && fCat.includes('strat')) || (catSearch === 'support' && fCat.includes('supp'));
+      });
+    }
+
+    return list;
   }
 
   function openEvidenceModalFor(categoryKey, mfoText) {

@@ -28,6 +28,17 @@ function requireAuth(allowedRoles) {
 function logout() {
   sessionStorage.removeItem('csu_login_attempts');
   sessionStorage.removeItem('csu_lockout_until');
+  try {
+    localStorage.removeItem('csu_piat_files_superadmin');
+    localStorage.removeItem('csu_piat_superadmin_opcr');
+    localStorage.removeItem('csu_piat_files_undefined');
+    localStorage.removeItem('csu_piat_files_null');
+    const user = window.SESSION_USER;
+    if (user && user.id) {
+      localStorage.removeItem('csu_piat_files_' + user.id);
+      localStorage.removeItem('csu_piat_superadmin_opcr_' + user.id);
+    }
+  } catch (e) {}
   window.location.href = getBasePath() + 'api/auth/logout.php';
 }
 

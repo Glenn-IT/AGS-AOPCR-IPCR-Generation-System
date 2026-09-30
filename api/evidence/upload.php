@@ -23,6 +23,11 @@ if (strpos($catLower, 'core') !== false) {
 }
 
 $description = trim($_POST['description'] ?? '');
+$mfo = trim($_POST['mfo'] ?? '');
+if (empty($mfo) && !empty($description) && strlen($description) <= 150) {
+    // If mfo was not explicitly sent but description is short and supplied from quick-upload
+    $mfo = $description;
+}
 $ipcr_form_id = !empty($_POST['ipcr_form_id']) ? intval($_POST['ipcr_form_id']) : null;
 $opcr_form_id = !empty($_POST['opcr_form_id']) ? intval($_POST['opcr_form_id']) : null;
 $targetUserId = (!empty($_POST['user_id']) && in_array($user['role'], ['admin', 'superadmin'])) ? intval($_POST['user_id']) : $user['id'];
@@ -54,6 +59,32 @@ $types = is_array($uploadedFiles['type']) ? $uploadedFiles['type'] : [$uploadedF
 
 $allowedExts = ['pdf', 'doc', 'docx', 'jpg', 'jpeg', 'png', 'xlsx', 'xls', 'gif', 'txt', 'zip', 'csv'];
 $db = getDB();
+ensureEvidenceColumns($db);
+
+// Validate foreign keys to avoid constraint violations
+if ($ipcr_form_id) {
+    try {
+        $chk = $db->prepare('SELECT id FROM ipcr_forms WHERE id = ?');
+        $chk->execute([$ipcr_form_id]);
+        if (!$chk->fetchColumn()) {
+            $ipcr_form_id = null;
+        }
+    } catch (Exception $e) {
+        $ipcr_form_id = null;
+    }
+}
+if ($opcr_form_id) {
+    try {
+        $chk = $db->prepare('SELECT id FROM opcr_forms WHERE id = ?');
+        $chk->execute([$opcr_form_id]);
+        if (!$chk->fetchColumn()) {
+            $opcr_form_id = null;
+        }
+    } catch (Exception $e) {
+        $opcr_form_id = null;
+    }
+}
+
 $savedFiles = [];
 
 for ($i = 0; $i < count($names); $i++) {
@@ -82,36 +113,44 @@ for ($i = 0; $i < count($names); $i++) {
     $relPath = 'uploads/evidence/' . $storedName;
 
     if (move_uploaded_file($tmpName, $targetPath)) {
-        $stmt = $db->prepare('INSERT INTO evidence_files (ipcr_form_id, opcr_form_id, user_id, original_name, stored_name, file_path, file_size, mime_type, category, description, uploaded_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())');
-        $stmt->execute([
-            $ipcr_form_id,
-            $opcr_form_id,
-            $targetUserId,
-            $origName,
-            $storedName,
-            $relPath,
-            $fileSize,
-            $mimeType,
-            $category,
-            $description ?: 'Uploaded evidence'
-        ]);
+        try {
+            $stmt = $db->prepare('INSERT INTO evidence_files (ipcr_form_id, opcr_form_id, user_id, original_name, stored_name, file_path, file_size, mime_type, category, mfo, description, uploaded_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())');
+            $stmt->execute([
+                $ipcr_form_id,
+                $opcr_form_id,
+                $targetUserId,
+                $origName,
+                $storedName,
+                $relPath,
+                $fileSize,
+                $mimeType,
+                $category,
+                $mfo ?: null,
+                $description ?: ($mfo ? $mfo : 'Uploaded evidence')
+            ]);
 
-        $newId = $db->lastInsertId();
-        $savedFiles[] = [
-            'id' => intval($newId),
-            'original_name' => $origName,
-            'name' => $origName,
-            'stored_name' => $storedName,
-            'file_path' => $relPath,
-            'file_size' => $fileSize,
-            'size' => $fileSize,
-            'mime_type' => $mimeType,
-            'category' => $category,
-            'description' => $description ?: 'Uploaded evidence',
-            'uploaded_at' => date('Y-m-d H:i:s'),
-            'date' => date('m/d/Y'),
-            'ext' => $ext
-        ];
+            $newId = $db->lastInsertId();
+            $savedFiles[] = [
+                'id' => intval($newId),
+                'original_name' => $origName,
+                'name' => $origName,
+                'stored_name' => $storedName,
+                'file_path' => $relPath,
+                'file_size' => $fileSize,
+                'size' => $fileSize,
+                'mime_type' => $mimeType,
+                'category' => $category,
+                'mfo' => $mfo ?: '',
+                'description' => $description ?: ($mfo ? $mfo : 'Uploaded evidence'),
+                'uploaded_at' => date('Y-m-d H:i:s'),
+                'date' => date('m/d/Y'),
+                'ext' => $ext
+            ];
+        } catch (Exception $e) {
+            // Remove uploaded file if DB insert failed
+            @unlink($targetPath);
+            error_log('Evidence DB Insert Error: ' . $e->getMessage());
+        }
     }
 }
 

@@ -204,4 +204,21 @@ function checkNewKpisForUser(PDO $db, array $user, int $ipcrFormId): array {
     ];
 }
 
+/**
+ * Ensure mfo column exists in evidence_files table.
+ */
+function ensureEvidenceColumns(PDO $db): void {
+    static $done = false;
+    if ($done) return;
+    try {
+        $cols = $db->query("SHOW COLUMNS FROM evidence_files LIKE 'mfo'")->fetchAll();
+        if (empty($cols)) {
+            $db->exec("ALTER TABLE evidence_files ADD COLUMN mfo VARCHAR(255) DEFAULT NULL AFTER category");
+        }
+        $done = true;
+    } catch (Exception $e) {
+        // Silently continue if table does not exist or column already added
+    }
+}
+
 

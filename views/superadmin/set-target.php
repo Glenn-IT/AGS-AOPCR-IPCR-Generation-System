@@ -740,22 +740,42 @@ $user = requireAuth(['superadmin']);
 
   function getMatchingEvidence(categoryKey, mfoText) {
     const list = currentEvidence || [];
-    const catSearch = (categoryKey || '').toLowerCase();
+    const catSearch = (categoryKey || '').toLowerCase().trim();
     const mfoSearch = (mfoText || '').toLowerCase().trim();
 
-    return list.filter(file => {
-      const fCat = (file.category || '').toLowerCase();
-      const fDesc = (file.description || '').toLowerCase();
-      const fName = (file.original_name || file.name || '').toLowerCase();
+    if (mfoSearch) {
+      return list.filter(file => {
+        const fCat = (file.category || '').toLowerCase().trim();
+        const fMfo = (file.mfo || '').toLowerCase().trim();
+        const fDesc = (file.description || '').toLowerCase().trim();
 
-      if (fCat.includes(catSearch) || (catSearch === 'core' && fCat.includes('core')) || (catSearch === 'strategic' && fCat.includes('strategic')) || (catSearch === 'support' && fCat.includes('support'))) {
-        return true;
-      }
-      if (mfoSearch && (fDesc.includes(mfoSearch) || fName.includes(mfoSearch))) {
-        return true;
-      }
-      return false;
-    });
+        // If file category is specified and conflicts with section, skip
+        if (catSearch && fCat && fCat !== 'other' && fCat !== 'evidence' && fCat !== catSearch) {
+          return false;
+        }
+
+        // Match against explicit mfo field
+        if (fMfo && (fMfo === mfoSearch || fMfo.includes(mfoSearch) || mfoSearch.includes(fMfo))) {
+          return true;
+        }
+
+        // Match against description if not default placeholder
+        if (fDesc && fDesc !== 'uploaded evidence' && (fDesc === mfoSearch || fDesc.includes(mfoSearch) || mfoSearch.includes(fDesc))) {
+          return true;
+        }
+
+        return false;
+      });
+    }
+
+    if (catSearch && catSearch !== 'all') {
+      return list.filter(file => {
+        const fCat = (file.category || '').toLowerCase().trim();
+        return fCat === catSearch || (catSearch === 'core' && fCat.includes('core')) || (catSearch === 'strategic' && fCat.includes('strat')) || (catSearch === 'support' && fCat.includes('supp'));
+      });
+    }
+
+    return list;
   }
 
   function updateRowEvidenceBtn(inputEl) {
@@ -1029,6 +1049,8 @@ $user = requireAuth(['superadmin']);
 
   function openUploadModalFor(categoryKey = 'core', mfoText = '') {
     _uploadModal = _uploadModal || new bootstrap.Modal(document.getElementById('uploadEvidenceModal'));
+    const form = document.getElementById('quickUploadForm');
+    if (form) form.dataset.mfo = mfoText || '';
     const catSelect = document.getElementById('quickUploadCategory');
     if (catSelect) {
       const normCat = (categoryKey || '').toLowerCase();
@@ -1074,6 +1096,7 @@ $user = requireAuth(['superadmin']);
 
     const category = document.getElementById('quickUploadCategory').value;
     const desc = document.getElementById('quickUploadDesc').value.trim();
+    const mfo = document.getElementById('quickUploadForm')?.dataset?.mfo || desc;
     const btn = document.getElementById('btnSubmitQuickUpload');
     btn.disabled = true;
     btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Uploading...';
@@ -1081,33 +1104,11 @@ $user = requireAuth(['superadmin']);
     const formData = new FormData();
     formData.append('category', category);
     formData.append('description', desc);
+    formData.append('mfo', mfo);
     formData.append('user_id', session.id);
     if (existingOpcrId) formData.append('opcr_form_id', existingOpcrId);
 
     Array.from(fileList).forEach(f => formData.append('files[]', f));
-
-    // Also cache Data URL locally
-    Array.from(fileList).forEach(file => {
-      const reader = new FileReader();
-      reader.onload = function(evt) {
-        const localEntry = {
-          id: Date.now() + Math.random(),
-          name: file.name,
-          original_name: file.name,
-          size: file.size,
-          file_size: file.size,
-          category,
-          description: desc || 'Uploaded evidence',
-          ext: file.name.split('.').pop().toLowerCase(),
-          data_url: evt.target.result,
-          date: new Date().toLocaleDateString('en-PH')
-        };
-        const current = JSON.parse(localStorage.getItem('csu_piat_files_' + session.id)) || [];
-        current.unshift(localEntry);
-        localStorage.setItem('csu_piat_files_' + session.id, JSON.stringify(current));
-      };
-      reader.readAsDataURL(file);
-    });
 
     try {
       const res = await fetch(API_BASE + 'evidence/upload.php', {
@@ -1126,9 +1127,7 @@ $user = requireAuth(['superadmin']);
         showToast(data.error || 'Upload error.', 'danger');
       }
     } catch (err) {
-      showToast('Uploaded to local workspace.', 'info');
-      updateAllRowEvidenceBtns();
-      _uploadModal.hide();
+      showToast('Upload failed. Please check your connection or file size.', 'danger');
     } finally {
       btn.disabled = false;
       btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up me-1"></i>Upload & Attach';
@@ -1136,33 +1135,22 @@ $user = requireAuth(['superadmin']);
   }
 
   async function initForm() {
+    // Clean up any legacy localStorage ghost evidence
+    if (session.id) {
+      try { localStorage.removeItem('csu_piat_files_' + session.id); } catch(e) {}
+    }
+
     const [tlRes, evRes] = await Promise.all([
       fetch(API_BASE + 'timeline/list.php?status=open', { credentials: 'include' }).then(r => r.json()).catch(() => null),
-      fetch(API_BASE + 'evidence/list.php?user_id=' + session.id, { credentials: 'include' }).then(r => r.json()).catch(() => null),
+      session.id ? fetch(API_BASE + 'evidence/list.php?user_id=' + session.id, { credentials: 'include' }).then(r => r.json()).catch(() => null) : Promise.resolve(null),
     ]);
     activeTimeline = (tlRes?.timelines || [])[0] || null;
 
-    // Load user's evidence from server and localStorage
+    // Real server evidence files
     let userFiles = (evRes && evRes.files) ? [...evRes.files] : [];
-    const lsFiles = JSON.parse(localStorage.getItem('csu_piat_files_' + session.id)) || JSON.parse(localStorage.getItem('csu_piat_files_superadmin')) || [];
-    lsFiles.forEach(lf => {
-      if (!userFiles.some(uf => uf.id === lf.id || uf.original_name === lf.name || uf.name === lf.name)) {
-        userFiles.push({
-          id: lf.id,
-          original_name: lf.name || lf.original_name,
-          name: lf.name || lf.original_name,
-          category: lf.category || 'Evidence',
-          description: lf.description || 'No description',
-          file_size: lf.size || lf.file_size || 0,
-          uploaded_at: lf.date || lf.uploaded_at || '',
-          file_path: lf.file_path || lf.path || '',
-          data_url: lf.data_url || lf.file_url || ''
-        });
-      }
-    });
 
     // Check saved local storage or backend
-    const savedLocal = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
+    const savedLocal = session.id ? JSON.parse(localStorage.getItem(STORAGE_KEY + '_' + session.id) || 'null') : null;
 
     if (activeTimeline) {
       const deadline = new Date(activeTimeline.submission_deadline);
@@ -1306,7 +1294,9 @@ $user = requireAuth(['superadmin']);
       supportFunction: supportRows,
       savedAt: new Date().toISOString()
     };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(localData));
+    if (session.id) {
+      localStorage.setItem(STORAGE_KEY + '_' + session.id, JSON.stringify(localData));
+    }
 
     if (activeTimeline) {
       const payload = {

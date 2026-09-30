@@ -48,9 +48,15 @@ $form['items'] = [
 
 // Load evidence files
 try {
+    ensureEvidenceColumns($db);
     $adminUserId = $form['admin_id'] ?? $user['id'];
-    $evStmt = $db->prepare('SELECT * FROM evidence_files WHERE user_id = ? ORDER BY uploaded_at DESC');
-    $evStmt->execute([$adminUserId]);
+    if ($form['status'] === 'draft') {
+        $evStmt = $db->prepare('SELECT id, ipcr_form_id, opcr_form_id, user_id, original_name, stored_name, file_path, file_size, mime_type, category, mfo, description, uploaded_at, DATE_FORMAT(uploaded_at, "%m/%d/%Y") AS date FROM evidence_files WHERE opcr_form_id = ? OR (opcr_form_id IS NULL AND user_id = ? AND ipcr_form_id IS NULL) ORDER BY uploaded_at DESC');
+        $evStmt->execute([$form['id'], $adminUserId]);
+    } else {
+        $evStmt = $db->prepare('SELECT id, ipcr_form_id, opcr_form_id, user_id, original_name, stored_name, file_path, file_size, mime_type, category, mfo, description, uploaded_at, DATE_FORMAT(uploaded_at, "%m/%d/%Y") AS date FROM evidence_files WHERE opcr_form_id = ? ORDER BY uploaded_at DESC');
+        $evStmt->execute([$form['id']]);
+    }
     $form['evidence_files'] = $evStmt->fetchAll();
 } catch (Exception $e) {
     $form['evidence_files'] = [];

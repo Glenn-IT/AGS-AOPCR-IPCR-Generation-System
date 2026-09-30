@@ -233,6 +233,7 @@ $user = requireAuth(['admin']);
         const q = item.q_rating || '';
         const e = item.e_rating || '';
         const t = item.t_rating || '';
+        const avg = parseFloat(item.rating) ? parseFloat(item.rating).toFixed(2) : (item.rating || '');
         let formattedAcc = '';
         if (item.accomplishment !== null && item.accomplishment !== undefined && String(item.accomplishment).trim() !== '') {
           const accStr = String(item.accomplishment).trim();
@@ -243,6 +244,7 @@ $user = requireAuth(['admin']);
           } else {
             formattedAcc = accStr;
           }
+        }
         html += `<tr class="data-row">
           <td>${ep(item.mfo)}</td>
           <td>${ep(item.success_indicator)}</td>
