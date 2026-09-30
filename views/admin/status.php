@@ -243,7 +243,6 @@ $user = requireAuth(['admin']);
           } else {
             formattedAcc = accStr;
           }
-        }
         html += `<tr class="data-row">
           <td>${ep(item.mfo)}</td>
           <td>${ep(item.success_indicator)}</td>
@@ -416,8 +415,7 @@ td, th { border:1px solid #000; padding:1.5px 3px; vertical-align:middle; font-s
     <thead>
       <tr>
         <th rowspan="2">MFO/PAP</th>
-        <th rowspan="2">SUCCESS INDICATORS</th>
-        <th rowspan="2">TARGET</th>
+        <th colspan="2" rowspan="2">SUCCESS INDICATORS<br>(TARGET + MEASURES)</th>
         <th rowspan="2">ALLOTTED<br>BUDGET</th>
         <th rowspan="2">INDIVIDUALS ACCOUNTABLE</th>
         <th rowspan="2">ACTUAL<br>ACCOMPLISHMENTS</th>

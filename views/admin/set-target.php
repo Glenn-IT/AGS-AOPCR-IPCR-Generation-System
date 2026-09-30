@@ -530,7 +530,7 @@ td, th { border:1px solid #000; padding:1.5px 3px; vertical-align:middle; font-s
       <th style="width:10%">DATE</th>
     </tr>
     <tr>
-      <td style="height:32px;vertical-align:bottom">
+      <td style="height:32px;vertical-align:bottom;text-align:center">
         <div class="rev-name">&nbsp;</div><div class="rev-role">(immediate supervisor)</div>
       </td>
       <td>&nbsp;</td>
@@ -563,10 +563,8 @@ td, th { border:1px solid #000; padding:1.5px 3px; vertical-align:middle; font-s
     <thead>
       <tr>
         <th rowspan="2">MFO/PAP</th>
-        <th rowspan="2">SUCCESS INDICATORS</th>
-        <th rowspan="2">TARGET</th>
+        <th colspan="2" rowspan="2">SUCCESS INDICATORS<br>(TARGET + MEASURES)</th>
         <th rowspan="2">BUDGET (₱)</th>
-        
         <th rowspan="2">ACTUAL ACCOMPLISHMENTS</th>
         <th colspan="4">RATING</th>
       </tr>

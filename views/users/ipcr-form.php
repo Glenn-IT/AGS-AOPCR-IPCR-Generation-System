@@ -1519,16 +1519,15 @@ td, th { border:1px solid #000; padding:1.5px 3px; vertical-align:middle; font-s
   </div>
   <table class="data-table">
     <colgroup>
-      <col style="width:16%"><col style="width:18%"><col style="width:8%"><col style="width:8%">
+      <col style="width:16%"><col style="width:18%"><col style="width:7%"><col style="width:8%">
       <col style="width:10%"><col style="width:15%">
       <col style="width:3%"><col style="width:3%"><col style="width:3%"><col style="width:3%">
-      <col style="width:13%">
+      <col style="width:14%">
     </colgroup>
     <thead>
       <tr>
         <th rowspan="2">MFO/KRA</th>
-        <th rowspan="2">SUCCESS INDICATORS<br>(TARGET + MEASURE)</th>
-        <th rowspan="2">TARGET</th>
+        <th colspan="2" rowspan="2">SUCCESS INDICATORS<br>(TARGET + MEASURE)</th>
         <th rowspan="2">ALLOTTED<br>BUDGET</th>
         <th rowspan="2">INDIVIDUALS<br>ACCOUNTABLE</th>
         <th rowspan="2">ACTUAL<br>ACCOMPLISHMENTS</th>

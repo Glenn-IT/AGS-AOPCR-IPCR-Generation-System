@@ -1534,7 +1534,7 @@ td,th{border:1px solid #000;padding:1.5px 3px;vertical-align:middle;font-size:7.
 <div class="div-field"><span class="uline">&nbsp;${ep(office)}&nbsp;</span><span class="field-lbl">Division/Office — Rating Period: ${ep(sem)}</span></div>
 <div class="commit-wrap"><div class="commit-left">I,&nbsp;<span style="border-bottom:1px solid #000;padding:0 4px">${ep(name)}</span>,&nbsp;<span style="border-bottom:1px solid #000;padding:0 4px">${ep(pos)}</span>, commit to deliver and agree to be rated on the attainment of the following targets in accordance with the indicated measures for<br>the period&nbsp;<span style="border-bottom:1px solid #000;padding:0 4px">${ep(period)}</span>.</div><div class="commit-right"><span class="sig-line">${ep(name)}<br><span style="font-size:6.5pt;font-style:italic">(Campus Executive Officer)</span></span><div class="date-line">Date:&nbsp;<span style="border-bottom:1px solid #000;padding:0 4px">${ep(date)}</span></div></div></div>
 <table class="rev-table"><tr><th style="width:45%">REVIEWED / APPROVED BY</th><th style="width:10%">DATE</th><th style="width:35%">NOTED BY</th><th style="width:10%">DATE</th></tr>
-<tr><td style="height:32px;vertical-align:bottom"><div class="rev-name">VP FOR ACADEMIC AFFAIRS</div><div class="rev-role">(University System Rater)</div></td><td>&nbsp;</td><td style="text-align:center;vertical-align:middle"><div class="rev-name">University President</div><div class="rev-role">CSU System Administration</div></td><td>&nbsp;</td></tr></table>
+<tr><td style="height:32px;vertical-align:bottom;text-align:center"><div class="rev-name">VP FOR ACADEMIC AFFAIRS</div><div class="rev-role">(University System Rater)</div></td><td>&nbsp;</td><td style="text-align:center;vertical-align:middle"><div class="rev-name">University President</div><div class="rev-role">CSU System Administration</div></td><td>&nbsp;</td></tr></table>
 <div class="legend-wrap" style="border-top:1px solid #000;">
   <div class="legend-blank">&nbsp;</div>
   <div class="legend-right">
@@ -1548,8 +1548,8 @@ td,th{border:1px solid #000;padding:1.5px 3px;vertical-align:middle;font-size:7.
     </table>
   </div>
 </div>
-<table class="data-table"><colgroup><col style="width:18%"><col style="width:22%"><col style="width:8%"><col style="width:9%"><col style="width:12%"><col style="width:4%"><col style="width:4%"><col style="width:4%"><col style="width:4%"><col style="width:15%"></colgroup>
-<thead><tr><th rowspan="2">MFO/PAP</th><th rowspan="2">SUCCESS INDICATORS</th><th rowspan="2">TARGET</th><th rowspan="2">BUDGET (₱)</th><th rowspan="2">ACTUAL ACCOMPLISHMENTS</th><th colspan="4">RATING</th><th rowspan="2">REMARKS</th></tr><tr><th>Q<sup>1</sup></th><th>E<sup>2</sup></th><th>T<sup>3</sup></th><th>A<sup>4</sup></th></tr></thead>
+<table class="data-table"><colgroup><col style="width:18%"><col style="width:20%"><col style="width:8%"><col style="width:9%"><col style="width:15%"><col style="width:4%"><col style="width:4%"><col style="width:4%"><col style="width:4%"><col style="width:14%"></colgroup>
+<thead><tr><th rowspan="2">MFO/PAP</th><th colspan="2" rowspan="2">SUCCESS INDICATORS<br>(TARGET + MEASURES)</th><th rowspan="2">BUDGET (₱)</th><th rowspan="2">ACTUAL ACCOMPLISHMENTS</th><th colspan="4">RATING</th><th rowspan="2">REMARKS</th></tr><tr><th>Q<sup>1</sup></th><th>E<sup>2</sup></th><th>T<sup>3</sup></th><th>A<sup>4</sup></th></tr></thead>
 <tbody>
 <tr class="sec-row"><td colspan="10">A. CORE FUNCTIONS</td></tr>
 ${buildRows(core,5)}

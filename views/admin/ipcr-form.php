@@ -1511,7 +1511,7 @@ td,th{border:1px solid #000;padding:1.5px 3px;vertical-align:middle;font-size:7.
   </div>
 </div>
 <table class="data-table"><colgroup><col style="width:16%"><col style="width:18%"><col style="width:8%"><col style="width:8%"><col style="width:10%"><col style="width:15%"><col style="width:3%"><col style="width:3%"><col style="width:3%"><col style="width:3%"><col style="width:13%"></colgroup>
-<thead><tr><th rowspan="2">MFO/PAP</th><th rowspan="2">SUCCESS INDICATORS</th><th rowspan="2">TARGET</th><th rowspan="2">ALLOTTED<br>BUDGET</th><th rowspan="2">INDIVIDUALS ACCOUNTABLE</th><th rowspan="2">ACTUAL ACCOMPLISHMENTS</th><th colspan="4">RATING</th><th rowspan="2">REMARKS</th></tr><tr><th>Q<sup>1</sup></th><th>E<sup>2</sup></th><th>T<sup>3</sup></th><th>A<sup>4</sup></th></tr></thead>
+<thead><tr><th rowspan="2">MFO/PAP</th><th colspan="2" rowspan="2">SUCCESS INDICATORS<br>(TARGET + MEASURES)</th><th rowspan="2">ALLOTTED<br>BUDGET</th><th rowspan="2">INDIVIDUALS ACCOUNTABLE</th><th rowspan="2">ACTUAL ACCOMPLISHMENTS</th><th colspan="4">RATING</th><th rowspan="2">REMARKS</th></tr><tr><th>Q<sup>1</sup></th><th>E<sup>2</sup></th><th>T<sup>3</sup></th><th>A<sup>4</sup></th></tr></thead>
 <tbody>
 <tr class="sec-row"><td colspan="11">A. CORE FUNCTIONS</td></tr>
 ${buildRows(core,4)}
