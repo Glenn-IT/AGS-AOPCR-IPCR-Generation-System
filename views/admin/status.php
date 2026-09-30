@@ -389,7 +389,7 @@ td, th { border:1px solid #000; padding:1.5px 3px; vertical-align:middle; font-s
       </td>
       <td>&nbsp;</td>
       <td style="text-align:center;vertical-align:middle">
-        <div class="rev-name">University President</div><div class="rev-role">CSU System Administration</div>
+        <div class="rev-name">HITLER C. DANGATAN, Ph.D.</div><div class="rev-role">Campus Executive Officer</div>
       </td>
       <td>&nbsp;</td>
     </tr>
@@ -509,8 +509,8 @@ td, th { border:1px solid #000; padding:1.5px 3px; vertical-align:middle; font-s
       </td>
       <td>&nbsp;</td>
       <td class="sig-name-cell" style="border-top:1px solid #aaa;text-align:center">
-        <div class="rev-name">University President</div>
-        <div class="rev-role" style="font-style:normal;text-transform:uppercase">CSU SYSTEM ADMINISTRATION</div>
+        <div class="rev-name">HITLER C. DANGATAN, Ph.D.</div>
+        <div class="rev-role" style="font-style:normal;text-transform:uppercase">CAMPUS EXECUTIVE OFFICER</div>
       </td>
       <td>&nbsp;</td>
     </tr>

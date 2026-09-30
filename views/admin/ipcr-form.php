@@ -1484,7 +1484,7 @@ td,th{border:1px solid #000;padding:1.5px 3px;vertical-align:middle;font-size:7.
 <div class="div-field"><span class="uline">&nbsp;${ep(office)}&nbsp;</span><span class="field-lbl">Division/Office/College</span></div>
 <div class="commit-wrap"><div class="commit-left">I,&nbsp;<span style="border-bottom:1px solid #000;padding:0 4px">${ep(name)}</span>,&nbsp;<span style="border-bottom:1px solid #000;padding:0 4px">${ep(pos)}</span>, commit to deliver and agree to be rated on the attainment of the following targets in accordance with the indicated measures for<br>the period&nbsp;<span style="border-bottom:1px solid #000;padding:0 4px">${ep(period)}</span>.</div><div class="commit-right"><span class="sig-line">${ep(name)}<br><span style="font-size:6.5pt;font-style:italic">(name of employee)</span></span><div class="date-line">Date:&nbsp;<span style="border-bottom:1px solid #000;padding:0 4px">${ep(date)}</span></div></div></div>
 <table class="rev-table"><tr><th style="width:35%">REVIEWED BY</th><th style="width:10%">DATE</th><th style="width:45%">APPROVED BY</th><th style="width:10%">DATE</th></tr>
-<tr><td style="height:32px;vertical-align:bottom;text-align:center"><div class="rev-name">HITLER C. DANGATAN, Ph.D.</div><div class="rev-role">(Campus Executive Officer)</div></td><td>&nbsp;</td><td style="text-align:center;vertical-align:middle"><div class="rev-name">University President</div><div class="rev-role">CSU System Administration</div></td><td>&nbsp;</td></tr></table>
+<tr><td style="height:32px;vertical-align:bottom;text-align:center"><div class="rev-name">HITLER C. DANGATAN, Ph.D.</div><div class="rev-role">(Campus Executive Officer)</div></td><td>&nbsp;</td><td style="text-align:center;vertical-align:middle"><div class="rev-name">HITLER C. DANGATAN, Ph.D.</div><div class="rev-role">Campus Executive Officer</div></td><td>&nbsp;</td></tr></table>
 <div class="legend-wrap" style="border-top:1px solid #000;">
   <div class="legend-blank">&nbsp;</div>
   <div class="legend-right">
@@ -1574,8 +1574,8 @@ ${buildRows(support,3)}
   </td>
   <td>&nbsp;</td>
   <td class="sig-name-cell" style="border-top:1px solid #aaa;text-align:center">
-    <div class="rev-name">University President</div>
-    <div class="rev-role" style="font-style:normal;text-transform:uppercase">CSU SYSTEM ADMINISTRATION</div>
+    <div class="rev-name">HITLER C. DANGATAN, Ph.D.</div>
+    <div class="rev-role" style="font-style:normal;text-transform:uppercase">CAMPUS EXECUTIVE OFFICER</div>
   </td>
   <td>&nbsp;</td>
 </tr>
