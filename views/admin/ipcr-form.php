@@ -1500,8 +1500,29 @@ td,th{border:1px solid #000;padding:1.5px 3px;vertical-align:middle;font-size:7.
   </tr>
 </table>
 <table class="sig-tbl"><tr><th style="width:18%">DISCUSSED WITH</th><th style="width:9%">DATE</th><th style="width:28%">ASSESSED BY</th><th style="width:9%">DATE</th><th style="width:27%">FINAL RATING BY</th><th style="width:9%">DATE</th></tr>
-<tr style="height:52px"><td>&nbsp;</td><td>&nbsp;</td><td class="certify">I certify that I discussed my assessment of the performance with the employee</td><td>&nbsp;</td><td class="sig-name-cell">Campus Executive Officer</td><td>&nbsp;</td></tr>
-<tr><td class="sig-name-cell" style="border-top:1px solid #aaa;text-align:center">${ep(name)}</td><td>&nbsp;</td><td class="sig-name-cell" style="border-top:1px solid #aaa">HITLER C. DANGATAN, Ph.D.<div class="rev-role">(Campus Executive Officer)</div></td><td>&nbsp;</td><td class="sig-name-cell" style="border-top:1px solid #aaa">University President</td><td>&nbsp;</td></tr>
+<tr style="height:52px">
+  <td>&nbsp;</td><td>&nbsp;</td>
+  <td class="certify">I certify that I discussed my assessment of the performance with the employee</td>
+  <td>&nbsp;</td>
+  <td>&nbsp;</td><td>&nbsp;</td>
+</tr>
+<tr>
+  <td class="sig-name-cell" style="border-top:1px solid #aaa;text-align:center">
+    <div class="rev-name">${ep(name)}</div>
+    <div class="rev-role">(name of employee)</div>
+  </td>
+  <td>&nbsp;</td>
+  <td class="sig-name-cell" style="border-top:1px solid #aaa;text-align:center">
+    <div class="rev-name">HITLER C. DANGATAN, Ph.D.</div>
+    <div class="rev-role">(Campus Executive Officer)</div>
+  </td>
+  <td>&nbsp;</td>
+  <td class="sig-name-cell" style="border-top:1px solid #aaa;text-align:center">
+    <div class="rev-name">University President</div>
+    <div class="rev-role" style="font-style:normal;text-transform:uppercase">CSU SYSTEM ADMINISTRATION</div>
+  </td>
+  <td>&nbsp;</td>
+</tr>
 <tr><td colspan="6" class="legend-note">Legend: 1:Quality &nbsp; 2:Efficiency &nbsp; 3:Timeliness &nbsp; 4:Average</td></tr></table>
 </div><script>setTimeout(()=>window.print(),700);<\/script></body></html>`;
 

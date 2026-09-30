@@ -1202,8 +1202,28 @@ td,th{border:1px solid #000;padding:1.5px 3px;vertical-align:middle;font-size:7.
 <tbody><tr class="sec-row"><td colspan="10">A. CORE FUNCTIONS</td></tr>${buildRows(core,5)}<tr class="sec-row"><td colspan="10">B. STRATEGIC FUNCTIONS</td></tr>${buildRows(strategic,3)}<tr class="sec-row"><td colspan="10">C. SUPPORT FUNCTIONS</td></tr>${buildRows(support,3)}</tbody></table>
 <table class="summary-table"><tr><td class="lbl" style="width:20%">AVERAGE RATING:</td><td class="val">${finalAvg||''}</td></tr><tr><td class="lbl">FINAL AVERAGE RATING:</td><td class="val">${finalAvg||''}</td></tr><tr><td class="lbl">ADJECTIVAL RATING:</td><td class="val">${finalAvg?adj(finalAvg):''}</td></tr></table>
 <table class="sig-tbl"><tr><th style="width:30%">CAMPUS EXECUTIVE OFFICER</th><th style="width:10%">DATE</th><th style="width:30%">REVIEWED / APPROVED BY</th><th style="width:10%">DATE</th><th style="width:10%">FINAL RATING</th><th style="width:10%">DATE</th></tr>
-<tr style="height:52px"><td class="sig-name-cell">${ep(name)}</td><td>&nbsp;</td><td class="certify">VP for Academic Affairs / University President</td><td>&nbsp;</td><td class="sig-name-cell">${finalAvg||''}</td><td>&nbsp;</td></tr>
-<tr><td class="sig-name-cell" style="border-top:1px solid #aaa">${ep(pos)}</td><td>&nbsp;</td><td class="sig-name-cell" style="border-top:1px solid #aaa">&nbsp;</td><td>&nbsp;</td><td class="sig-name-cell" style="border-top:1px solid #aaa">${finalAvg?adj(finalAvg):''}</td><td>&nbsp;</td></tr>
+<tr style="height:52px">
+  <td>&nbsp;</td><td>&nbsp;</td>
+  <td class="certify">VP for Academic Affairs / University President</td><td>&nbsp;</td>
+  <td>&nbsp;</td><td>&nbsp;</td>
+</tr>
+<tr>
+  <td class="sig-name-cell" style="border-top:1px solid #aaa;text-align:center">
+    <div class="rev-name">${ep(name)}</div>
+    <div class="rev-role" style="font-style:normal;text-transform:uppercase">${ep(pos || 'CAMPUS EXECUTIVE OFFICER')}</div>
+  </td>
+  <td>&nbsp;</td>
+  <td class="sig-name-cell" style="border-top:1px solid #aaa;text-align:center">
+    <div class="rev-name">VP FOR ACADEMIC AFFAIRS</div>
+    <div class="rev-role" style="font-style:normal;text-transform:uppercase">UNIVERSITY SYSTEM RATER</div>
+  </td>
+  <td>&nbsp;</td>
+  <td class="sig-name-cell" style="border-top:1px solid #aaa;text-align:center">
+    <div class="rev-name">${finalAvg ? finalAvg : ''}</div>
+    <div class="rev-role">${finalAvg ? adj(finalAvg) : ''}</div>
+  </td>
+  <td>&nbsp;</td>
+</tr>
 <tr><td colspan="6" class="legend-note">Legend: 1:Quality &nbsp; 2:Efficiency &nbsp; 3:Timeliness &nbsp; 4:Average</td></tr></table>
 </div><script>setTimeout(()=>window.print(),700);<\/script></body></html>`;
 

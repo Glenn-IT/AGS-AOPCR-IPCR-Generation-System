@@ -154,17 +154,39 @@ function checkNewKpisForUser(PDO $db, array $user, int $ipcrFormId): array {
         return ['has_new' => false, 'new_count' => 0, 'new_kpi_ids' => []];
     }
 
-    // Get KPIs currently in this IPCR form
-    $itemStmt = $db->prepare("SELECT DISTINCT kpi_id FROM ipcr_items WHERE ipcr_form_id = ? AND kpi_id IS NOT NULL");
+    // Get KPIs currently in this IPCR form (check both kpi_id and mfo+success_indicator)
+    $itemStmt = $db->prepare("SELECT kpi_id, mfo, success_indicator FROM ipcr_items WHERE ipcr_form_id = ?");
     $itemStmt->execute([$ipcrFormId]);
-    $formKpiIds = $itemStmt->fetchAll(PDO::FETCH_COLUMN);
+    $formItems = $itemStmt->fetchAll();
 
-    $formKpiMap = array_flip($formKpiIds);
+    $formKpiMap = [];
+    $formMfoMap = [];
+    foreach ($formItems as $fi) {
+        if (!empty($fi['kpi_id'])) {
+            $formKpiMap[$fi['kpi_id']] = true;
+        }
+        $key = trim($fi['mfo'] ?? '') . '|||' . trim($fi['success_indicator'] ?? '');
+        if ($key !== '|||') {
+            $formMfoMap[$key] = true;
+        }
+    }
+
+    $allKpiDetails = $db->query("SELECT id, mfo, success_indicator FROM kpi_items WHERE is_active = 1")->fetchAll();
+    $kpiDetailMap = [];
+    foreach ($allKpiDetails as $kd) {
+        $kpiDetailMap[$kd['id']] = trim($kd['mfo'] ?? '') . '|||' . trim($kd['success_indicator'] ?? '');
+    }
+
     $newKpis = [];
     foreach ($activeKpiIds as $kid) {
-        if (!isset($formKpiMap[$kid])) {
-            $newKpis[] = intval($kid);
+        if (isset($formKpiMap[$kid])) {
+            continue;
         }
+        $detailKey = $kpiDetailMap[$kid] ?? '';
+        if ($detailKey !== '' && isset($formMfoMap[$detailKey])) {
+            continue;
+        }
+        $newKpis[] = intval($kid);
     }
 
     return [

@@ -386,6 +386,7 @@ $user = requireAuth(['user']);
   let _evidenceModal = null;
   let existingFormStatus = null;
   let hasNewKpisGlobal = false;
+  let savedOverallRating = 0;
 
   document.getElementById('ipcrName').value = session.name;
   document.getElementById('ipcrPosition').value = session.position || '-';
@@ -775,6 +776,7 @@ $user = requireAuth(['user']);
         const f = existRes.form;
         existingIpcrId = f.id;
         existingFormStatus = f.status;
+        savedOverallRating = parseFloat(f.overall_rating) || 0;
         hasNewKpisGlobal = Boolean(f.has_new_kpis);
 
         document.getElementById('ipcrOffice').value = f.department_name || session.department_id || '';
@@ -803,56 +805,72 @@ $user = requireAuth(['user']);
         loadSection('strategicBody', f.items.strategic, kpi.strategic, 'strategic');
         loadSection('supportBody', f.items.support, kpi.support, 'support');
 
-        // Check submission state and whether new KPIs were added
-        const hasSubmitted = ['pending', 'reviewed', 'approved'].includes(f.status);
+        // Check submission state:
+        // - 'reviewed' or 'approved': administrator has reviewed/approved it -> strictly locked from editing
+        // - 'pending': submitted and waiting review -> employee can update their actual accomplishment if needed
+        // - 'draft': editable as normal
+        const isReviewedOrApproved = ['reviewed', 'approved'].includes(f.status);
+        const isPending = f.status === 'pending';
         const statusBanner = document.getElementById('submissionStatusBanner');
 
-        if (hasSubmitted) {
-          if (hasNewKpisGlobal) {
-            // New KPI(s) added by administrator! Re-submission is permitted.
-            if (statusBanner) {
-              statusBanner.className = 'alert alert-warning border-warning shadow-sm py-2 px-3 mb-3 no-print';
-              statusBanner.innerHTML = `<div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
-                <div>
-                  <i class="fa-solid fa-bell text-warning me-2 fs-5"></i>
-                  <strong>New KPI Added by Administrator:</strong> Your department or administrator has added <strong>${f.new_kpi_count || ''}</strong> new KPI indicator(s) to this rating period. Please fill out your accomplishment and rating for the new indicator(s) below, then submit your updated IPCR.
-                </div>
-                <span class="badge bg-warning text-dark"><i class="fa-solid fa-clock-rotate-left me-1"></i>Re-submission Permitted</span>
-              </div>`;
-              statusBanner.classList.remove('d-none');
-            }
-            setReadOnly(false);
-            const btnSubmit = document.getElementById('btnSubmit2');
-            if (btnSubmit) {
-              btnSubmit.style.display = 'inline-flex';
-              btnSubmit.innerHTML = '<i class="fa-solid fa-paper-plane me-1"></i>Submit Updated IPCR';
-            }
-            const btnDraft = document.getElementById('btnSaveDraft2');
-            if (btnDraft) btnDraft.style.display = 'inline-flex';
-            const editBtn = document.getElementById('editBtn2');
-            if (editBtn) editBtn.style.display = 'none';
-          } else {
-            // Already submitted, and NO new KPIs added -> Duplicate submission is strictly disabled!
-            setReadOnly(true);
-            if (statusBanner) {
-              const statCls = f.status === 'approved' ? 'success' : (f.status === 'reviewed' ? 'primary' : 'warning');
-              statusBanner.className = 'alert alert-success border-success shadow-sm py-2 px-3 mb-3 no-print';
-              statusBanner.innerHTML = `<div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
-                <div>
-                  <i class="fa-solid fa-circle-check text-success me-2 fs-5"></i>
-                  <strong>IPCR Already Submitted:</strong> You have submitted your IPCR for this academic timeline (${f.covered_period}). Current status: <span class="badge bg-${statCls}">${f.status.toUpperCase()}</span>.
-                  <div class="text-muted small mt-1"><i class="fa-solid fa-lock me-1"></i>Duplicate submissions are disabled. Re-submission is not allowed unless a new KPI is added by your administrator.</div>
-                </div>
-              </div>`;
-              statusBanner.classList.remove('d-none');
-            }
-            const btnSubmit = document.getElementById('btnSubmit2');
-            if (btnSubmit) btnSubmit.style.display = 'none';
-            const btnDraft = document.getElementById('btnSaveDraft2');
-            if (btnDraft) btnDraft.style.display = 'none';
-            const editBtn = document.getElementById('editBtn2');
-            if (editBtn) editBtn.style.display = 'none';
+        if (isReviewedOrApproved) {
+          // Strictly locked and not editable
+          setReadOnly(true);
+          if (statusBanner) {
+            const statCls = f.status === 'approved' ? 'success' : 'primary';
+            statusBanner.className = `alert alert-${statCls} border-${statCls} shadow-sm py-2 px-3 mb-3 no-print`;
+            statusBanner.innerHTML = `<div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+              <div>
+                <i class="fa-solid fa-lock text-${statCls} me-2 fs-5"></i>
+                <strong>IPCR ${f.status.toUpperCase()}:</strong> Your IPCR has been reviewed and marked as <strong>${f.status.toUpperCase()}</strong> by your administrator (${f.covered_period}).
+                <div class="text-muted small mt-1">This form is finalized and cannot be modified.</div>
+              </div>
+              <span class="badge bg-${statCls}"><i class="fa-solid fa-shield-halved me-1"></i>Locked</span>
+            </div>`;
+            statusBanner.classList.remove('d-none');
           }
+          const btnSubmit = document.getElementById('btnSubmit2');
+          if (btnSubmit) btnSubmit.style.display = 'none';
+          const btnDraft = document.getElementById('btnSaveDraft2');
+          if (btnDraft) btnDraft.style.display = 'none';
+          const editBtn = document.getElementById('editBtn2');
+          if (editBtn) editBtn.style.display = 'none';
+        } else if (isPending) {
+          // Pending review -> employee can edit accomplishments and update
+          setReadOnly(false);
+          if (statusBanner) {
+            statusBanner.className = 'alert alert-info border-info shadow-sm py-2 px-3 mb-3 no-print';
+            statusBanner.innerHTML = `<div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+              <div>
+                <i class="fa-solid fa-clock text-info me-2 fs-5"></i>
+                <strong>IPCR Pending Review:</strong> Your IPCR is submitted and pending review by your administrator (${f.covered_period}). You can update your accomplishments and re-submit if needed.
+              </div>
+              <span class="badge bg-warning text-dark"><i class="fa-solid fa-pen me-1"></i>Editable</span>
+            </div>`;
+            statusBanner.classList.remove('d-none');
+          }
+          const btnSubmit = document.getElementById('btnSubmit2');
+          if (btnSubmit) {
+            btnSubmit.style.display = 'inline-flex';
+            btnSubmit.innerHTML = '<i class="fa-solid fa-paper-plane me-1"></i>Update Submission';
+          }
+          const btnDraft = document.getElementById('btnSaveDraft2');
+          if (btnDraft) btnDraft.style.display = 'inline-flex';
+          const editBtn = document.getElementById('editBtn2');
+          if (editBtn) editBtn.style.display = 'none';
+        } else {
+          // Draft
+          setReadOnly(false);
+          if (statusBanner) statusBanner.classList.add('d-none');
+          const btnSubmit = document.getElementById('btnSubmit2');
+          if (btnSubmit) {
+            btnSubmit.style.display = 'inline-flex';
+            btnSubmit.innerHTML = '<i class="fa-solid fa-paper-plane me-1"></i>Submit for Review';
+          }
+          const btnDraft = document.getElementById('btnSaveDraft2');
+          if (btnDraft) btnDraft.style.display = 'inline-flex';
+          const editBtn = document.getElementById('editBtn2');
+          if (editBtn) editBtn.style.display = 'none';
         }
       } else {
         currentEvidence = userFiles;
@@ -938,8 +956,12 @@ $user = requireAuth(['user']);
 
   function setReadOnly(on) {
     isReadOnly = on;
-    const allInputs = document.querySelectorAll('#coreBody input, #coreBody select, #strategicBody input, #strategicBody select, #supportBody input, #supportBody select, #ipcrDate');
-    allInputs.forEach(i => i.disabled = on);
+    const allInputs = document.querySelectorAll('#coreBody input, #coreBody select, #coreBody textarea, #strategicBody input, #strategicBody select, #strategicBody textarea, #supportBody input, #supportBody select, #supportBody textarea, #ipcrDate');
+    allInputs.forEach(i => {
+      i.disabled = on;
+      if (on) i.classList.add('bg-light');
+      else i.classList.remove('bg-light');
+    });
     const etlSel = document.getElementById('etlSelect');
     if (etlSel) etlSel.disabled = on;
     const stratInp = document.getElementById('inpStrategicWeight');
@@ -948,14 +970,14 @@ $user = requireAuth(['user']);
       el.style.pointerEvents = on ? 'none' : 'auto';
     });
     const editBtn = document.getElementById('editBtn2');
-    if (editBtn) editBtn.style.display = on ? 'inline-flex' : 'none';
+    if (editBtn) editBtn.style.display = 'none';
     const actionBtns = [document.getElementById('btnSubmit2'), document.getElementById('btnSaveDraft2')];
     actionBtns.forEach(b => { if (b) b.style.display = on ? 'none' : 'inline-flex'; });
   }
 
   function enableEdit() {
-    if (existingFormStatus && ['pending', 'reviewed', 'approved'].includes(existingFormStatus) && !hasNewKpisGlobal) {
-      showToast('You have already submitted your IPCR for this academic timeline. Re-submission is not allowed unless a new KPI is added by the administrator.', 'warning');
+    if (existingFormStatus && ['reviewed', 'approved'].includes(existingFormStatus)) {
+      showToast('This IPCR has already been ' + existingFormStatus + ' by your administrator and cannot be modified.', 'warning');
       return;
     }
     confirmModal('Allow editing of this IPCR? You can make changes and re-submit for review.', 'Enable Edit', () => {
@@ -996,7 +1018,8 @@ $user = requireAuth(['user']);
       const evidenceBtn = getEvidenceBtn(categoryKey, item.mfo);
       const mfoAttr = (item.mfo || '').replace(/"/g, '&quot;');
       const budgetVal = item.budget || 0;
-      tbody.innerHTML += `<tr data-budget="${budgetVal}">
+      const kpiId = item.id || '';
+      tbody.innerHTML += `<tr data-budget="${budgetVal}" data-kpi-id="${kpiId}" data-q="" data-e="" data-t="" data-avg="" data-remarks="">
         <td style="font-size:0.82rem;background:#fafafa;white-space:nowrap">${item.mfo}${personalTag(item)}</td>
         <td style="font-size:0.82rem;background:#fafafa">${item.success_indicator}</td>
         <td style="font-size:0.82rem;background:#fafafa;white-space:nowrap">${item.target || '—'}</td>
@@ -1021,21 +1044,27 @@ $user = requireAuth(['user']);
       const evidenceBtn = getEvidenceBtn(categoryKey, mfo);
       const mfoAttr = (mfo || '').replace(/"/g, '&quot;');
       const budgetVal = item.budget !== undefined && item.budget !== null ? item.budget : (kpiItem.budget || 0);
-      tbody.innerHTML += `<tr data-budget="${budgetVal}">
+      const kpiId = item.kpi_id || kpiItem.id || '';
+      const qVal = (item.q_rating !== undefined && item.q_rating !== null) ? item.q_rating : '';
+      const eVal = (item.e_rating !== undefined && item.e_rating !== null) ? item.e_rating : '';
+      const tVal = (item.t_rating !== undefined && item.t_rating !== null) ? item.t_rating : '';
+      const avgVal = avg > 0 ? avg.toFixed(2) : '';
+      const remVal = (item.remarks || '').toString();
+      const remAttr = remVal.replace(/"/g, '&quot;');
+
+      tbody.innerHTML += `<tr data-budget="${budgetVal}" data-kpi-id="${kpiId}" data-q="${qVal}" data-e="${eVal}" data-t="${tVal}" data-avg="${avgVal}" data-remarks="${remAttr}">
         <td style="font-size:0.82rem;background:#fafafa;white-space:nowrap">${mfo}</td>
         <td style="font-size:0.82rem;background:#fafafa">${kpiItem.success_indicator || item.success_indicator || '-'}</td>
         <td style="font-size:0.82rem;background:#fafafa;white-space:nowrap">${kpiItem.target || item.target || '-'}</td>
         <td>${getAccInputHtml(kpiItem.target || item.target, item.accomplishment)}</td>
-        <td class="text-center fw-600" style="font-size:0.85rem;background:#f8f9fa" title="Rated by your immediate supervisor">${item.q_rating || '—'}</td>
-        <td class="text-center fw-600" style="font-size:0.85rem;background:#f8f9fa" title="Rated by your immediate supervisor">${item.e_rating || '—'}</td>
-        <td class="text-center fw-600" style="font-size:0.85rem;background:#f8f9fa" title="Rated by your immediate supervisor">${item.t_rating || '—'}</td>
-        <td class="text-center fw-700 row-avg" style="font-size:0.85rem;background:#fafafa">${avg > 0 ? avg.toFixed(2) : '—'}</td>
-        <td class="text-center fw-600" style="font-size:0.82rem;background:#f8f9fa" title="Filled by your immediate supervisor">${item.remarks || '—'}</td>
+        <td class="text-center fw-600" style="font-size:0.85rem;background:#f8f9fa" title="Rated by your immediate supervisor">${qVal || '—'}</td>
+        <td class="text-center fw-600" style="font-size:0.85rem;background:#f8f9fa" title="Rated by your immediate supervisor">${eVal || '—'}</td>
+        <td class="text-center fw-600" style="font-size:0.85rem;background:#f8f9fa" title="Rated by your immediate supervisor">${tVal || '—'}</td>
+        <td class="text-center fw-700 row-avg" style="font-size:0.85rem;background:#fafafa">${avgVal || '—'}</td>
+        <td class="text-center fw-600" style="font-size:0.82rem;background:#f8f9fa" title="Filled by your immediate supervisor">${remVal || '—'}</td>
         <td class="text-center evidence-cell" data-cat="${categoryKey}" data-mfo="${mfoAttr}">${evidenceBtn}</td></tr>`;
     });
     // Surface KPIs added after this form was first saved (no ipcr_items row yet).
-    // Match by kpi_id first; fall back to mfo+success_indicator for rows saved before
-    // kpi_id was tracked (prevents duplicate rows from appearing).
     (sectionKpi || []).forEach(k => {
       const already = (items || []).some(item => {
         if (item.kpi_id && String(item.kpi_id) === String(k.id)) return true;
@@ -1048,7 +1077,8 @@ $user = requireAuth(['user']);
       const evidenceBtn = getEvidenceBtn(categoryKey, k.mfo);
       const mfoAttr = (k.mfo || '').replace(/"/g, '&quot;');
       const budgetVal = k.budget || 0;
-      tbody.innerHTML += `<tr data-budget="${budgetVal}">
+      const kpiId = k.id || '';
+      tbody.innerHTML += `<tr data-budget="${budgetVal}" data-kpi-id="${kpiId}" data-q="" data-e="" data-t="" data-avg="" data-remarks="">
         <td style="font-size:0.82rem;background:#fafafa;white-space:nowrap">${k.mfo || '—'}${personalTag(k)}</td>
         <td style="font-size:0.82rem;background:#fafafa">${k.success_indicator || '—'}</td>
         <td style="font-size:0.82rem;background:#fafafa;white-space:nowrap">${k.target || '—'}</td>
@@ -1076,16 +1106,16 @@ $user = requireAuth(['user']);
       }
 
       rows.push({
-        kpi_id:            '',
+        kpi_id:            tr.dataset.kpiId || '',
         mfo:               mfoText,
         success_indicator: tr.cells[1]?.textContent?.trim() || '',
         target:            tr.cells[2]?.textContent?.trim() || '',
         accomplishment:    accInp?.value !== undefined ? accInp.value.trim() : '',
-        q_rating:          null,
-        e_rating:          null,
-        t_rating:          null,
-        rating:            null,
-        remarks:           ''
+        q_rating:          tr.dataset.q ? parseFloat(tr.dataset.q) : null,
+        e_rating:          tr.dataset.e ? parseFloat(tr.dataset.e) : null,
+        t_rating:          tr.dataset.t ? parseFloat(tr.dataset.t) : null,
+        rating:            tr.dataset.avg ? parseFloat(tr.dataset.avg) : null,
+        remarks:           tr.dataset.remarks || ''
       });
     });
     return rows;
@@ -1247,28 +1277,36 @@ $user = requireAuth(['user']);
     // Blank when the department has no assigned admin — the ruled line still prints.
     const supName = supervisor ? esc(supervisor.name) : '';
 
+    function cleanCellText(txt) {
+      if (!txt) return '';
+      const t = txt.trim();
+      return (t === '—' || t === '-') ? '' : t;
+    }
+
     function getFormRows(tbodyId) {
       const rows = [];
       document.getElementById(tbodyId).querySelectorAll('tr').forEach(tr => {
         const tds = tr.querySelectorAll('td');
         const accInp     = tr.querySelector('.acc-input') || tr.querySelector('textarea');
-        const qInp       = tr.querySelector('.rating-q');
-        const eInp       = tr.querySelector('.rating-e');
-        const tInp       = tr.querySelector('.rating-t');
-        const avgCell    = tr.querySelector('.row-avg');
-        const remarksInp = tr.querySelector('.row-remarks');
         const budgetVal  = tr.dataset.budget || '0';
+
+        const qVal   = (tr.dataset.q !== undefined && tr.dataset.q !== '') ? tr.dataset.q : cleanCellText(tds[4]?.textContent);
+        const eVal   = (tr.dataset.e !== undefined && tr.dataset.e !== '') ? tr.dataset.e : cleanCellText(tds[5]?.textContent);
+        const tVal   = (tr.dataset.t !== undefined && tr.dataset.t !== '') ? tr.dataset.t : cleanCellText(tds[6]?.textContent);
+        const avgVal = (tr.dataset.avg !== undefined && tr.dataset.avg !== '') ? tr.dataset.avg : cleanCellText(tds[7]?.textContent);
+        const remVal = (tr.dataset.remarks !== undefined && tr.dataset.remarks !== '') ? tr.dataset.remarks : cleanCellText(tds[8]?.textContent);
+
         rows.push({
           mfo:     tds[0]?.textContent?.trim() || '',
           si:      tds[1]?.textContent?.trim() || '',
           target:  tds[2]?.textContent?.trim() || '',
           budget:  budgetVal,
           actual:  accInp?.value !== undefined ? accInp.value.trim() : '',
-          q:       qInp?.value || '',
-          e:       eInp?.value || '',
-          t:       tInp?.value || '',
-          a:       avgCell?.textContent !== '-' ? avgCell?.textContent : '',
-          remarks: remarksInp?.value || ''
+          q:       qVal || '',
+          e:       eVal || '',
+          t:       tVal || '',
+          a:       avgVal || '',
+          remarks: remVal || ''
         });
       });
       return rows;
@@ -1299,7 +1337,7 @@ $user = requireAuth(['user']);
     if (coreWeighted !== null) { pSum += coreWeighted; pWeightSum += wCore; }
     if (stratWeighted !== null) { pSum += stratWeighted; pWeightSum += wStrat; }
     if (suppWeighted !== null) { pSum += suppWeighted; pWeightSum += wSupp; }
-    const finalAvg = pWeightSum > 0 ? parseFloat((pSum / pWeightSum).toFixed(2)) : 0;
+    const finalAvg = (savedOverallRating > 0) ? savedOverallRating : (pWeightSum > 0 ? parseFloat((pSum / pWeightSum).toFixed(2)) : 0);
 
     function adj(avg) {
       if (avg >= 4.5) return 'Outstanding';
@@ -1530,15 +1568,23 @@ td, th { border:1px solid #000; padding:1.5px 3px; vertical-align:middle; font-s
       <td>&nbsp;</td><td>&nbsp;</td>
       <td class="certify">I certify that I discussed my assessment of the performance with the employee</td>
       <td>&nbsp;</td>
-      <td class="sig-name-cell">HITLER C. DANGATAN, Ph.D.</td>
-      <td>&nbsp;</td>
+      <td>&nbsp;</td><td>&nbsp;</td>
     </tr>
     <tr>
-      <td class="sig-name-cell" style="border-top:1px solid #aaa;text-align:center">${esc(name)}</td>
+      <td class="sig-name-cell" style="border-top:1px solid #aaa;text-align:center">
+        <div class="rev-name">${esc(name)}</div>
+        <div class="rev-role">(name of employee)</div>
+      </td>
       <td>&nbsp;</td>
-      <td class="sig-name-cell" style="border-top:1px solid #aaa">${supName || ''}<div class="rev-role">(immediate supervisor)</div></td>
+      <td class="sig-name-cell" style="border-top:1px solid #aaa;text-align:center">
+        <div class="rev-name">${supName || '&nbsp;'}</div>
+        <div class="rev-role">(immediate supervisor)</div>
+      </td>
       <td>&nbsp;</td>
-      <td class="sig-name-cell" style="border-top:1px solid #aaa">Campus Executive Officer</td>
+      <td class="sig-name-cell" style="border-top:1px solid #aaa;text-align:center">
+        <div class="rev-name">HITLER C. DANGATAN, Ph.D.</div>
+        <div class="rev-role" style="font-style:normal;text-transform:uppercase">CAMPUS EXECUTIVE OFFICER</div>
+      </td>
       <td>&nbsp;</td>
     </tr>
     <tr>

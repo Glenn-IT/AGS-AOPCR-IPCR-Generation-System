@@ -456,15 +456,23 @@ td, th { border:1px solid #000; padding:1.5px 3px; vertical-align:middle; font-s
       <td>&nbsp;</td><td>&nbsp;</td>
       <td class="certify">I certify that I discussed my assessment of the performance with the employee</td>
       <td>&nbsp;</td>
-      <td class="sig-name-cell">Campus Executive Officer</td>
-      <td>&nbsp;</td>
+      <td>&nbsp;</td><td>&nbsp;</td>
     </tr>
     <tr>
-      <td class="sig-name-cell" style="border-top:1px solid #aaa;text-align:center">${ep(f.user_name)}</td>
+      <td class="sig-name-cell" style="border-top:1px solid #aaa;text-align:center">
+        <div class="rev-name">${ep(f.user_name)}</div>
+        <div class="rev-role">(name of employee)</div>
+      </td>
       <td>&nbsp;</td>
-      <td class="sig-name-cell" style="border-top:1px solid #aaa">HITLER C. DANGATAN, Ph.D.<div class="rev-role">(Campus Executive Officer)</div></td>
+      <td class="sig-name-cell" style="border-top:1px solid #aaa;text-align:center">
+        <div class="rev-name">HITLER C. DANGATAN, Ph.D.</div>
+        <div class="rev-role">(Campus Executive Officer)</div>
+      </td>
       <td>&nbsp;</td>
-      <td class="sig-name-cell" style="border-top:1px solid #aaa">University President</td>
+      <td class="sig-name-cell" style="border-top:1px solid #aaa;text-align:center">
+        <div class="rev-name">University President</div>
+        <div class="rev-role" style="font-style:normal;text-transform:uppercase">CSU SYSTEM ADMINISTRATION</div>
+      </td>
       <td>&nbsp;</td>
     </tr>
     <tr>

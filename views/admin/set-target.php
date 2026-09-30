@@ -545,21 +545,29 @@ td, th { border:1px solid #000; padding:1.5px 3px; vertical-align:middle; font-s
     </tr>
     <tr style="height:52px">
       <td>&nbsp;</td><td>&nbsp;</td>
-      <td class="certify">I certify that I discussed my assessment of the performance with the head of office</td>
+      <td class="certify">I certify that I discussed my assessment of the performance with the employee</td>
       <td>&nbsp;</td>
-      <td class="sig-name-cell">HITLER C. DANGATAN, Ph.D.</td>
+      <td>&nbsp;</td><td>&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="sig-name-cell" style="border-top:1px solid #aaa;text-align:center">
+        <div class="rev-name">${ep(name)}</div>
+        <div class="rev-role">(name of employee)</div>
+      </td>
+      <td>&nbsp;</td>
+      <td class="sig-name-cell" style="border-top:1px solid #aaa;text-align:center">
+        <div class="rev-name">HITLER C. DANGATAN, Ph.D.</div>
+        <div class="rev-role">(Campus Executive Officer)</div>
+      </td>
+      <td>&nbsp;</td>
+      <td class="sig-name-cell" style="border-top:1px solid #aaa;text-align:center">
+        <div class="rev-name">University President</div>
+        <div class="rev-role" style="font-style:normal;text-transform:uppercase">CSU SYSTEM ADMINISTRATION</div>
+      </td>
       <td>&nbsp;</td>
     </tr>
     <tr>
-      <td class="sig-name-cell" style="border-top:1px solid #aaa">${ep(name)}</td>
-      <td>&nbsp;</td>
-      <td class="sig-name-cell" style="border-top:1px solid #aaa">(immediate supervisor)</td>
-      <td>&nbsp;</td>
-      <td class="sig-name-cell" style="border-top:1px solid #aaa">Campus Executive Officer</td>
-      <td>&nbsp;</td>
-    </tr>
-    <tr>
-      <td colspan="5" class="legend-note">Legend: 1:Quality &nbsp; 2:Efficiency &nbsp; 3:Timeliness &nbsp; 4:Average</td>
+      <td colspan="6" class="legend-note">Legend: 1:Quality &nbsp; 2:Efficiency &nbsp; 3:Timeliness &nbsp; 4:Average</td>
     </tr>
   </table>
 </div>

@@ -77,17 +77,14 @@ try {
             exit;
         }
 
-        // If form has already been submitted (pending, reviewed, or approved):
-        if (in_array($existing['status'], ['pending', 'reviewed', 'approved'])) {
-            $newKpiInfo = checkNewKpisForUser($db, $user, $ipcr_id);
-            if (!$newKpiInfo['has_new']) {
-                $db->rollBack();
-                echo json_encode([
-                    'success' => false,
-                    'error' => 'You have already submitted your IPCR for this academic timeline. You cannot duplicate or re-submit unless a new KPI is added by the administrator.'
-                ]);
-                exit;
-            }
+        // If form has already been reviewed or approved by administrator, lock it completely
+        if (in_array($existing['status'], ['reviewed', 'approved'])) {
+            $db->rollBack();
+            echo json_encode([
+                'success' => false,
+                'error' => 'This IPCR has already been ' . $existing['status'] . ' by your administrator and cannot be modified.'
+            ]);
+            exit;
         }
 
         $db->prepare('UPDATE ipcr_forms SET timeline_id=?, covered_period=?, status=?, date_submitted=?, etl_type=?, weight_core=?, weight_strategic=?, weight_support=?, updated_at=NOW() WHERE id=?')
@@ -102,17 +99,13 @@ try {
         if ($dupForm) {
             $ipcr_id = intval($dupForm['id']);
 
-            // If form has already been submitted (pending, reviewed, or approved):
-            if (in_array($dupForm['status'], ['pending', 'reviewed', 'approved'])) {
-                $newKpiInfo = checkNewKpisForUser($db, $user, $ipcr_id);
-                if (!$newKpiInfo['has_new']) {
-                    $db->rollBack();
-                    echo json_encode([
-                        'success' => false,
-                        'error' => 'You have already submitted your IPCR for this academic timeline. You cannot duplicate or re-submit unless a new KPI is added by the administrator.'
-                    ]);
-                    exit;
-                }
+            if (in_array($dupForm['status'], ['reviewed', 'approved'])) {
+                $db->rollBack();
+                echo json_encode([
+                    'success' => false,
+                    'error' => 'This IPCR has already been ' . $dupForm['status'] . ' by your administrator and cannot be modified.'
+                ]);
+                exit;
             }
 
             $db->prepare('UPDATE ipcr_forms SET timeline_id=?, covered_period=?, status=?, date_submitted=?, etl_type=?, weight_core=?, weight_strategic=?, weight_support=?, updated_at=NOW() WHERE id=?')
