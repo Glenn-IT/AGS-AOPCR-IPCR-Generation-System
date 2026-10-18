@@ -29,6 +29,8 @@ function logout() {
   sessionStorage.removeItem('csu_login_attempts');
   sessionStorage.removeItem('csu_lockout_until');
   try {
+    localStorage.removeItem('csu_login_attempts');
+    localStorage.removeItem('csu_lockout_until');
     localStorage.removeItem('csu_piat_files_superadmin');
     localStorage.removeItem('csu_piat_superadmin_opcr');
     localStorage.removeItem('csu_piat_files_undefined');

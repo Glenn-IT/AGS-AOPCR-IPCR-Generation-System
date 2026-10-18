@@ -21,36 +21,54 @@ if (!$username || !$password) {
 $db = getDB();
 $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
 
-// --- Rate limiting: use MySQL NOW() to avoid PHP/MySQL timezone mismatch ---
+// --- Rate limiting: Max 3 attempts, 30 seconds lockout across all accounts ---
 $lockoutSecs = (int) LOCKOUT_SECONDS;
+$maxAttempts = (int) MAX_LOGIN_ATTEMPTS;
+$windowSecs  = 900; // 15-minute window for failed attempt accumulation
 
-// Purge expired attempts using MySQL time
-$db->prepare(
-    "DELETE FROM login_attempts WHERE attempted_at <= NOW() - INTERVAL {$lockoutSecs} SECOND"
-)->execute();
+// Clean up stale attempts older than 24 hours silently
+try {
+    $db->exec("DELETE FROM login_attempts WHERE attempted_at <= NOW() - INTERVAL 1 DAY");
+} catch (Exception $e) {}
+
+// Check current failed attempts for this username OR IP address within the accumulation window
+$ipCondition = ($ip !== 'unknown' && !empty($ip)) ? '(username = ? OR ip_address = ?)' : 'username = ?';
+$queryParams = ($ip !== 'unknown' && !empty($ip)) ? [$username, $ip, $windowSecs] : [$username, $windowSecs];
+$clearParams = ($ip !== 'unknown' && !empty($ip)) ? [$username, $ip] : [$username];
 
 $stmt = $db->prepare(
-    "SELECT COUNT(*) FROM login_attempts WHERE username = ? AND attempted_at > NOW() - INTERVAL {$lockoutSecs} SECOND"
+    "SELECT COUNT(*) AS total,
+            MAX(attempted_at) AS last_attempt_time,
+            TIMESTAMPDIFF(SECOND, MAX(attempted_at), NOW()) AS elapsed_since_last
+     FROM login_attempts
+     WHERE {$ipCondition}
+       AND attempted_at > NOW() - INTERVAL ? SECOND"
 );
-$stmt->execute([$username]);
-$attempts = (int) $stmt->fetchColumn();
+$stmt->execute($queryParams);
+$lockStatus = $stmt->fetch(PDO::FETCH_ASSOC);
 
-if ($attempts >= MAX_LOGIN_ATTEMPTS) {
-    $oldestStmt = $db->prepare(
-        "SELECT GREATEST(0, {$lockoutSecs} - TIMESTAMPDIFF(SECOND, MIN(attempted_at), NOW()))
-         FROM login_attempts WHERE username = ? AND attempted_at > NOW() - INTERVAL {$lockoutSecs} SECOND"
-    );
-    $oldestStmt->execute([$username]);
-    $secondsRemaining = max(1, (int) $oldestStmt->fetchColumn());
+$totalAttempts    = (int) ($lockStatus['total'] ?? 0);
+$elapsedSinceLast = $lockStatus['elapsed_since_last'] !== null ? (int) $lockStatus['elapsed_since_last'] : 999999;
 
-    echo json_encode([
-        'success'           => false,
-        'error'             => 'Too many failed attempts. Account locked for ' . LOCKOUT_SECONDS . ' seconds.',
-        'locked'            => true,
-        'attempts'          => $attempts,
-        'seconds_remaining' => $secondsRemaining,
-    ]);
-    exit;
+if ($totalAttempts >= $maxAttempts) {
+    if ($elapsedSinceLast < $lockoutSecs) {
+        $secondsRemaining = max(1, $lockoutSecs - $elapsedSinceLast);
+        echo json_encode([
+            'success'           => false,
+            'error'             => "Too many failed attempts. Account locked for {$lockoutSecs} seconds. Please wait {$secondsRemaining} second(s) before trying again.",
+            'locked'            => true,
+            'attempts'          => $totalAttempts,
+            'seconds_remaining' => $secondsRemaining,
+        ]);
+        exit;
+    } else {
+        // Lockout period has elapsed; clear prior attempts to give a fresh start
+        $clearSql = ($ip !== 'unknown' && !empty($ip))
+            ? "DELETE FROM login_attempts WHERE username = ? OR ip_address = ?"
+            : "DELETE FROM login_attempts WHERE username = ?";
+        $db->prepare($clearSql)->execute($clearParams);
+        $totalAttempts = 0;
+    }
 }
 
 // --- Fetch user ---
@@ -58,32 +76,33 @@ $stmt = $db->prepare('SELECT * FROM users WHERE username = ? LIMIT 1');
 $stmt->execute([$username]);
 $user = $stmt->fetch();
 
-if (!$user || !password_verify($password, $user['password'])) {
-    // Log failed attempt
-    $db->prepare('INSERT INTO login_attempts (username, ip_address) VALUES (?, ?)')->execute([$username, $ip]);
+$isValid = ($user && password_verify($password, $user['password']));
 
-    $remaining = MAX_LOGIN_ATTEMPTS - ($attempts + 1);
-    $nowLocked = $remaining <= 0;
-    $msg = $nowLocked
-        ? 'Too many failed attempts. Account locked for ' . LOCKOUT_SECONDS . ' seconds.'
-        : "Invalid username or password. {$remaining} attempt(s) remaining.";
+if (!$isValid) {
+    // Log failed attempt with current timestamp
+    $db->prepare('INSERT INTO login_attempts (username, ip_address, attempted_at) VALUES (?, ?, NOW())')->execute([$username, $ip]);
+    $newAttempts = $totalAttempts + 1;
 
-    $payload = [
-        'success'  => false,
-        'error'    => $msg,
-        'attempts' => $attempts + 1,
-    ];
-    if ($nowLocked) {
-        $oldestStmt2 = $db->prepare(
-            "SELECT GREATEST(0, {$lockoutSecs} - TIMESTAMPDIFF(SECOND, MIN(attempted_at), NOW()))
-             FROM login_attempts WHERE username = ? AND attempted_at > NOW() - INTERVAL {$lockoutSecs} SECOND"
-        );
-        $oldestStmt2->execute([$username]);
-        $payload['locked']            = true;
-        $payload['seconds_remaining'] = max(1, (int) $oldestStmt2->fetchColumn());
+    if ($newAttempts >= $maxAttempts) {
+        echo json_encode([
+            'success'           => false,
+            'error'             => "Too many failed attempts. Account locked for {$lockoutSecs} seconds.",
+            'locked'            => true,
+            'attempts'          => $newAttempts,
+            'seconds_remaining' => $lockoutSecs,
+        ]);
+        exit;
+    } else {
+        $remaining = $maxAttempts - $newAttempts;
+        echo json_encode([
+            'success'           => false,
+            'error'             => "Invalid username or password. {$remaining} attempt(s) remaining.",
+            'locked'            => false,
+            'attempts'          => $newAttempts,
+            'seconds_remaining' => 0,
+        ]);
+        exit;
     }
-    echo json_encode($payload);
-    exit;
 }
 
 if ($user['status'] === 'inactive') {
@@ -97,7 +116,10 @@ if ($user['status'] === 'pending') {
 }
 
 // --- Success: clear failed attempts, update last_login, set session ---
-$db->prepare('DELETE FROM login_attempts WHERE username = ?')->execute([$username]);
+$clearSql = ($ip !== 'unknown' && !empty($ip))
+    ? "DELETE FROM login_attempts WHERE username = ? OR ip_address = ?"
+    : "DELETE FROM login_attempts WHERE username = ?";
+$db->prepare($clearSql)->execute($clearParams);
 $db->prepare('UPDATE users SET last_login = NOW() WHERE id = ?')->execute([$user['id']]);
 
 // Fetch department name

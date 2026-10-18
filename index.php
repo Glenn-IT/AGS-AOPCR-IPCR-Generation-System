@@ -91,8 +91,47 @@ if (isLoggedIn()) {
 <script src="assets/js/components.js"></script>
 <script>
   const MAX_ATTEMPTS = 3;
-  let localAttempts = parseInt(sessionStorage.getItem('csu_login_attempts') || '0');
+  const LOCKOUT_SECS = 30;
   let countdownTimer = null;
+
+  // Storage helpers for lockout state across tabs and page reloads
+  function setLockoutStorage(lockUntilMs, attempts) {
+    try {
+      localStorage.setItem('csu_lockout_until', String(lockUntilMs));
+      sessionStorage.setItem('csu_lockout_until', String(lockUntilMs));
+      localStorage.setItem('csu_login_attempts', String(attempts));
+      sessionStorage.setItem('csu_login_attempts', String(attempts));
+    } catch (e) {}
+  }
+
+  function setAttemptsStorage(attempts) {
+    try {
+      localStorage.setItem('csu_login_attempts', String(attempts));
+      sessionStorage.setItem('csu_login_attempts', String(attempts));
+    } catch (e) {}
+  }
+
+  function clearLockoutStorage() {
+    try {
+      localStorage.removeItem('csu_lockout_until');
+      sessionStorage.removeItem('csu_lockout_until');
+      localStorage.removeItem('csu_login_attempts');
+      sessionStorage.removeItem('csu_login_attempts');
+    } catch (e) {}
+  }
+
+  function getSavedLockout() {
+    return parseInt(localStorage.getItem('csu_lockout_until') || sessionStorage.getItem('csu_lockout_until') || '0', 10);
+  }
+
+  function getSavedAttempts() {
+    return parseInt(localStorage.getItem('csu_login_attempts') || sessionStorage.getItem('csu_login_attempts') || '0', 10);
+  }
+
+  function isCurrentlyLocked() {
+    const saved = getSavedLockout();
+    return Boolean(saved && Date.now() < saved);
+  }
 
   // Remember Me
   const remembered = localStorage.getItem('csu_piat_remember');
@@ -108,15 +147,24 @@ if (isLoggedIn()) {
   });
 
   function updateAttemptsBar(count) {
+    const bar = document.getElementById('attemptsBar');
+    const text = document.getElementById('attemptsText');
+    const progress = document.getElementById('attemptsProgress');
     if (count > 0) {
-      document.getElementById('attemptsBar').classList.remove('d-none');
-      document.getElementById('attemptsText').textContent = count + ' / ' + MAX_ATTEMPTS;
-      document.getElementById('attemptsProgress').style.width = ((count / MAX_ATTEMPTS) * 100) + '%';
+      bar.classList.remove('d-none');
+      const capped = Math.min(count, MAX_ATTEMPTS);
+      text.textContent = capped + ' / ' + MAX_ATTEMPTS;
+      progress.style.width = ((capped / MAX_ATTEMPTS) * 100) + '%';
+    } else {
+      bar.classList.add('d-none');
     }
   }
 
-  const LOCKOUT_SECS = 30;
-  const LOCKOUT_BUFFER_MS = 2000; // silent buffer after display hits 0
+  function setInputsDisabled(disabled) {
+    document.getElementById('username').disabled = disabled;
+    document.getElementById('password').disabled = disabled;
+    document.getElementById('loginBtn').disabled = disabled;
+  }
 
   function startLockoutCountdown(lockUntilMs) {
     const btn       = document.getElementById('loginBtn');
@@ -124,24 +172,23 @@ if (isLoggedIn()) {
     const lockMsg   = document.getElementById('lockMsg');
 
     clearInterval(countdownTimer);
-    btn.disabled = true;
+    setInputsDisabled(true);
     lockAlert.classList.remove('d-none');
+    updateAttemptsBar(MAX_ATTEMPTS);
 
     function tick() {
       const msLeft = lockUntilMs - Date.now();
       if (msLeft <= 0) {
         clearInterval(countdownTimer);
-        btn.disabled = false;
+        setInputsDisabled(false);
         btn.innerHTML = '<i class="fa-solid fa-right-to-bracket me-2"></i>Sign In';
         lockAlert.classList.add('d-none');
-        sessionStorage.removeItem('csu_lockout_until');
-        sessionStorage.removeItem('csu_login_attempts');
-        localAttempts = 0;
-        document.getElementById('attemptsBar').classList.add('d-none');
+        clearLockoutStorage();
+        updateAttemptsBar(0);
+        showToast('Lockout period ended. You may now attempt to sign in again.', 'info', 'Unlocked');
         return;
       }
-      // Display counts from LOCKOUT_SECS to 1; buffer is hidden from the user
-      const displaySecs = Math.max(1, Math.ceil((msLeft - LOCKOUT_BUFFER_MS) / 1000));
+      const displaySecs = Math.max(1, Math.ceil(msLeft / 1000));
       lockMsg.textContent = 'Too many failed attempts. Please wait ' + displaySecs + ' second(s) before trying again.';
       btn.innerHTML = '<i class="fa-solid fa-clock me-2"></i>Locked (' + displaySecs + 's)';
     }
@@ -150,42 +197,48 @@ if (isLoggedIn()) {
     countdownTimer = setInterval(tick, 1000);
   }
 
-  // On page load: restore lockout countdown if still active
-  const savedLockUntil = parseInt(sessionStorage.getItem('csu_lockout_until') || '0');
+  // On page load: restore lockout countdown or attempt state if active
+  const savedLockUntil = getSavedLockout();
   if (savedLockUntil && Date.now() < savedLockUntil) {
-    updateAttemptsBar(MAX_ATTEMPTS);
     startLockoutCountdown(savedLockUntil);
   } else {
     if (savedLockUntil) {
-      sessionStorage.removeItem('csu_lockout_until');
-      sessionStorage.removeItem('csu_login_attempts');
-      localAttempts = 0;
+      clearLockoutStorage();
     }
-    updateAttemptsBar(localAttempts);
+    const savedAttempts = getSavedAttempts();
+    if (savedAttempts > 0 && savedAttempts < MAX_ATTEMPTS) {
+      updateAttemptsBar(savedAttempts);
+    }
   }
 
   document.getElementById('loginForm').addEventListener('submit', async function(e) {
     e.preventDefault();
-    const username   = document.getElementById('username').value.trim();
-    const password   = document.getElementById('password').value;
-    const rememberMe = document.getElementById('rememberMe').checked;
-    const btn        = document.getElementById('loginBtn');
-    const lockAlert  = document.getElementById('lockAlert');
+    const usernameInput = document.getElementById('username');
+    const passwordInput = document.getElementById('password');
+    const username      = usernameInput.value.trim();
+    const password      = passwordInput.value;
+    const rememberMe    = document.getElementById('rememberMe').checked;
+    const btn           = document.getElementById('loginBtn');
+    const lockAlert     = document.getElementById('lockAlert');
+    const lockMsg       = document.getElementById('lockMsg');
+
+    // Prevent submit while locked
+    if (isCurrentlyLocked()) {
+      startLockoutCountdown(getSavedLockout());
+      return;
+    }
 
     if (!username || !password) {
       showToast('Please enter your username and password.', 'warning');
       return;
     }
 
-    // Prevent submit while locked
-    if (sessionStorage.getItem('csu_lockout_until') && Date.now() < parseInt(sessionStorage.getItem('csu_lockout_until'))) return;
-
     btn.disabled = true;
     btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Signing in...';
     lockAlert.classList.add('d-none');
 
     try {
-      const res  = await fetch('api/auth/login.php', {
+      const res = await fetch('api/auth/login.php', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
         body:    JSON.stringify({ username, password }),
@@ -193,8 +246,7 @@ if (isLoggedIn()) {
       const data = await res.json();
 
       if (data.success) {
-        sessionStorage.removeItem('csu_login_attempts');
-        sessionStorage.removeItem('csu_lockout_until');
+        clearLockoutStorage();
         if (rememberMe) localStorage.setItem('csu_piat_remember', username);
         else localStorage.removeItem('csu_piat_remember');
 
@@ -212,19 +264,24 @@ if (isLoggedIn()) {
         btn.innerHTML = '<i class="fa-solid fa-right-to-bracket me-2"></i>Sign In';
 
         if (data.locked) {
-          // Always lock for exactly LOCKOUT_SECS from now (+ hidden buffer)
-          const lockUntilMs = Date.now() + LOCKOUT_SECS * 1000 + LOCKOUT_BUFFER_MS;
-          sessionStorage.setItem('csu_lockout_until', String(lockUntilMs));
-          sessionStorage.setItem('csu_login_attempts', String(MAX_ATTEMPTS));
-          localAttempts = MAX_ATTEMPTS;
-          updateAttemptsBar(MAX_ATTEMPTS);
+          const lockSeconds = data.seconds_remaining || LOCKOUT_SECS;
+          const lockUntilMs = Date.now() + (lockSeconds * 1000);
+          setLockoutStorage(lockUntilMs, MAX_ATTEMPTS);
           startLockoutCountdown(lockUntilMs);
+          showToast(data.error, 'danger', 'Account Locked');
         } else {
           lockAlert.classList.remove('d-none');
-          document.getElementById('lockMsg').textContent = data.error;
-          localAttempts = data.attempts || (localAttempts + 1);
-          sessionStorage.setItem('csu_login_attempts', String(localAttempts));
-          updateAttemptsBar(localAttempts);
+          lockMsg.textContent = data.error;
+          const currentAttempts = data.attempts || (getSavedAttempts() + 1);
+          setAttemptsStorage(currentAttempts);
+          updateAttemptsBar(currentAttempts);
+          if (currentAttempts >= MAX_ATTEMPTS) {
+            const lockUntilMs = Date.now() + (LOCKOUT_SECS * 1000);
+            setLockoutStorage(lockUntilMs, MAX_ATTEMPTS);
+            startLockoutCountdown(lockUntilMs);
+          } else {
+            showToast(data.error, 'danger', 'Login Failed');
+          }
         }
       }
     } catch (err) {
