@@ -84,6 +84,26 @@ function ensureIpcrColumns(PDO $db): void {
 }
 
 /**
+ * Ensure first_name, middle_name, and last_name columns exist in users table.
+ */
+function ensureUserColumns(PDO $db): void {
+    static $done = false;
+    if ($done) return;
+    try {
+        $cols = $db->query("SHOW COLUMNS FROM users LIKE 'first_name'")->fetchAll();
+        if (empty($cols)) {
+            $db->exec("ALTER TABLE users 
+                ADD COLUMN first_name VARCHAR(100) DEFAULT NULL AFTER name,
+                ADD COLUMN middle_name VARCHAR(100) DEFAULT NULL AFTER first_name,
+                ADD COLUMN last_name VARCHAR(100) DEFAULT NULL AFTER middle_name");
+        }
+    } catch (Exception $e) {
+        // Silently fail if table not present
+    }
+    $done = true;
+}
+
+/**
  * Ensure q_rating, e_rating, t_rating, measure, remarks, rating DECIMAL exist in opcr_items table.
  */
 function ensureOpcrColumns(PDO $db): void {

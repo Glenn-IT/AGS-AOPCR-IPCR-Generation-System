@@ -88,9 +88,17 @@ $user = requireAuth(['superadmin']);
       <div class="modal-body">
         <input type="hidden" id="editUserId">
         <div class="row g-3">
-          <div class="col-md-6">
-            <label class="form-label">Full Name <span class="text-danger">*</span></label>
-            <input type="text" class="form-control form-control-sm" id="editName">
+          <div class="col-md-4">
+            <label class="form-label">First Name <span class="text-danger">*</span></label>
+            <input type="text" class="form-control form-control-sm" id="editFname" placeholder="First name">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Middle Name</label>
+            <input type="text" class="form-control form-control-sm" id="editMname" placeholder="Middle name">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Last Name <span class="text-danger">*</span></label>
+            <input type="text" class="form-control form-control-sm" id="editLname" placeholder="Last name">
           </div>
           <div class="col-md-6">
             <label class="form-label">Email</label>
@@ -221,7 +229,11 @@ $user = requireAuth(['superadmin']);
         <h6 class="mb-0">${u.name}</h6><small class="text-muted">${[u.designation, u.position].filter(Boolean).join(' · ') || 'N/A'}</small>
       </div>
       <table class="table table-sm table-borderless" style="font-size:0.85rem">
-        <tr><td class="text-muted fw-500" style="width:40%">Username</td><td>${u.username}</td></tr>
+        <tr><td class="text-muted fw-500" style="width:40%">Full Name</td><td>${u.name}</td></tr>
+        ${u.first_name ? `<tr><td class="text-muted fw-500">First Name</td><td>${u.first_name}</td></tr>` : ''}
+        ${u.middle_name ? `<tr><td class="text-muted fw-500">Middle Name</td><td>${u.middle_name}</td></tr>` : ''}
+        ${u.last_name ? `<tr><td class="text-muted fw-500">Last Name</td><td>${u.last_name}</td></tr>` : ''}
+        <tr><td class="text-muted fw-500">Username</td><td>${u.username}</td></tr>
         <tr><td class="text-muted fw-500">Email</td><td>${u.email || '-'}</td></tr>
         <tr><td class="text-muted fw-500">Gender</td><td>${u.gender || '-'}</td></tr>
         <tr><td class="text-muted fw-500">Designation</td><td>${u.designation || '-'}</td></tr>
@@ -281,7 +293,25 @@ $user = requireAuth(['superadmin']);
     if (!u) return;
     loadDepartments();
     document.getElementById('editUserId').value       = u.id;
-    document.getElementById('editName').value         = u.name || '';
+    
+    // Split name into parts if individual columns are empty
+    let fn = u.first_name || '';
+    let mn = u.middle_name || '';
+    let ln = u.last_name || '';
+    if (!fn && !ln && u.name) {
+      const parts = u.name.trim().split(/\s+/);
+      fn = parts[0] || '';
+      if (parts.length === 2) {
+        ln = parts[1];
+      } else if (parts.length > 2) {
+        mn = parts[1];
+        ln = parts.slice(2).join(' ');
+      }
+    }
+
+    document.getElementById('editFname').value        = fn;
+    document.getElementById('editMname').value        = mn;
+    document.getElementById('editLname').value        = ln;
     document.getElementById('editEmail').value        = u.email || '';
     document.getElementById('editGender').value       = u.gender || '';
     document.getElementById('editDepartment').value   = u.department_id || '';
@@ -294,9 +324,13 @@ $user = requireAuth(['superadmin']);
   }
 
   async function saveEdit() {
-    const btn = document.getElementById('saveEditBtn');
-    const name = document.getElementById('editName').value.trim();
-    if (!name) { showToast('Name is required.', 'warning'); return; }
+    const btn   = document.getElementById('saveEditBtn');
+    const fname = document.getElementById('editFname').value.trim();
+    const mname = document.getElementById('editMname').value.trim();
+    const lname = document.getElementById('editLname').value.trim();
+    const name  = [fname, mname, lname].filter(Boolean).join(' ');
+
+    if (!fname || !lname) { showToast('First Name and Last Name are required.', 'warning'); return; }
     btn.disabled = true;
     btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Saving...';
     const res = await fetch(API_BASE + 'users/update.php', {
@@ -304,6 +338,12 @@ $user = requireAuth(['superadmin']);
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         id:          document.getElementById('editUserId').value,
+        fname,
+        mname,
+        lname,
+        first_name:  fname,
+        middle_name: mname,
+        last_name:   lname,
         name,
         email:       document.getElementById('editEmail').value.trim(),
         gender:      document.getElementById('editGender').value,

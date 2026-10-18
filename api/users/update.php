@@ -10,6 +10,8 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 requireAuth(['superadmin']);
 
+require_once '../../config/helpers.php';
+
 $input = json_decode(file_get_contents('php://input'), true) ?? $_POST;
 $id    = (int)($input['id'] ?? 0);
 
@@ -18,7 +20,24 @@ if (!$id) {
     exit;
 }
 
+$fname       = trim($input['fname'] ?? $input['first_name'] ?? '');
+$mname       = trim($input['mname'] ?? $input['middle_name'] ?? '');
+$lname       = trim($input['lname'] ?? $input['last_name'] ?? '');
 $name        = trim($input['name'] ?? '');
+
+if (!$name && ($fname || $lname)) {
+    $name = trim(implode(' ', array_filter([$fname, $mname, $lname])));
+} elseif ($name && !$fname && !$lname) {
+    $parts = preg_split('/\s+/', $name);
+    $fname = $parts[0] ?? '';
+    if (count($parts) === 2) {
+        $lname = $parts[1];
+    } elseif (count($parts) > 2) {
+        $mname = $parts[1];
+        $lname = implode(' ', array_slice($parts, 2));
+    }
+}
+
 $email       = trim($input['email'] ?? '');
 $gender      = $input['gender'] ?? '';
 $dept        = $input['department'] ?? '';
@@ -79,8 +98,10 @@ if ($dept) {
     }
 }
 
-$sets   = ['name = ?', 'email = ?', 'gender = ?', 'position = ?', 'designation = ?'];
-$params = [$name, $email ?: null, $gender ?: null, $position ?: null, $designation];
+ensureUserColumns($db);
+
+$sets   = ['name = ?', 'first_name = ?', 'middle_name = ?', 'last_name = ?', 'email = ?', 'gender = ?', 'position = ?', 'designation = ?'];
+$params = [$name, $fname ?: null, $mname ?: null, $lname ?: null, $email ?: null, $gender ?: null, $position ?: null, $designation];
 
 if ($dept)   { $sets[] = 'department_id = ?'; $params[] = $dept; }
 if ($role)   { $sets[] = 'role = ?';          $params[] = $role; }

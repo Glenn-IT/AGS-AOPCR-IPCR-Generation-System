@@ -66,9 +66,17 @@ $user = requireAuth(['admin']);
             <div class="card-body">
               <form id="profileForm">
                 <div class="row g-3">
-                  <div class="col-md-6">
-                    <label class="form-label">Full Name</label>
-                    <input type="text" class="form-control" id="editName">
+                  <div class="col-md-4">
+                    <label class="form-label">First Name</label>
+                    <input type="text" class="form-control" id="editFname" placeholder="First name">
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label">Middle Name</label>
+                    <input type="text" class="form-control" id="editMname" placeholder="Middle name">
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label">Last Name</label>
+                    <input type="text" class="form-control" id="editLname" placeholder="Last name">
                   </div>
                   <div class="col-md-6">
                     <label class="form-label">Username</label>
@@ -287,7 +295,23 @@ $user = requireAuth(['admin']);
   document.getElementById('profileDept').textContent = session.department || '-';
   document.getElementById('profileEmail').textContent = session.email || '-';
   document.getElementById('profileLastLogin').textContent = session.lastLogin || '-';
-  document.getElementById('editName').value = session.name;
+  let fn = session.first_name || session.fname || '';
+  let mn = session.middle_name || session.mname || '';
+  let ln = session.last_name || session.lname || '';
+  if (!fn && !ln && session.name) {
+    const parts = session.name.trim().split(/\s+/);
+    fn = parts[0] || '';
+    if (parts.length === 2) {
+      ln = parts[1];
+    } else if (parts.length > 2) {
+      mn = parts[1];
+      ln = parts.slice(2).join(' ');
+    }
+  }
+
+  document.getElementById('editFname').value = fn;
+  document.getElementById('editMname').value = mn;
+  document.getElementById('editLname').value = ln;
   document.getElementById('editUsername').value = session.username;
   document.getElementById('editEmail').value = session.email || '';
   document.getElementById('editGender').value = session.gender || '';
@@ -295,10 +319,31 @@ $user = requireAuth(['admin']);
 
   document.getElementById('profileForm').addEventListener('submit', async function(e) {
     e.preventDefault();
+    const fname = document.getElementById('editFname').value.trim();
+    const mname = document.getElementById('editMname').value.trim();
+    const lname = document.getElementById('editLname').value.trim();
+    const name  = [fname, mname, lname].filter(Boolean).join(' ');
+
+    if (!fname || !lname) {
+      showToast('First Name and Last Name are required.', 'warning');
+      return;
+    }
+
     const res = await fetch(API_BASE + 'user/update-profile.php', {
       method: 'POST', credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: document.getElementById('editName').value.trim(), email: document.getElementById('editEmail').value.trim(), gender: document.getElementById('editGender').value, position: document.getElementById('editPosition').value.trim() })
+      body: JSON.stringify({
+        fname,
+        mname,
+        lname,
+        first_name:  fname,
+        middle_name: mname,
+        last_name:   lname,
+        name,
+        email: document.getElementById('editEmail').value.trim(),
+        gender: document.getElementById('editGender').value,
+        position: document.getElementById('editPosition').value.trim()
+      })
     }).then(r => r.json()).catch(() => null);
     if (res?.success) { showToast('Profile updated successfully!', 'success'); setTimeout(() => location.reload(), 1000); }
     else showToast(res?.error || 'Failed to update profile.', 'danger');

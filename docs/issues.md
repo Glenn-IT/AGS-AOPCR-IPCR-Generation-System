@@ -1,3 +1,2 @@
-Login - All accounts
-    - [x] add a attempt feature that if the user failed to login 3 attempts it will countdown to 30 secs and lock the login button (COMPLETED)
-
+Registration 
+    - [x] can you seperate the Fullname make it Fname Mname and Lname they should have diffenret textnbpx ok updatetaht apart check the whole system (COMPLETED) 

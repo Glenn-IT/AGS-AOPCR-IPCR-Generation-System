@@ -30,7 +30,7 @@ try {
 <body>
 <div id="toast-container"></div>
 <div class="login-wrapper" style="align-items:flex-start;padding:30px 20px">
-  <div class="login-card" style="max-width:520px;margin:0 auto">
+  <div class="login-card" style="max-width:600px;margin:0 auto">
     <div class="login-header">
       <div class="login-logo"><i class="fa-solid fa-user-plus"></i></div>
       <h4>CREATE ACCOUNT</h4>
@@ -39,11 +39,25 @@ try {
     <div class="login-body">
       <form id="registerForm" novalidate>
         <div class="row g-3">
-          <div class="col-12">
-            <label class="form-label">Full Name <span class="text-danger">*</span></label>
+          <div class="col-md-4">
+            <label class="form-label">First Name <span class="text-danger">*</span></label>
             <div class="input-group">
-              <span class="input-group-text"><i class="fa-solid fa-id-card"></i></span>
-              <input type="text" class="form-control" id="regName" placeholder="e.g. Juan dela Cruz" required>
+              <span class="input-group-text"><i class="fa-solid fa-user"></i></span>
+              <input type="text" class="form-control" id="regFname" placeholder="e.g. Juan" required autocomplete="given-name">
+            </div>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Middle Name</label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="fa-solid fa-user"></i></span>
+              <input type="text" class="form-control" id="regMname" placeholder="e.g. Santos" autocomplete="additional-name">
+            </div>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Last Name <span class="text-danger">*</span></label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="fa-solid fa-user"></i></span>
+              <input type="text" class="form-control" id="regLname" placeholder="e.g. Dela Cruz" required autocomplete="family-name">
             </div>
           </div>
           <div class="col-md-6">
@@ -183,21 +197,23 @@ try {
 
   document.getElementById('registerForm').addEventListener('submit', async function(e) {
     e.preventDefault();
-    const name      = document.getElementById('regName').value.trim();
-    const username  = document.getElementById('regUsername').value.trim();
-    const email     = document.getElementById('regEmail').value.trim();
-    const password  = document.getElementById('regPassword').value;
-    const confirmPw = document.getElementById('regConfirmPw').value;
-    const gender    = document.getElementById('regGender').value;
-    const dept      = document.getElementById('regDepartment').value;
+    const fname       = document.getElementById('regFname').value.trim();
+    const mname       = document.getElementById('regMname').value.trim();
+    const lname       = document.getElementById('regLname').value.trim();
+    const username    = document.getElementById('regUsername').value.trim();
+    const email       = document.getElementById('regEmail').value.trim();
+    const password    = document.getElementById('regPassword').value;
+    const confirmPw   = document.getElementById('regConfirmPw').value;
+    const gender      = document.getElementById('regGender').value;
+    const dept        = document.getElementById('regDepartment').value;
     const position    = document.getElementById('regPosition').value.trim();
     const designation = document.getElementById('regDesignation').value;
-    const secQ      = document.getElementById('regSecQ').value;
-    const secA      = document.getElementById('regSecA').value.trim();
-    const btn       = document.getElementById('registerBtn');
+    const secQ        = document.getElementById('regSecQ').value;
+    const secA        = document.getElementById('regSecA').value.trim();
+    const btn         = document.getElementById('registerBtn');
 
-    if (!name || !username || !password || !dept || !secQ || !secA) {
-      showToast('Please fill in all required fields.', 'warning'); return;
+    if (!fname || !lname || !username || !password || !dept || !secQ || !secA) {
+      showToast('Please fill in all required fields (First Name, Last Name, Username, etc.).', 'warning'); return;
     }
     if (password.length < 6) { showToast('Password must be at least 6 characters.', 'warning'); return; }
     if (password !== confirmPw) { showToast('Passwords do not match.', 'danger'); return; }
@@ -205,12 +221,17 @@ try {
     btn.disabled = true;
     btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Registering...';
 
+    const fullName = [fname, mname, lname].filter(Boolean).join(' ');
+
     try {
       const res = await fetch('api/auth/register.php', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
         body:    JSON.stringify({
-          name, username, email, password, confirm_password: confirmPw,
+          fname, mname, lname,
+          first_name: fname, middle_name: mname, last_name: lname,
+          name: fullName,
+          username, email, password, confirm_password: confirmPw,
           gender, department: dept, position, designation, security_question: secQ, security_answer: secA,
         }),
       });

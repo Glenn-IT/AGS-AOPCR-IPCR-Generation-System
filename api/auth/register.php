@@ -1,6 +1,8 @@
 <?php
 require_once __DIR__ . '/../../config/session.php';
 
+require_once __DIR__ . '/../../config/helpers.php';
+
 header('Content-Type: application/json');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -9,21 +11,39 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
-$input    = json_decode(file_get_contents('php://input'), true) ?? $_POST;
-$name     = trim($input['name'] ?? '');
-$username = trim($input['username'] ?? '');
-$password = $input['password'] ?? '';
-$email    = trim($input['email'] ?? '');
+$input = json_decode(file_get_contents('php://input'), true) ?? $_POST;
+$fname = trim($input['fname'] ?? $input['first_name'] ?? '');
+$mname = trim($input['mname'] ?? $input['middle_name'] ?? '');
+$lname = trim($input['lname'] ?? $input['last_name'] ?? '');
+
+$name  = trim($input['name'] ?? '');
+if (!$name) {
+    $name = trim(implode(' ', array_filter([$fname, $mname, $lname])));
+} elseif (!$fname && !$lname) {
+    // If only full name was submitted, split into first, middle, last
+    $parts = preg_split('/\s+/', $name);
+    $fname = $parts[0] ?? '';
+    if (count($parts) === 2) {
+        $lname = $parts[1];
+    } elseif (count($parts) > 2) {
+        $mname = $parts[1];
+        $lname = implode(' ', array_slice($parts, 2));
+    }
+}
+
+$username    = trim($input['username'] ?? '');
+$password    = $input['password'] ?? '';
+$email       = trim($input['email'] ?? '');
 $gender      = $input['gender'] ?? '';
 $dept        = $input['department'] ?? '';
 $position    = trim($input['position'] ?? '');
 $designation = $input['designation'] ?? '';
-$secQ     = $input['security_question'] ?? '';
-$secA     = trim($input['security_answer'] ?? '');
+$secQ        = $input['security_question'] ?? '';
+$secA        = trim($input['security_answer'] ?? '');
 
 // Validation
-if (!$name || !$username || !$password || !$dept || !$secQ || !$secA) {
-    echo json_encode(['success' => false, 'error' => 'Please fill in all required fields.']);
+if (!$fname || !$lname || !$username || !$password || !$dept || !$secQ || !$secA) {
+    echo json_encode(['success' => false, 'error' => 'Please fill in all required fields (First Name, Last Name, Username, etc.).']);
     exit;
 }
 if (strlen($password) < 6) {
@@ -36,6 +56,7 @@ if ($password !== ($input['confirm_password'] ?? '')) {
 }
 
 $db = getDB();
+ensureUserColumns($db);
 
 // Check username taken
 $stmt = $db->prepare('SELECT id FROM users WHERE username = ? LIMIT 1');
@@ -53,9 +74,13 @@ if (!$stmt->fetch()) {
     exit;
 }
 
-// Build avatar initials
-$nameParts = explode(' ', $name);
-$avatar    = strtoupper(substr($nameParts[0], 0, 1) . (isset($nameParts[1]) ? substr($nameParts[1], 0, 1) : ''));
+// Build avatar initials (First letter of first name + First letter of last name)
+$firstInitial = mb_substr($fname ?: $name, 0, 1);
+$lastInitial  = mb_substr($lname ?: '', 0, 1);
+$avatar       = strtoupper($firstInitial . $lastInitial);
+if (!$avatar) {
+    $avatar = 'U';
+}
 
 // Hash password and security answer
 $hashedPw  = password_hash($password, PASSWORD_BCRYPT);
@@ -68,11 +93,13 @@ $adminDesignations = ['Dean', 'Department Head', 'Office Head'];
 $assignedRole = in_array($designation, $adminDesignations) ? ROLE_ADMIN : ROLE_USER;
 
 $stmt = $db->prepare(
-    'INSERT INTO users (username, password, role, name, position, designation, department_id, email, gender, status, avatar, security_question, security_answer)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+    'INSERT INTO users (username, password, role, name, first_name, middle_name, last_name, position, designation, department_id, email, gender, status, avatar, security_question, security_answer)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
 );
 $stmt->execute([
-    $username, $hashedPw, $assignedRole, $name, $position, $designation,
+    $username, $hashedPw, $assignedRole, $name,
+    $fname ?: null, $mname ?: null, $lname ?: null,
+    $position, $designation,
     $dept, $email, $gender ?: null, 'pending',
     $avatar, $secQ, $hashedAns
 ]);

@@ -113,20 +113,32 @@ function resetPassword(username, newPassword) {
 // Registration (used by register.html inline JS)
 // ----------------------------------------------------------------
 function registerUser(data) {
+  const fname = data.fname || data.first_name || '';
+  const mname = data.mname || data.middle_name || '';
+  const lname = data.lname || data.last_name || '';
+  const name  = data.name || [fname, mname, lname].filter(Boolean).join(' ');
+
   return fetch('api/auth/register.php', {
     method:  'POST',
     headers: { 'Content-Type': 'application/json' },
     body:    JSON.stringify({
-      name:              data.name,
+      fname,
+      mname,
+      lname,
+      first_name:        fname,
+      middle_name:       mname,
+      last_name:         lname,
+      name,
       username:          data.username,
       password:          data.password,
-      confirm_password:  data.password,
+      confirm_password:  data.confirm_password || data.password,
       email:             data.email || '',
       gender:            data.gender || '',
       department:        data.department,
       position:          data.position || '',
-      security_question: data.securityQuestion,
-      security_answer:   data.securityAnswer,
+      designation:       data.designation || '',
+      security_question: data.securityQuestion || data.security_question,
+      security_answer:   data.securityAnswer || data.security_answer,
     }),
   }).then(r => r.json());
 }
