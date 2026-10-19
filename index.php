@@ -24,7 +24,7 @@ if (isLoggedIn()) {
     <div class="login-header">
       <div class="login-logo"><img src="img/CSU-Logo.png" alt="CSU Logo"></div>
       <h4>CAGAYAN STATE UNIVERSITY</h4>
-      <p>Piat Campus &bull; Ytawes District, Piat, Cagayan</p>
+      <p>Piat Campus &bull; Piat, Cagayan</p>
       <div style="margin-top:10px;padding:6px 14px;background:rgba(255,255,255,0.15);border-radius:20px;display:inline-block;font-size:0.78rem;letter-spacing:1px">
         AOPCR/IPCR Generation System
       </div>
