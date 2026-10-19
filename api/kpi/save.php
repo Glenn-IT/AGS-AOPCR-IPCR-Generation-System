@@ -8,6 +8,142 @@ $input = json_decode(file_get_contents('php://input'), true) ?? [];
 
 $db = getDB();
 
+// Check if batch creation is requested
+$rawItems = $input['items'] ?? null;
+
+if (is_array($rawItems)) {
+    if (empty($rawItems)) {
+        echo json_encode(['success' => false, 'error' => 'No KPI items provided in batch.']);
+        exit;
+    }
+
+    $topCategory   = in_array($input['category'] ?? '', ['core','strategic','support']) ? $input['category'] : '';
+    $topScope      = in_array($input['scope'] ?? '', ['global','department','user']) ? $input['scope'] : null;
+    $topAssignedTo = intval($input['assigned_to'] ?? 0) ?: null;
+    $topDeptId     = $input['department_id'] ?? null;
+
+    // Validate scope and permissions for the batch
+    if ($user['role'] === 'superadmin') {
+        if ($topScope === null) $topScope = 'global';
+        if ($topScope === 'user' && $topAssignedTo) {
+            $chk = $db->prepare('SELECT id, role, department_id FROM users WHERE id = ? AND status = "active"');
+            $chk->execute([$topAssignedTo]);
+            $target_user = $chk->fetch();
+            if (!$target_user || $target_user['role'] !== 'admin') {
+                echo json_encode(['success' => false, 'error' => 'Assigned user must be an active Admin (Dean/Head).']);
+                exit;
+            }
+            $topDeptId = $target_user['department_id'];
+        } elseif ($topScope !== 'user') {
+            $topAssignedTo = null;
+        }
+    } else {
+        $topDeptId = $user['department_id'];
+        if ($topScope === 'global') {
+            echo json_encode(['success' => false, 'error' => 'Admins cannot create global KPIs.']);
+            exit;
+        }
+        if ($topScope === null) $topScope = 'department';
+        if ($topScope === 'user' && $topAssignedTo) {
+            $chk = $db->prepare('SELECT id, role, department_id FROM users WHERE id = ? AND status = "active"');
+            $chk->execute([$topAssignedTo]);
+            $target_user = $chk->fetch();
+            if (!$target_user || $target_user['role'] !== 'user') {
+                echo json_encode(['success' => false, 'error' => 'Assigned user must be an active Faculty/Staff member.']);
+                exit;
+            }
+            if ($target_user['department_id'] !== $topDeptId) {
+                echo json_encode(['success' => false, 'error' => 'You can only assign KPIs to faculty in your own department.']);
+                exit;
+            }
+        } elseif ($topScope !== 'user') {
+            $topAssignedTo = null;
+        }
+    }
+
+    // Filter and validate each item in the batch
+    $validItems = [];
+    foreach ($rawItems as $idx => $raw) {
+        $cat = in_array($raw['category'] ?? '', ['core','strategic','support']) ? $raw['category'] : $topCategory;
+        $mfo = trim($raw['mfo'] ?? '');
+        $ind = trim($raw['success_indicator'] ?? '');
+        $tgt = trim($raw['target'] ?? '');
+        $msr = trim($raw['measure'] ?? '');
+
+        // If row is entirely blank, skip it
+        if ($mfo === '' && $ind === '' && $tgt === '') {
+            continue;
+        }
+
+        if (!$cat) {
+            echo json_encode(['success' => false, 'error' => "Function #" . ($idx + 1) . ": Category is required."]);
+            exit;
+        }
+        if (!$mfo) {
+            echo json_encode(['success' => false, 'error' => "Function #" . ($idx + 1) . ": MFO / PAP is required."]);
+            exit;
+        }
+        if (!$ind) {
+            echo json_encode(['success' => false, 'error' => "Function #" . ($idx + 1) . ": Success Indicator is required."]);
+            exit;
+        }
+
+        $validItems[] = [
+            'category'          => $cat,
+            'mfo'               => $mfo,
+            'success_indicator' => $ind,
+            'target'            => $tgt,
+            'measure'           => $msr,
+            'department_id'     => $topDeptId,
+            'scope'             => $topScope,
+            'assigned_to'       => $topAssignedTo,
+        ];
+    }
+
+    if (empty($validItems)) {
+        echo json_encode(['success' => false, 'error' => 'Please provide at least one valid function with MFO and Success Indicator.']);
+        exit;
+    }
+
+    try {
+        $db->beginTransaction();
+        $stmt = $db->prepare('INSERT INTO kpi_items (category, mfo, success_indicator, target, measure, department_id, scope, assigned_to, is_active, created_by) VALUES (?,?,?,?,?,?,?,?,1,?)');
+        $insertedIds = [];
+
+        foreach ($validItems as $vi) {
+            $stmt->execute([
+                $vi['category'],
+                $vi['mfo'],
+                $vi['success_indicator'],
+                $vi['target'],
+                $vi['measure'],
+                $vi['department_id'],
+                $vi['scope'],
+                $vi['assigned_to'],
+                $user['id']
+            ]);
+            $insertedIds[] = $db->lastInsertId();
+        }
+
+        $count = count($insertedIds);
+        $assignedLabel = $topAssignedTo ? "user ID $topAssignedTo" : ($topDeptId ?? 'all');
+        addLog($user['id'], "Added $count KPIs (scope: $topScope, assigned: $assignedLabel)");
+
+        $db->commit();
+        echo json_encode([
+            'success' => true,
+            'count'   => $count,
+            'message' => "$count KPIs added successfully.",
+            'ids'     => $insertedIds
+        ]);
+        exit;
+    } catch (Exception $e) {
+        if ($db->inTransaction()) $db->rollBack();
+        echo json_encode(['success' => false, 'error' => 'Failed to save KPIs: ' . $e->getMessage()]);
+        exit;
+    }
+}
+
 $id        = intval($input['id'] ?? 0);
 $category  = in_array($input['category'] ?? '', ['core','strategic','support']) ? $input['category'] : '';
 $mfo       = trim($input['mfo'] ?? '');

@@ -71,7 +71,18 @@ $user = requireAuth(['admin']);
   <div class="mb-3">
     <div class="ipcr-section-header d-flex justify-content-between align-items-center">
       <span><i class="fa-solid fa-star me-2"></i>A. CORE FUNCTION</span>
-      <button class="btn btn-sm btn-light" onclick="addRow('core')"><i class="fa-solid fa-plus me-1"></i>Add Row</button>
+      <div class="btn-group btn-group-sm no-print">
+        <button class="btn btn-sm btn-light" onclick="addRow('core')"><i class="fa-solid fa-plus me-1"></i>Add Row</button>
+        <button type="button" class="btn btn-sm btn-light dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
+          <span class="visually-hidden">Toggle Dropdown</span>
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end shadow-sm" style="font-size:0.8rem">
+          <li><a class="dropdown-item" href="javascript:void(0)" onclick="addRow('core', 3)"><i class="fa-solid fa-plus me-1 text-primary"></i>Add 3 Functions</a></li>
+          <li><a class="dropdown-item" href="javascript:void(0)" onclick="addRow('core', 5)"><i class="fa-solid fa-plus me-1 text-primary"></i>Add 5 Functions</a></li>
+          <li><hr class="dropdown-divider"></li>
+          <li><a class="dropdown-item" href="javascript:void(0)" onclick="promptAddRows('core')"><i class="fa-solid fa-list-ol me-1 text-secondary"></i>Add Custom Count...</a></li>
+        </ul>
+      </div>
     </div>
     <div class="table-responsive">
       <table class="table table-bordered mb-0" id="coreTable">
@@ -88,7 +99,18 @@ $user = requireAuth(['admin']);
   <div class="mb-3">
     <div class="ipcr-section-header d-flex justify-content-between align-items-center">
       <span><i class="fa-solid fa-chess me-2"></i>B. STRATEGIC FUNCTION</span>
-      <button class="btn btn-sm btn-light" onclick="addRow('strategic')"><i class="fa-solid fa-plus me-1"></i>Add Row</button>
+      <div class="btn-group btn-group-sm no-print">
+        <button class="btn btn-sm btn-light" onclick="addRow('strategic')"><i class="fa-solid fa-plus me-1"></i>Add Row</button>
+        <button type="button" class="btn btn-sm btn-light dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
+          <span class="visually-hidden">Toggle Dropdown</span>
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end shadow-sm" style="font-size:0.8rem">
+          <li><a class="dropdown-item" href="javascript:void(0)" onclick="addRow('strategic', 3)"><i class="fa-solid fa-plus me-1 text-primary"></i>Add 3 Functions</a></li>
+          <li><a class="dropdown-item" href="javascript:void(0)" onclick="addRow('strategic', 5)"><i class="fa-solid fa-plus me-1 text-primary"></i>Add 5 Functions</a></li>
+          <li><hr class="dropdown-divider"></li>
+          <li><a class="dropdown-item" href="javascript:void(0)" onclick="promptAddRows('strategic')"><i class="fa-solid fa-list-ol me-1 text-secondary"></i>Add Custom Count...</a></li>
+        </ul>
+      </div>
     </div>
     <div class="table-responsive">
       <table class="table table-bordered mb-0" id="strategicTable">
@@ -105,7 +127,18 @@ $user = requireAuth(['admin']);
   <div class="mb-3">
     <div class="ipcr-section-header d-flex justify-content-between align-items-center">
       <span><i class="fa-solid fa-hands-helping me-2"></i>C. SUPPORT FUNCTION</span>
-      <button class="btn btn-sm btn-light" onclick="addRow('support')"><i class="fa-solid fa-plus me-1"></i>Add Row</button>
+      <div class="btn-group btn-group-sm no-print">
+        <button class="btn btn-sm btn-light" onclick="addRow('support')"><i class="fa-solid fa-plus me-1"></i>Add Row</button>
+        <button type="button" class="btn btn-sm btn-light dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
+          <span class="visually-hidden">Toggle Dropdown</span>
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end shadow-sm" style="font-size:0.8rem">
+          <li><a class="dropdown-item" href="javascript:void(0)" onclick="addRow('support', 3)"><i class="fa-solid fa-plus me-1 text-primary"></i>Add 3 Functions</a></li>
+          <li><a class="dropdown-item" href="javascript:void(0)" onclick="addRow('support', 5)"><i class="fa-solid fa-plus me-1 text-primary"></i>Add 5 Functions</a></li>
+          <li><hr class="dropdown-divider"></li>
+          <li><a class="dropdown-item" href="javascript:void(0)" onclick="promptAddRows('support')"><i class="fa-solid fa-list-ol me-1 text-secondary"></i>Add Custom Count...</a></li>
+        </ul>
+      </div>
     </div>
     <div class="table-responsive">
       <table class="table table-bordered mb-0" id="supportTable">
@@ -243,10 +276,20 @@ $user = requireAuth(['admin']);
     return tr;
   }
 
-  function addRow(section) {
+  function addRow(section, count = 1) {
     const tbodyMap = { core: 'coreBody', strategic: 'strategicBody', support: 'supportBody' };
-    document.getElementById(tbodyMap[section]).appendChild(createRow());
+    const n = Math.max(1, parseInt(count) || 1);
+    for (let i = 0; i < n; i++) {
+      document.getElementById(tbodyMap[section]).appendChild(createRow());
+    }
     computeOPCRAverages();
+  }
+
+  function promptAddRows(section) {
+    const count = prompt('How many function rows would you like to add?', '5');
+    if (count && parseInt(count) > 0) {
+      addRow(section, parseInt(count));
+    }
   }
 
   function getRows(tbodyId) {

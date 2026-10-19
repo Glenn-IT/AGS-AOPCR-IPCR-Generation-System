@@ -172,7 +172,7 @@ you MUST update both the PHP endpoint and ALL consumer Views listed below!
 | Endpoint | Method | Role | Request Payload | Response Schema | Calling Files / UI Components |
 |---|---|---|---|---|---|
 | `list.php` | GET | Logged-in | `?category=&department_id=` | `{success: bool, items: array, grouped: {core: [], strategic: [], support: []}}` | `views/users/ipcr-form.php`, `views/admin/ipcr-form.php`, `views/admin/kpi-management.php`, `views/superadmin/settings.php` |
-| `save.php` | POST | `admin`, `superadmin` | `{id?, category, mfo, success_indicator, target, measure?, scope, department_id?, assigned_to?}` | `{success: bool, id: int, message: string}` | `views/admin/kpi-management.php`, `views/superadmin/settings.php` |
+| `save.php` | POST | `admin`, `superadmin` | Single: `{id?, category, mfo, success_indicator, target, measure?, scope, department_id?, assigned_to?}`<br>Batch: `{category?, scope?, department_id?, assigned_to?, items: [{mfo, success_indicator, target, measure?, category?}]}` | `{success: bool, id?: int, count?: int, ids?: array, message: string}` | `views/admin/kpi-management.php`, `views/superadmin/settings.php` |
 | `get.php` | GET | Logged-in | `?id=<kpi_id>` | `{success: bool, item: object}` | `views/admin/kpi-management.php`, `views/superadmin/settings.php` |
 | `delete.php` | POST | `admin`, `superadmin` | `{id: int}` | `{success: bool, message: string}` | `views/admin/kpi-management.php`, `views/superadmin/settings.php` |
 

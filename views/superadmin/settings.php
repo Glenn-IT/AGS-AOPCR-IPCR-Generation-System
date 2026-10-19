@@ -207,22 +207,51 @@ $user = requireAuth(['superadmin']);
           <div class="form-text">This KPI will be visible only to the selected Admin.</div>
         </div>
 
-        <div class="mb-3">
-          <label class="form-label">MFO / PAP <span class="text-danger">*</span></label>
-          <input type="text" class="form-control" id="kpiMfo" placeholder="e.g. Instruction, Research, Extension">
+        <!-- Batch Quantity Controls (Visible when adding new KPIs) -->
+        <div id="batchKpiControls" class="card border-primary-subtle bg-light mb-3">
+          <div class="card-body p-3">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+              <div>
+                <label class="form-label fw-bold mb-0 text-primary">
+                  <i class="fa-solid fa-layer-group me-1"></i>Number of Functions to Add:
+                </label>
+                <div class="text-muted" style="font-size:0.78rem">
+                  Select or type the count (e.g. 5 Core Functions) to generate entry fields below.
+                </div>
+              </div>
+              <div class="d-flex align-items-center gap-2">
+                <div class="btn-group btn-group-sm" role="group">
+                  <button type="button" class="btn btn-outline-primary count-btn" onclick="setKpiRowCount(1)">1</button>
+                  <button type="button" class="btn btn-outline-primary count-btn" onclick="setKpiRowCount(3)">3</button>
+                  <button type="button" class="btn btn-outline-primary count-btn active" onclick="setKpiRowCount(5)">5</button>
+                  <button type="button" class="btn btn-outline-primary count-btn" onclick="setKpiRowCount(10)">10</button>
+                </div>
+                <div class="input-group input-group-sm" style="width: 110px;">
+                  <input type="number" id="kpiRowCountInput" class="form-control text-center" min="1" max="25" value="5" onchange="setKpiRowCount(this.value)">
+                  <button type="button" class="btn btn-primary" onclick="setKpiRowCount(document.getElementById('kpiRowCountInput').value)">Set</button>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-        <div class="mb-3">
-          <label class="form-label">Success Indicator <span class="text-danger">*</span></label>
-          <textarea class="form-control" id="kpiIndicator" rows="2" placeholder="Describe the measurable success indicator..."></textarea>
+
+        <!-- Dynamic Function Rows Container -->
+        <div id="kpiRowsContainer" class="mb-3" style="max-height: 480px; overflow-y: auto; padding-right: 4px;">
+          <!-- Generated function cards go here -->
         </div>
-        <div class="mb-3">
-          <label class="form-label">Target</label>
-          <input type="text" class="form-control" id="kpiTarget" placeholder="e.g. 100%">
+
+        <div id="addMoreKpiRowContainer" class="d-flex justify-content-between align-items-center mb-2 px-1">
+          <button type="button" class="btn btn-outline-primary btn-sm" onclick="addKpiRow()">
+            <i class="fa-solid fa-plus me-1"></i>Add Another Function
+          </button>
+          <span class="text-muted small" id="kpiCountSummary"><strong>5</strong> functions to be added</span>
         </div>
       </div>
       <div class="modal-footer">
         <button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
-        <button class="btn btn-primary btn-sm" onclick="saveKpi()"><i class="fa-solid fa-save me-1"></i>Save KPI</button>
+        <button class="btn btn-primary btn-sm" id="btnSaveKpi" onclick="saveKpi()">
+          <i class="fa-solid fa-save me-1"></i><span id="saveKpiBtnText">Save KPIs</span>
+        </button>
       </div>
     </div>
   </div>
@@ -466,18 +495,140 @@ $user = requireAuth(['superadmin']);
       </div>`;
   }
 
+  // ─── KPI Dynamic Row Helpers ─────────────────────────────────────────────
+  function escapeHtml(str) {
+    if (!str) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
+  function createKpiRowElement(index = 1, data = {}) {
+    const div = document.createElement('div');
+    div.className = 'kpi-row-item card mb-2 border shadow-sm';
+    div.innerHTML = `
+      <div class="card-header py-1 px-3 bg-light d-flex justify-content-between align-items-center">
+        <span class="fw-semibold small text-primary row-num-label">
+          <i class="fa-solid fa-clipboard-check me-1"></i>Function #${index}
+        </span>
+        <button type="button" class="btn btn-link text-danger p-0 delete-row-btn" onclick="removeKpiRow(this)" title="Remove this function" style="text-decoration:none;font-size:0.85rem">
+          <i class="fa-solid fa-trash-can"></i>
+        </button>
+      </div>
+      <div class="card-body p-3">
+        <div class="row g-2 mb-2">
+          <div class="col-md-8">
+            <label class="form-label small fw-semibold mb-1">MFO / PAP <span class="text-danger">*</span></label>
+            <input type="text" class="form-control form-control-sm row-mfo" value="${escapeHtml(data.mfo || '')}" placeholder="e.g. Higher Education Services / Instruction">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label small fw-semibold mb-1">Target</label>
+            <input type="text" class="form-control form-control-sm row-target" value="${escapeHtml(data.target || '')}" placeholder="e.g. 100%, 5 outputs">
+          </div>
+        </div>
+        <div>
+          <label class="form-label small fw-semibold mb-1">Success Indicator <span class="text-danger">*</span></label>
+          <textarea class="form-control form-control-sm row-indicator" rows="2" placeholder="Describe the measurable success indicator for this function...">${escapeHtml(data.success_indicator || '')}</textarea>
+        </div>
+      </div>
+    `;
+    return div;
+  }
+
+  function updateRowNumbers() {
+    const rows = document.querySelectorAll('#kpiRowsContainer .kpi-row-item');
+    const isEdit = !!document.getElementById('kpiId').value;
+    rows.forEach((row, idx) => {
+      const lbl = row.querySelector('.row-num-label');
+      if (lbl) lbl.innerHTML = `<i class="fa-solid fa-clipboard-check me-1"></i>Function #${idx + 1}`;
+      const delBtn = row.querySelector('.delete-row-btn');
+      if (delBtn) delBtn.style.display = (rows.length > 1 && !isEdit) ? 'inline-block' : 'none';
+    });
+
+    const count = rows.length;
+    const summary = document.getElementById('kpiCountSummary');
+    if (summary) summary.innerHTML = `<strong>${count}</strong> function${count === 1 ? '' : 's'} to be added`;
+
+    const btnText = document.getElementById('saveKpiBtnText');
+    if (btnText) {
+      btnText.textContent = isEdit ? 'Save KPI' : `Save ${count > 1 ? count + ' KPIs' : 'KPI'}`;
+    }
+
+    document.querySelectorAll('.count-btn').forEach(btn => {
+      btn.classList.toggle('active', parseInt(btn.textContent) === count);
+    });
+    const inp = document.getElementById('kpiRowCountInput');
+    if (inp && parseInt(inp.value) !== count) inp.value = count;
+  }
+
+  function setKpiRowCount(count) {
+    const n = Math.max(1, Math.min(25, parseInt(count) || 1));
+    const container = document.getElementById('kpiRowsContainer');
+    const existingRows = container.querySelectorAll('.kpi-row-item');
+    const currentCount = existingRows.length;
+
+    if (n > currentCount) {
+      for (let i = currentCount; i < n; i++) {
+        container.appendChild(createKpiRowElement(i + 1));
+      }
+    } else if (n < currentCount) {
+      for (let i = currentCount - 1; i >= n; i--) {
+        existingRows[i].remove();
+      }
+    }
+    updateRowNumbers();
+  }
+
+  function addKpiRow(data = {}) {
+    const container = document.getElementById('kpiRowsContainer');
+    const count = container.querySelectorAll('.kpi-row-item').length;
+    container.appendChild(createKpiRowElement(count + 1, data));
+    updateRowNumbers();
+  }
+
+  function removeKpiRow(btn) {
+    const container = document.getElementById('kpiRowsContainer');
+    const rows = container.querySelectorAll('.kpi-row-item');
+    if (rows.length <= 1) {
+      showToast('At least one function row is required.', 'warning');
+      return;
+    }
+    const card = btn.closest('.kpi-row-item');
+    if (card) card.remove();
+    updateRowNumbers();
+  }
+
   // ─── KPI Modal ───────────────────────────────────────────────────────────
   function openKpiModal(data = null) {
+    const isEdit = !!data;
     document.getElementById('kpiId').value          = data?.id || '';
     document.getElementById('kpiCategory').value    = data?.category || 'core';
     document.getElementById('kpiScope').value       = data?.scope || 'global';
     document.getElementById('kpiAssignedTo').value  = data?.assigned_to || '';
     document.getElementById('kpiDeptId').value      = data?.department_id || '';
-    document.getElementById('kpiMfo').value         = data?.mfo || '';
-    document.getElementById('kpiIndicator').value   = data?.success_indicator || '';
-    document.getElementById('kpiTarget').value      = data?.target || '';
-    document.getElementById('kpiModalTitle').innerHTML = `<i class="fa-solid fa-bullseye me-2"></i>${data ? 'Edit' : 'Add'} KPI`;
+
+    const batchControls   = document.getElementById('batchKpiControls');
+    const addMoreContainer = document.getElementById('addMoreKpiRowContainer');
+    const container        = document.getElementById('kpiRowsContainer');
+    container.innerHTML    = '';
+
+    if (isEdit) {
+      document.getElementById('kpiModalTitle').innerHTML = `<i class="fa-solid fa-pen-to-square me-2"></i>Edit KPI`;
+      if (batchControls) batchControls.style.display = 'none';
+      if (addMoreContainer) addMoreContainer.style.display = 'none';
+      container.appendChild(createKpiRowElement(1, data));
+    } else {
+      document.getElementById('kpiModalTitle').innerHTML = `<i class="fa-solid fa-bullseye me-2"></i>Add KPIs`;
+      if (batchControls) batchControls.style.display = 'block';
+      if (addMoreContainer) addMoreContainer.style.display = 'flex';
+      setKpiRowCount(5);
+    }
+
     onScopeChange();
+    updateRowNumbers();
     new bootstrap.Modal(document.getElementById('kpiModal')).show();
   }
 
@@ -500,28 +651,101 @@ $user = requireAuth(['superadmin']);
   }
 
   async function saveKpi() {
-    const id        = document.getElementById('kpiId').value;
-    const cat       = document.getElementById('kpiCategory').value;
-    const scope     = document.getElementById('kpiScope').value;
-    const mfo       = document.getElementById('kpiMfo').value.trim();
-    const indicator = document.getElementById('kpiIndicator').value.trim();
+    const id         = document.getElementById('kpiId').value;
+    const cat        = document.getElementById('kpiCategory').value;
+    const scope      = document.getElementById('kpiScope').value;
     const assignedTo = parseInt(document.getElementById('kpiAssignedTo').value) || null;
     const deptId     = document.getElementById('kpiDeptId').value || null;
 
-    if (!mfo || !indicator) { showToast('MFO and Success Indicator are required.', 'warning'); return; }
     if (scope === 'user' && !assignedTo) { showToast('Please select an Admin to assign this KPI to.', 'warning'); return; }
     if (scope === 'department' && !deptId) { showToast('Please select a Department.', 'warning'); return; }
 
+    const rows = document.querySelectorAll('#kpiRowsContainer .kpi-row-item');
+    if (rows.length === 0) {
+      showToast('Please add at least one function.', 'warning');
+      return;
+    }
+
+    // Single item edit mode
+    if (id) {
+      const row = rows[0];
+      const mfo = row.querySelector('.row-mfo').value.trim();
+      const indicator = row.querySelector('.row-indicator').value.trim();
+      const target = row.querySelector('.row-target').value.trim();
+
+      if (!mfo || !indicator) { showToast('MFO and Success Indicator are required.', 'warning'); return; }
+
+      const payload = {
+        id:               parseInt(id),
+        category:         cat,
+        scope,
+        mfo,
+        success_indicator: indicator,
+        target,
+        measure:          '',
+        assigned_to:      scope === 'user'       ? assignedTo : null,
+        department_id:    scope === 'department' ? deptId     : null,
+      };
+
+      const res = await fetch(API_BASE + 'kpi/save.php', {
+        method: 'POST', credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      }).then(r => r.json()).catch(() => null);
+
+      if (res?.success) {
+        bootstrap.Modal.getInstance(document.getElementById('kpiModal')).hide();
+        showToast('KPI updated successfully!', 'success');
+        loadKpis();
+      } else showToast(res?.error || 'Failed to save KPI.', 'danger');
+      return;
+    }
+
+    // Batch add mode
+    const items = [];
+    let hasPartiallyFilled = false;
+    let partialRowIndex = -1;
+
+    rows.forEach((row, idx) => {
+      const mfo = row.querySelector('.row-mfo').value.trim();
+      const indicator = row.querySelector('.row-indicator').value.trim();
+      const target = row.querySelector('.row-target').value.trim();
+
+      if (mfo === '' && indicator === '' && target === '') {
+        return;
+      }
+
+      if (!mfo || !indicator) {
+        hasPartiallyFilled = true;
+        if (partialRowIndex === -1) partialRowIndex = idx + 1;
+        return;
+      }
+
+      items.push({
+        category: cat,
+        mfo,
+        success_indicator: indicator,
+        target,
+        measure: ''
+      });
+    });
+
+    if (hasPartiallyFilled) {
+      showToast(`Function #${partialRowIndex}: Both MFO / PAP and Success Indicator are required.`, 'warning');
+      return;
+    }
+
+    if (items.length === 0) {
+      showToast('Please enter MFO / PAP and Success Indicator for at least one function.', 'warning');
+      return;
+    }
+
     const payload = {
-      id:               id || undefined,
-      category:         cat,
+      category:      cat,
       scope,
-      mfo,
-      success_indicator: indicator,
-      target:           document.getElementById('kpiTarget').value,
-      measure:          '',
-      assigned_to:      scope === 'user'       ? assignedTo : null,
-      department_id:    scope === 'department' ? deptId     : null,
+      department_id: scope === 'department' ? deptId     : null,
+      assigned_to:   scope === 'user'       ? assignedTo : null,
+      items
     };
 
     const res = await fetch(API_BASE + 'kpi/save.php', {
@@ -532,9 +756,10 @@ $user = requireAuth(['superadmin']);
 
     if (res?.success) {
       bootstrap.Modal.getInstance(document.getElementById('kpiModal')).hide();
-      showToast('KPI saved successfully!', 'success');
+      const msg = (res.count > 1) ? `${res.count} KPIs saved successfully!` : 'KPI saved successfully!';
+      showToast(msg, 'success');
       loadKpis();
-    } else showToast(res?.error || 'Failed to save KPI.', 'danger');
+    } else showToast(res?.error || 'Failed to save KPIs.', 'danger');
   }
 
   // ─── Init ────────────────────────────────────────────────────────────────
