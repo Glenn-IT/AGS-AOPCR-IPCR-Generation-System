@@ -228,8 +228,20 @@ $user = requireAuth(['admin']);
     function buildRows(items, minRows) {
       let html = '';
       const total = Math.max((items||[]).length, minRows);
+      let lastMfo = null;
       for (let i = 0; i < total; i++) {
         const item = (items||[])[i] || {};
+        const currentMfo = (item.mfo || '').trim();
+        let displayMfo = '';
+        if (currentMfo) {
+          if (lastMfo === null || currentMfo.toLowerCase() !== lastMfo.toLowerCase()) {
+            displayMfo = currentMfo;
+            lastMfo = currentMfo;
+          }
+        } else {
+          lastMfo = null;
+        }
+
         const q = item.q_rating || '';
         const e = item.e_rating || '';
         const t = item.t_rating || '';
@@ -246,7 +258,7 @@ $user = requireAuth(['admin']);
           }
         }
         html += `<tr class="data-row">
-          <td>${ep(item.mfo)}</td>
+          <td style="vertical-align:top">${displayMfo ? `<strong>${ep(displayMfo)}</strong>` : ''}</td>
           <td>${ep(item.success_indicator)}</td>
           <td class="tc">${ep(item.target)}</td>
           <td class="tc">${item.budget !== undefined && item.budget !== null ? item.budget : ''}</td>

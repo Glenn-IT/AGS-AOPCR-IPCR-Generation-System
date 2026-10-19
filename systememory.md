@@ -294,7 +294,7 @@ Inventory of all web pages with their access roles, layout bindings, and data de
 | `accomplishments.php` | `superadmin` | `accomplishments` | `api/ipcr/list.php`, `api/ipcr/get.php`, `api/ipcr/review.php`, `api/timeline/list.php` | System-wide accomplishment review and rating interface with employee ETL badge/weights card, category averages, weighted averages, and weighted overall rating computation |
 | `review-opcr.php` | `superadmin` | `accomplishments` | `api/opcr/list.php`, `api/opcr/get.php`, `api/opcr/review.php` | Evaluation and formal approval/disapproval of department-level OPCRs |
 | `reports.php` | `superadmin` | `reports` | `api/ipcr/list.php`, `api/opcr/list.php`, `api/departments/list.php`, `api/timeline/list.php` | Cross-campus report generation, printable view, Excel/CSV export |
-| `set-target.php` | `superadmin` | `set-target` | `api/opcr/save.php`, `api/opcr/get.php`, `api/timeline/list.php` | Campus-wide OPCR target setting form with interactive ETL weight matrix presets (18 ETL to 0 ETL, custom adjustment slider), weighted rating calculation, and standard clean Annex B print preview |
+| `set-target.php` | `superadmin` | `set-target` | `api/opcr/save.php`, `api/opcr/get.php`, `api/timeline/list.php` | Campus-wide OPCR target setting form with interactive ETL weight matrix presets (18 ETL to 0 ETL, custom adjustment slider), weighted rating calculation, multi-row function adder, and clean Annex B print preview with non-repetitive MFO grouping |
 | `settings.php` | `superadmin` | `settings` | `api/timeline/*`, `api/kpi/*`, `api/departments/list.php` | Academic timelines CRUD, KPI indicator bank management (Global/Department) |
 | `account.php` | `superadmin` | `account` | `api/user/update-profile.php`, `api/user/upload-avatar.php`, `api/auth/change-password.php`, `api/user/logs.php` | Profile updates, avatar upload, password change, personal activity log |
 
@@ -303,13 +303,13 @@ Inventory of all web pages with their access roles, layout bindings, and data de
 | Page File | Role Guard | Active Nav Key | Key APIs Consumed | Primary Functionality |
 |---|---|---|---|---|
 | `dashboard.php` | `admin` | `dashboard` | `api/dashboard/admin-stats.php` | Department-scoped dashboard, faculty submission progress, pending review alerts |
-| `ipcr-form.php` | `admin` | `ipcr-form` | `api/ipcr/save.php`, `api/ipcr/get.php`, `api/kpi/list.php`, `api/timeline/list.php` | Personal IPCR form for Dean/Head |
-| `status.php` | `admin` | `status` | `api/ipcr/list.php?my_submissions=1`, `api/ipcr/get.php` | Real-time tracking pipeline for Admin's submitted IPCR (Submitted $\rightarrow$ Under Review $\rightarrow$ Final Decision), detail modal, and official Print Preview |
+| `ipcr-form.php` | `admin` | `ipcr-form` | `api/ipcr/save.php`, `api/ipcr/get.php`, `api/kpi/list.php`, `api/timeline/list.php` | Personal IPCR form for Dean/Head with non-repetitive MFO print preview |
+| `status.php` | `admin` | `status` | `api/ipcr/list.php?my_submissions=1`, `api/ipcr/get.php` | Real-time tracking pipeline for Admin's submitted IPCR (Submitted $\rightarrow$ Under Review $\rightarrow$ Final Decision), detail modal, and official Print Preview with non-repetitive MFO grouping |
 | `review-ipcr.php` | `admin` | `accomplishments` | `api/ipcr/list.php`, `api/ipcr/get.php`, `api/ipcr/review.php`, `api/evidence/list.php` | Departmental IPCR reviewer with item-by-item rating modal & evidence inspector |
 | `accomplishments.php` | `admin` | `accomplishments` | `api/ipcr/list.php`, `api/ipcr/get.php`, `api/ipcr/review.php` | Tabular accomplishment review and ratings |
 | `kpi-management.php` | `admin` | `kpi-management` | `api/kpi/*`, `api/users/list.php` | Create/assign department KPIs to specific faculty members |
 | `reports.php` | `admin` | `reports` | `api/ipcr/list.php`, `api/timeline/list.php` | Department IPCR summary report & export |
-| `set-target.php` | `admin` | `set-target` | `api/opcr/save.php`, `api/opcr/get.php`, `api/timeline/list.php` | Office OPCR form: MFO, targets, budget allocation |
+| `set-target.php` | `admin` | `set-target` | `api/opcr/save.php`, `api/opcr/get.php`, `api/timeline/list.php` | Office OPCR form: MFO, targets, budget allocation, multi-row function adder, and non-repetitive MFO print layout |
 | `evidence.php` | `admin` | `evidence` | `api/evidence/*`, `api/ipcr/list.php` | *(Consolidated)* Redirects to `ipcr-form.php`; evidence upload & viewing integrated directly into IPCR Form |
 | `account.php` | `admin` | `account` | `api/user/*`, `api/auth/change-password.php` | Profile settings, avatar, security questions, activity history |
 
@@ -318,9 +318,9 @@ Inventory of all web pages with their access roles, layout bindings, and data de
 | Page File | Role Guard | Active Nav Key | Key APIs Consumed | Primary Functionality |
 |---|---|---|---|---|
 | `dashboard.php` | `user` | `dashboard` | `api/dashboard/user-stats.php` | Personal rating status, pending reviews, active timeline alert |
-| `ipcr-form.php` | `user` | `ipcr-form` | `api/ipcr/save.php`, `api/ipcr/get.php`, `api/kpi/list.php`, `api/timeline/list.php`, `api/user/supervisor.php` | Main faculty IPCR entry: KPI selector, accomplishment entries, Q/E/T self-rating, evidence upload & viewing modals, draft/submit |
+| `ipcr-form.php` | `user` | `ipcr-form` | `api/ipcr/save.php`, `api/ipcr/get.php`, `api/kpi/list.php`, `api/timeline/list.php`, `api/user/supervisor.php` | Main faculty IPCR entry: KPI selector, accomplishment entries, Q/E/T self-rating, evidence upload & viewing modals, draft/submit, and non-repetitive MFO print layout |
 | `evidence.php` | `user` | `evidence` | `api/evidence/*`, `api/ipcr/list.php` | *(Consolidated)* Redirects to `ipcr-form.php`; evidence upload & viewing integrated directly into IPCR Form |
-| `status.php` | `user` | `status` | `api/ipcr/list.php`, `api/ipcr/get.php` | Real-time tracking pipeline (Draft $\rightarrow$ Pending Review $\rightarrow$ Reviewed $\rightarrow$ Approved) |
+| `status.php` | `user` | `status` | `api/ipcr/list.php`, `api/ipcr/get.php` | Real-time tracking pipeline (Draft $\rightarrow$ Pending Review $\rightarrow$ Reviewed $\rightarrow$ Approved) with non-repetitive MFO print layout |
 | `account.php` | `user` | `account` | `api/user/*`, `api/auth/change-password.php` | Personal account settings, profile photo, password change, audit logs |
 
 ---

@@ -84,7 +84,7 @@ $user = requireAuth(['superadmin']);
       <button class="btn btn-outline-primary btn-sm" id="btnUploadEvidence" onclick="openUploadModal()">
         <i class="fa-solid fa-cloud-arrow-up me-1"></i>Upload Evidence
       </button>
-      <button class="btn btn-outline-secondary btn-sm" onclick="window.print()">
+      <button class="btn btn-outline-secondary btn-sm" onclick="showPrintPreview()">
         <i class="fa-solid fa-print me-1"></i>Print
       </button>
       <button class="btn btn-outline-primary btn-sm" id="editBtn" onclick="enableEdit()" style="display:none">
@@ -1492,8 +1492,20 @@ $user = requireAuth(['superadmin']);
     function buildRows(rows, minRows) {
       let html = '';
       const total = Math.max(rows.length, minRows);
+      let lastMfo = null;
       for (let i = 0; i < total; i++) {
         const r = rows[i] || {};
+        const currentMfo = (r.mfo || '').trim();
+        let displayMfo = '';
+        if (currentMfo) {
+          if (lastMfo === null || currentMfo.toLowerCase() !== lastMfo.toLowerCase()) {
+            displayMfo = currentMfo;
+            lastMfo = currentMfo;
+          }
+        } else {
+          lastMfo = null;
+        }
+
         let formattedActual = '';
         if (r.actual !== undefined && r.actual !== null && String(r.actual).trim() !== '') {
           const actStr = String(r.actual).trim();
@@ -1506,7 +1518,7 @@ $user = requireAuth(['superadmin']);
           }
         }
         html += `<tr class="data-row">
-          <td>${ep(r.mfo)}</td>
+          <td style="vertical-align:top">${displayMfo ? `<strong>${ep(displayMfo)}</strong>` : ''}</td>
           <td>${ep(r.si)}</td>
           <td class="tc">${ep(r.target)}</td>
           <td class="tc">${ep(r.budget)}</td>

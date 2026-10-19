@@ -1339,8 +1339,20 @@ $user = requireAuth(['user']);
     function buildRows(rows, minRows) {
       let html = '';
       const total = Math.max(rows.length, minRows);
+      let lastMfo = null;
       for (let i = 0; i < total; i++) {
         const r = rows[i] || {};
+        const currentMfo = (r.mfo || '').trim();
+        let displayMfo = '';
+        if (currentMfo) {
+          if (lastMfo === null || currentMfo.toLowerCase() !== lastMfo.toLowerCase()) {
+            displayMfo = currentMfo;
+            lastMfo = currentMfo;
+          }
+        } else {
+          lastMfo = null;
+        }
+
         let formattedActual = '';
         if (r.actual !== undefined && r.actual !== null && String(r.actual).trim() !== '') {
           const actStr = String(r.actual).trim();
@@ -1354,7 +1366,7 @@ $user = requireAuth(['user']);
         }
         const formattedBudget = r.budget && parseFloat(r.budget) > 0 ? Number(r.budget).toLocaleString() : (r.budget !== undefined && r.budget !== '' ? r.budget : '0');
         html += `<tr class="data-row">
-          <td>${esc(r.mfo)}</td>
+          <td style="vertical-align:top">${displayMfo ? `<strong>${esc(displayMfo)}</strong>` : ''}</td>
           <td>${esc(r.si)}</td>
           <td class="tc">${esc(r.target)}</td>
           <td class="tc">${esc(formattedBudget)}</td>

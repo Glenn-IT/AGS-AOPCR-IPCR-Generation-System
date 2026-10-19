@@ -28,7 +28,7 @@ $user = requireAuth(['admin']);
       <p>Office Performance Commitment and Review | CSU-Piat</p>
     </div>
     <div class="d-flex gap-2 no-print">
-      <button class="btn btn-outline-secondary btn-sm" onclick="window.print()"><i class="fa-solid fa-print me-1"></i>Print</button>
+      <button class="btn btn-outline-secondary btn-sm" onclick="showPrintPreview()"><i class="fa-solid fa-print me-1"></i>Print</button>
       <button class="btn btn-outline-primary btn-sm" id="editBtn" onclick="enableEdit()" style="display:none"><i class="fa-solid fa-pen me-1"></i>Edit</button>
       <button class="btn btn-primary btn-sm" id="saveBtn" onclick="saveOPCR()"><i class="fa-solid fa-save me-1"></i>Save OPCR</button>
       <button class="btn btn-success btn-sm" id="confirmBtn" onclick="confirmOPCR()"><i class="fa-solid fa-check me-1"></i>Confirm & Submit</button>
@@ -444,8 +444,20 @@ $user = requireAuth(['admin']);
     function buildRows(rows, minRows) {
       let html = '';
       const total = Math.max(rows.length, minRows);
+      let lastMfo = null;
       for (let i = 0; i < total; i++) {
         const r = rows[i] || {};
+        const currentMfo = (r.mfo || '').trim();
+        let displayMfo = '';
+        if (currentMfo) {
+          if (lastMfo === null || currentMfo.toLowerCase() !== lastMfo.toLowerCase()) {
+            displayMfo = currentMfo;
+            lastMfo = currentMfo;
+          }
+        } else {
+          lastMfo = null;
+        }
+
         let formattedActual = '';
         if (r.actual !== undefined && r.actual !== null && String(r.actual).trim() !== '') {
           const actStr = String(r.actual).trim();
@@ -458,7 +470,7 @@ $user = requireAuth(['admin']);
           }
         }
         html += `<tr class="data-row">
-          <td>${ep(r.mfo)}</td>
+          <td style="vertical-align:top">${displayMfo ? `<strong>${ep(displayMfo)}</strong>` : ''}</td>
           <td>${ep(r.successIndicator)}</td>
           <td class="tc">${ep(r.target)}</td>
           <td class="tc">${ep(r.budget)}</td>
